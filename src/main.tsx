@@ -1,0 +1,16 @@
+import {StrictMode} from 'react';
+import {createRoot} from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
+import { CartProvider } from './context/CartContext.tsx';
+import { SignUpProvider } from './context/SignUpContext.tsx';
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <SignUpProvider>
+      <CartProvider>
+        <App />
+      </CartProvider>
+    </SignUpProvider>
+  </StrictMode>,
+);
