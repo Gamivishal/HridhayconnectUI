@@ -2,8 +2,9 @@ import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
 import { useRef, useEffect, useState } from "react";
 import { Award, Heart, Leaf, Star, Sparkle, Plus, ChevronDown, Check } from "lucide-react";
 import { useCart } from "../context/CartContext";
-import { products } from "../data/products";
+import { products, syncProducts } from "../data/products";
 import { InnerPageBanner } from "./InnerPageBanner";
+import { fetchProductsFromApi } from "../api/productService";
 
 interface HairOilCardProps {
   key?: any;
@@ -18,6 +19,8 @@ interface HairOilCardProps {
     tag: string;
     ingredient: string;
     discount: string;
+    totalAvailableStock?: number;
+    variants?: any[];
   };
   index: number;
   cartState: Record<string, boolean>;
@@ -40,6 +43,16 @@ function HairOilCard({
     offset: ["start end", "end start"]
   });
   const y = useTransform(scrollYProgress, [0, 1], [40, -40]);
+
+  const renderPrice = () => {
+    if (oil.variants && oil.variants.length > 1) {
+      const prices = oil.variants.map(v => v.price);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      return `₹${minPrice} - ₹${maxPrice}`;
+    }
+    return `₹${oil.price}`;
+  };
 
   return (
     <motion.div
@@ -119,7 +132,7 @@ function HairOilCard({
             {oil.name}
           </h3>
           <div className="flex items-center gap-2 font-serif text-lg">
-            <span className="text-[var(--color-primary)] font-semibold">₹{oil.price}</span>
+            <span className="text-[var(--color-primary)] font-semibold">{renderPrice()}</span>
             <span className="text-xs text-[var(--color-dark-text)]/40 line-through">₹{oil.originalPrice}</span>
           </div>
         </div>
@@ -127,6 +140,12 @@ function HairOilCard({
         <p className="text-[11.5px] text-[var(--color-dark-text)]/60 font-light font-satoshi mb-4 leading-relaxed line-clamp-2">
           {oil.desc}
         </p>
+
+        {oil.totalAvailableStock !== undefined && oil.totalAvailableStock < 10 && (
+          <div className="text-[10px] font-semibold text-red-600 mb-2.5 uppercase tracking-wider">
+            Available only: {oil.totalAvailableStock}
+          </div>
+        )}
 
         {/* Subtle benefit items list */}
         <ul className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2">
@@ -143,8 +162,49 @@ function HairOilCard({
   );
 }
 
+const staticOils = [
+  {
+    id: "keshvedaam-100",
+    name: "Keshvedaam Hair Oil (100ml)",
+    price: 210,
+    originalPrice: 250,
+    img: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=800&auto=format&fit=crop",
+    desc: "Our flagship Ayurvedic slow-infused hair oil, hand-stirred in copper vessels with Bringraj, Amla, and organic base oils.",
+    benefits: ["Nourishes the scalp & strengthens roots", "Promotes hair growth & density", "Reduces hair fall & adds natural shine"],
+    tag: "Flagship Choice",
+    ingredient: "Bringraj & Amla Infusion",
+    discount: "16% OFF"
+  },
+  {
+    id: "keshvedaam-200",
+    name: "Keshvedaam Hair Oil (200ml)",
+    price: 380,
+    originalPrice: 480,
+    img: "https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=800&auto=format&fit=crop",
+    desc: "Double the quantity of our copper-cured nourishing hair nectar, designed for complete family scalp wellness.",
+    benefits: ["Prevents dryness & flaky buildup", "Soothes scalp heat & inflammation", "Locks in root moisture for long hydration"],
+    tag: "Best Value",
+    ingredient: "Sesame & Coconut Oil Base",
+    discount: "20% OFF"
+  },
+  {
+    id: "scalp-revival-set",
+    name: "Scalp Revival Ritual Set",
+    price: 490,
+    originalPrice: 650,
+    img: "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?q=80&w=800&auto=format&fit=crop",
+    desc: "The ultimate scalp care ritual pack including Keshvedaam Oil (100ml), a handcrafted neem wood comb, and a nourishing hair pack.",
+    benefits: ["Improves blood circulation in scalp", "Neem wood comb controls static frizz", "Ayurvedic hair pack strengthens cuticles"],
+    tag: "Gift & Wellness Pack",
+    ingredient: "Ritual Set with Neem Comb",
+    discount: "24% OFF"
+  }
+];
+
 export function HairOilCategoryPage() {
   const pageRef = useRef<HTMLDivElement>(null);
+  const [oilsList, setOilsList] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Scroll to top and set page title on mount
   useEffect(() => {
@@ -152,45 +212,54 @@ export function HairOilCategoryPage() {
     document.title = "Keshvedaam Ayurvedic Hair Oil | Hridhay Connect";
   }, []);
 
-  // Products Data
-  const oils = [
-    {
-      id: "keshvedaam-100",
-      name: "Keshvedaam Hair Oil (100ml)",
-      price: 210,
-      originalPrice: 250,
-      img: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=800&auto=format&fit=crop",
-      desc: "Our flagship Ayurvedic slow-infused hair oil, hand-stirred in copper vessels with Bringraj, Amla, and organic base oils.",
-      benefits: ["Nourishes the scalp & strengthens roots", "Promotes hair growth & density", "Reduces hair fall & adds natural shine"],
-      tag: "Flagship Choice",
-      ingredient: "Bringraj & Amla Infusion",
-      discount: "16% OFF"
-    },
-    {
-      id: "keshvedaam-200",
-      name: "Keshvedaam Hair Oil (200ml)",
-      price: 380,
-      originalPrice: 480,
-      img: "https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=800&auto=format&fit=crop",
-      desc: "Double the quantity of our copper-cured nourishing hair nectar, designed for complete family scalp wellness.",
-      benefits: ["Prevents dryness & flaky buildup", "Soothes scalp heat & inflammation", "Locks in root moisture for long hydration"],
-      tag: "Best Value",
-      ingredient: "Sesame & Coconut Oil Base",
-      discount: "20% OFF"
-    },
-    {
-      id: "scalp-revival-set",
-      name: "Scalp Revival Ritual Set",
-      price: 490,
-      originalPrice: 650,
-      img: "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?q=80&w=800&auto=format&fit=crop",
-      desc: "The ultimate scalp care ritual pack including Keshvedaam Oil (100ml), a handcrafted neem wood comb, and a nourishing hair pack.",
-      benefits: ["Improves blood circulation in scalp", "Neem wood comb controls static frizz", "Ayurvedic hair pack strengthens cuticles"],
-      tag: "Gift & Wellness Pack",
-      ingredient: "Ritual Set with Neem Comb",
-      discount: "24% OFF"
+  // Fetch hair oils from live API (CategoryId: 16)
+  useEffect(() => {
+    let isMounted = true;
+    async function loadProducts() {
+      try {
+        setIsLoading(true);
+        const fetched = await fetchProductsFromApi(16);
+        if (isMounted) {
+          const cardOils = fetched.map(p => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            originalPrice: p.originalPrice,
+            img: p.images?.[0] || "https://localhost:7103/Uploads/Product/no-image.png",
+            desc: p.desc,
+            benefits: p.benefits || [
+              "Nourishes the scalp & strengthens roots",
+              "Promotes hair growth & density"
+            ],
+            tag: p.tag || "",
+            ingredient: "",
+            discount: p.discount,
+            totalAvailableStock: p.totalAvailableStock,
+            variants: p.variants
+          }));
+          setOilsList(cardOils);
+          syncProducts(fetched);
+        }
+      } catch (error) {
+        console.error("[HairOilPage API Error] Failed to load hair oils from API:", error);
+        if (isMounted) {
+          // Fallback to static oils enriched with variants
+          const enriched = staticOils.map(oil => {
+            const matchingProduct = products.find(p => p.id === oil.id || p.id.replace(/-100|-200/g, "") === oil.id.replace(/-100|-200/g, ""));
+            return {
+              ...oil,
+              variants: matchingProduct?.variants
+            };
+          });
+          setOilsList(enriched);
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
     }
-  ];
+    loadProducts();
+    return () => { isMounted = false; };
+  }, []);
 
   // Ingredients Data
   const keyIngredients = [
@@ -291,24 +360,31 @@ export function HairOilCategoryPage() {
             </h2>
           </div>
           <span className="text-xs font-medium tracking-widest uppercase text-[var(--color-dark-text)]/50 mt-4 md:mt-0 font-general">
-            Showing {oils.length} Exclusive Cured Oils
+            Showing {oilsList.length} Exclusive Cured Oils
           </span>
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-14">
-          {oils.map((oil, index) => (
-            <HairOilCard
-              key={oil.id}
-              oil={oil}
-              index={index}
-              cartState={cartState}
-              wishlistState={wishlistState}
-              handleAddToCart={handleAddToCart}
-              toggleWishlist={toggleWishlist}
-            />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-32 text-[var(--color-primary)]">
+            <Sparkle className="w-10 h-10 animate-spin mb-4" />
+            <span className="text-xs uppercase tracking-[0.2em] font-medium font-general">Retrieving apothecary items...</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-14">
+            {oilsList.map((oil, index) => (
+              <HairOilCard
+                key={oil.id}
+                oil={oil}
+                index={index}
+                cartState={cartState}
+                wishlistState={wishlistState}
+                handleAddToCart={handleAddToCart}
+                toggleWishlist={toggleWishlist}
+              />
+            ))}
+          </div>
+        )}
 
       </section>
 

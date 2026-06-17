@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ShieldCheck, 
@@ -14,8 +14,14 @@ export function CartPage() {
     cartSubtotal, 
     cartCount,
     clearCart,
-    prepareCheckout
+    prepareCheckout,
+    syncCartWithApi,
+    isCartLoading
   } = useCart();
+
+  useEffect(() => {
+    syncCartWithApi();
+  }, []);
 
   const [promoCode, setPromoCode] = useState("");
   const [discountPercent, setDiscountPercent] = useState(0);
@@ -198,7 +204,8 @@ export function CartPage() {
                           </h3>
                           <button 
                             onClick={() => removeFromCart(item.product.id)}
-                            className="text-[var(--color-dark-text)]/30 hover:text-red-500 transition-colors p-1 rounded cursor-pointer"
+                            disabled={isCartLoading}
+                            className={`text-[var(--color-dark-text)]/30 hover:text-red-500 transition-colors p-1 rounded ${isCartLoading ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                             aria-label="Remove item"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -213,13 +220,13 @@ export function CartPage() {
                           {item.product.tagline}
                         </p>
                       </div>
-
                       {/* Quantity & Pricing details */}
                       <div className="flex justify-between items-center mt-4 pt-3 border-t border-black/5">
                         <div className="flex items-center bg-black/5 rounded-full p-1 scale-95 origin-left">
                           <button 
                             onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                            className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-black/5 transition-all cursor-pointer"
+                            disabled={isCartLoading || item.quantity <= 1}
+                            className={`w-7 h-7 rounded-full flex items-center justify-center hover:bg-black/5 transition-all ${(isCartLoading || item.quantity <= 1) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                           >
                             <Minus className="w-3.5 h-3.5 text-[var(--color-dark-text)]" />
                           </button>
@@ -228,7 +235,8 @@ export function CartPage() {
                           </span>
                           <button 
                             onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                            className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-black/5 transition-all cursor-pointer"
+                            disabled={isCartLoading}
+                            className={`w-7 h-7 rounded-full flex items-center justify-center hover:bg-black/5 transition-all ${isCartLoading ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                           >
                             <Plus className="w-3.5 h-3.5 text-[var(--color-dark-text)]" />
                           </button>

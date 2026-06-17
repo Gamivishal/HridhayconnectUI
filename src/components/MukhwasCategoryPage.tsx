@@ -2,8 +2,9 @@ import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
 import { useRef, useEffect, useState } from "react";
 import { Award, Heart, Leaf, Star, Sparkle, Plus, ChevronDown, Check } from "lucide-react";
 import { useCart } from "../context/CartContext";
-import { products } from "../data/products";
+import { products, syncProducts } from "../data/products";
 import { InnerPageBanner } from "./InnerPageBanner";
+import { fetchProductsFromApi, normalizeSlug } from "../api/productService";
 
 interface MukhwasCardProps {
   key?: any;
@@ -18,6 +19,8 @@ interface MukhwasCardProps {
     tag: string;
     ingredient: string;
     discount: string;
+    totalAvailableStock?: number;
+    variants?: any[];
   };
   index: number;
   cartState: Record<string, boolean>;
@@ -40,6 +43,16 @@ function MukhwasCard({
     offset: ["start end", "end start"]
   });
   const y = useTransform(scrollYProgress, [0, 1], [40, -40]);
+
+  const renderPrice = () => {
+    if (mukhwas.variants && mukhwas.variants.length > 1) {
+      const prices = mukhwas.variants.map(v => v.price);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      return `₹${minPrice} - ₹${maxPrice}`;
+    }
+    return `₹${mukhwas.price}`;
+  };
 
   return (
     <motion.div
@@ -119,7 +132,7 @@ function MukhwasCard({
             {mukhwas.name}
           </h3>
           <div className="flex items-center gap-2 font-serif text-lg">
-            <span className="text-[var(--color-primary)] font-semibold">₹{mukhwas.price}</span>
+            <span className="text-[var(--color-primary)] font-semibold">{renderPrice()}</span>
             <span className="text-xs text-[var(--color-dark-text)]/40 line-through">₹{mukhwas.originalPrice}</span>
           </div>
         </div>
@@ -127,6 +140,12 @@ function MukhwasCard({
         <p className="text-[11.5px] text-[var(--color-dark-text)]/60 font-light font-satoshi mb-4 leading-relaxed line-clamp-2">
           {mukhwas.desc}
         </p>
+
+        {mukhwas.totalAvailableStock !== undefined && mukhwas.totalAvailableStock < 10 && (
+          <div className="text-[10px] font-semibold text-red-600 mb-2.5 uppercase tracking-wider">
+            Available only: {mukhwas.totalAvailableStock}
+          </div>
+        )}
 
         {/* Subtle benefit items list */}
         <ul className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2">
@@ -143,8 +162,49 @@ function MukhwasCard({
   );
 }
 
+const staticMukhwas = [
+  {
+    id: "dil-ranjan",
+    name: "Dil Ranjan Mukhwas (150g Jar)",
+    price: 80,
+    originalPrice: 140,
+    img: "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=800&auto=format&fit=crop",
+    desc: "Our royal heritage digestive blend, slow-roasted over mild wood fire with fennel, sesame, coriander pulses, and spices.",
+    benefits: ["Aids post-meal stomach comfort", "Rich in digestion-enhancing fibers", "100% natural, sugar-saccharin free"],
+    tag: "Best Seller",
+    ingredient: "Wood-Roasted Fennel & Seeds",
+    discount: "42% OFF"
+  },
+  {
+    id: "kalkatti-pan",
+    name: "Kalkatti Pan Mukhwas (150g Jar)",
+    price: 90,
+    originalPrice: 160,
+    img: "https://images.unsplash.com/photo-1596547609652-9cf5d8d76921?q=80&w=800&auto=format&fit=crop",
+    desc: "An organic blend inspired by the heritage betel leaf of Calcutta, cured with cooling gulkand and digestive seeds.",
+    benefits: ["Cools stomach heat & acidity", "Fleshy rose petal base for sweetness", "Naturally refreshes bad breath"],
+    tag: "Traditional Favorite",
+    ingredient: "Calcutta Betel & Gulkand",
+    discount: "43% OFF"
+  },
+  {
+    id: "jamun-shot",
+    name: "Jamun Shot Mukhwas (150g Jar)",
+    price: 85,
+    originalPrice: 150,
+    img: "https://images.unsplash.com/photo-1607006342411-92f1f5449174?q=80&w=800&auto=format&fit=crop",
+    desc: "A tangy, refreshing digestive pellet crafted from sun-cured jamun pulp, dry herbs, and gut-friendly spices.",
+    benefits: ["Supports blood sugar balance", "Tangy, cooling after-meal refresher", "Aids digestion and gas relief"],
+    tag: "Fruity Digestives",
+    ingredient: "Sun-Cured Jamun Pulp",
+    discount: "43% OFF"
+  }
+];
+
 export function MukhwasCategoryPage() {
   const pageRef = useRef<HTMLDivElement>(null);
+  const [mukhwasList, setMukhwasList] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Scroll to top and set page title on mount
   useEffect(() => {
@@ -152,45 +212,54 @@ export function MukhwasCategoryPage() {
     document.title = "Handcrafted Mukhwas & Digestives | Hridhay Connect";
   }, []);
 
-  // Products Data
-  const mukhwasProducts = [
-    {
-      id: "dil-ranjan",
-      name: "Dil Ranjan Mukhwas (150g Jar)",
-      price: 80,
-      originalPrice: 140,
-      img: "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=800&auto=format&fit=crop",
-      desc: "Our royal heritage digestive blend, slow-roasted over mild wood fire with fennel, sesame, coriander pulses, and spices.",
-      benefits: ["Aids post-meal stomach comfort", "Rich in digestion-enhancing fibers", "100% natural, sugar-saccharin free"],
-      tag: "Best Seller",
-      ingredient: "Wood-Roasted Fennel & Seeds",
-      discount: "42% OFF"
-    },
-    {
-      id: "kalkatti-pan",
-      name: "Kalkatti Pan Mukhwas (150g Jar)",
-      price: 90,
-      originalPrice: 160,
-      img: "https://images.unsplash.com/photo-1596547609652-9cf5d8d76921?q=80&w=800&auto=format&fit=crop",
-      desc: "An organic blend inspired by the heritage betel leaf of Calcutta, cured with cooling gulkand and digestive seeds.",
-      benefits: ["Cools stomach heat & acidity", "Fleshy rose petal base for sweetness", "Naturally refreshes bad breath"],
-      tag: "Traditional Favorite",
-      ingredient: "Calcutta Betel & Gulkand",
-      discount: "43% OFF"
-    },
-    {
-      id: "jamun-shot",
-      name: "Jamun Shot Mukhwas (150g Jar)",
-      price: 85,
-      originalPrice: 150,
-      img: "https://images.unsplash.com/photo-1607006342411-92f1f5449174?q=80&w=800&auto=format&fit=crop",
-      desc: "A tangy, refreshing digestive pellet crafted from sun-cured jamun pulp, dry herbs, and gut-friendly spices.",
-      benefits: ["Supports blood sugar balance", "Tangy, cooling after-meal refresher", "Aids digestion and gas relief"],
-      tag: "Fruity Digestives",
-      ingredient: "Sun-Cured Jamun Pulp",
-      discount: "43% OFF"
+  // Fetch mukhwas from live API
+  useEffect(() => {
+    let isMounted = true;
+    async function loadProducts() {
+      try {
+        setIsLoading(true);
+        const fetched = await fetchProductsFromApi(17);
+        if (isMounted) {
+          const cardMukhwas = fetched.map(p => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            originalPrice: p.originalPrice,
+            img: p.images[0] || "https://localhost:7103/Uploads/Product/no-image.png",
+            desc: p.desc,
+            benefits: p.benefits || [
+              "Aids post-meal stomach comfort",
+              "100% natural, sugar-saccharin free"
+            ],
+            tag: p.tag || "",
+            ingredient: p.ingredients?.[0]?.name || "",
+            discount: p.discount,
+            totalAvailableStock: p.totalAvailableStock,
+            variants: p.variants
+          }));
+
+          setMukhwasList(cardMukhwas);
+          syncProducts(fetched);
+        }
+      } catch (error) {
+        console.error("[MukhwasPage API Error] Failed to load mukhwas from API:", error);
+        if (isMounted) {
+          const fallbackList = staticMukhwas.map(s => {
+            const matchingProduct = products.find(p => p.id === s.id);
+            return {
+              ...s,
+              variants: matchingProduct?.variants
+            };
+          });
+          setMukhwasList(fallbackList);
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
     }
-  ];
+    loadProducts();
+    return () => { isMounted = false; };
+  }, []);
 
   // Ingredients Data
   const keyIngredients = [
@@ -291,24 +360,31 @@ export function MukhwasCategoryPage() {
             </h2>
           </div>
           <span className="text-xs font-medium tracking-widest uppercase text-[var(--color-dark-text)]/50 mt-4 md:mt-0 font-general">
-            Showing {mukhwasProducts.length} Premium Jars
+            Showing {mukhwasList.length} Premium Jars
           </span>
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-14">
-          {mukhwasProducts.map((mukhwas, index) => (
-            <MukhwasCard
-              key={mukhwas.id}
-              mukhwas={mukhwas}
-              index={index}
-              cartState={cartState}
-              wishlistState={wishlistState}
-              handleAddToCart={handleAddToCart}
-              toggleWishlist={toggleWishlist}
-            />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-32 text-[var(--color-primary)]">
+            <Sparkle className="w-10 h-10 animate-spin mb-4" />
+            <span className="text-xs uppercase tracking-[0.2em] font-medium font-general">Retrieving apothecary items...</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-14">
+            {mukhwasList.map((mukhwas, index) => (
+              <MukhwasCard
+                key={mukhwas.id}
+                mukhwas={mukhwas}
+                index={index}
+                cartState={cartState}
+                wishlistState={wishlistState}
+                handleAddToCart={handleAddToCart}
+                toggleWishlist={toggleWishlist}
+              />
+            ))}
+          </div>
+        )}
 
       </section>
 

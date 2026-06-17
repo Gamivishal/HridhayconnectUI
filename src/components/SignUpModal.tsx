@@ -1,6 +1,8 @@
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect } from "react";
 import { X, Eye, EyeOff, User, Mail, Phone, Lock, ArrowRight, Check, Sparkles, Chrome, ShieldCheck } from "lucide-react";
+import { useCart } from "../context/CartContext";
+import { getCaseInsensitiveProperty } from "../api/productService";
 
 // Particle positions for left branding panel
 const LEFT_PARTICLES = [
@@ -109,6 +111,7 @@ interface SignUpModalProps {
 }
 
 export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
+  const { syncCartWithApi } = useCart();
   const [authMode, setAuthMode] = useState<'signup' | 'signin'>('signup');
   const [form, setForm] = useState({
     fullName: "",
@@ -171,13 +174,13 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
       e.fullName = "Full name is required";
     }
     if (!form.email.trim()) {
-      e.email = "Email address is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      e.email = authMode === 'signup' ? "Email address is required" : "Username/Email is required";
+    } else if (authMode === 'signup' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       e.email = "Please enter a valid email";
     }
     if (!form.password) {
       e.password = "Password is required";
-    } else if (form.password.length < 8) {
+    } else if (authMode === 'signup' && form.password.length < 8) {
       e.password = "Minimum 8 characters required";
     }
     if (authMode === 'signup') {
@@ -193,10 +196,75 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
     e.preventDefault();
     if (!validate()) return;
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 1800));
-    setIsLoading(false);
-    setIsSuccess(true);
-    setTimeout(() => onClose(), 2500);
+
+    if (authMode === 'signin') {
+      try {
+        const url = "https://localhost:7103/api/CustomerAuth/Login";
+        const payload = {
+          username: form.email,
+          password: form.password
+        };
+
+        console.log("[Login API Request] Sending payload to:", url, payload);
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error(`Login failed with status ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log("[Login API Response] Raw response:", result);
+
+        const isSuccessVal = result.isSuccess || result.IsSuccess;
+        const messageVal = result.message || result.Message || "";
+
+        if (isSuccessVal && messageVal.includes("|")) {
+          const parts = messageVal.split("|");
+          const token = parts[1];
+          if (token) {
+            console.log("[Login API Success] Storing auth token:", token);
+            localStorage.setItem("authToken", token);
+            
+            // Extract and save Customer ID and Profile
+            const customerData = getCaseInsensitiveProperty(result, "data") || {};
+            const customerId = getCaseInsensitiveProperty(customerData, "Id") || getCaseInsensitiveProperty(result, "Id");
+            if (customerId) {
+              console.log("[Login API Success] Storing customerId:", customerId);
+              localStorage.setItem("customerId", String(customerId));
+            }
+            localStorage.setItem("customerProfile", JSON.stringify(customerData));
+            
+            syncCartWithApi();
+            window.dispatchEvent(new Event("auth-change"));
+          }
+
+          setIsLoading(false);
+          setIsSuccess(true);
+          setTimeout(() => onClose(), 2500);
+        } else {
+          const errorMsg = result.message || result.Message || "Login failed. Please check your credentials.";
+          setErrors({ email: errorMsg });
+          setIsLoading(false);
+        }
+      } catch (error: any) {
+        console.error("[Login API Error] Exception occurred:", error);
+        setErrors({ email: "Network error. Unable to reach authentication server." });
+        setIsLoading(false);
+      }
+    } else {
+      // Mock signup success
+      await new Promise((r) => setTimeout(r, 1800));
+      setIsLoading(false);
+      setIsSuccess(true);
+      setTimeout(() => onClose(), 2500);
+    }
   };
 
   return (

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Product } from "../data/products";
+import { Product, products } from "../data/products";
+import { getCaseInsensitiveProperty, normalizeSlug } from "../api/productService";
+import { API_BASE_URL } from "../api/config";
 
 export interface CartItem {
   product: Product;
@@ -16,18 +18,263 @@ interface CartContextType {
   setIsCartOpen: (open: boolean) => void;
   cartCount: number;
   cartSubtotal: number;
-  // New checkout fields
+  // Checkout fields
   checkoutItems: CartItem[];
   prepareCheckout: (items: CartItem[]) => void;
   clearCheckout: () => void;
+  syncCartWithApi: () => Promise<void>;
+  isCartLoading: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
+
+// Helper to resolve API cart item to local CartItem structure
+export function resolveCartItem(apiCartItem: any): CartItem | null {
+  console.log("[resolveCartItem] Raw API Cart Item:", apiCartItem);
+  const productId = getCaseInsensitiveProperty<any>(apiCartItem, "ProductId");
+  const variantId = getCaseInsensitiveProperty<any>(apiCartItem, "VariantId");
+  const quantity = getCaseInsensitiveProperty<number>(apiCartItem, "Quantity") || 1;
+  const productName = getCaseInsensitiveProperty<string>(apiCartItem, "ProductName") || "";
+  const price = getCaseInsensitiveProperty<number>(apiCartItem, "Price") || 0;
+
+  const parsedProductId = (productId && typeof productId !== "object" && !isNaN(Number(productId))) ? Number(productId) : 0;
+  const parsedVariantId = (variantId && typeof variantId !== "object" && !isNaN(Number(variantId)) && Number(variantId) !== 0) ? Number(variantId) : undefined;
+
+  console.log(`[resolveCartItem] Extracted values: ProductId=${parsedProductId}, VariantId=${parsedVariantId}, Quantity=${quantity}, ProductName=${productName}, Price=${price}`);
+
+  if (!parsedProductId) {
+    console.warn("[resolveCartItem] Falsy ProductId, skipping resolution");
+    return null;
+  }
+
+  // Search by exact matches on ID or variants containing variantId
+  let matchedProduct = products.find(p => {
+    if (parsedVariantId && p.variants && p.variants.some(v => Number(v.varientId) === parsedVariantId)) {
+      return true;
+    }
+    return String(p.productId) === String(parsedProductId) || p.id === String(parsedProductId) || normalizeSlug(p.name) === normalizeSlug(productName);
+  });
+
+  if (matchedProduct) {
+    console.log(`[resolveCartItem] Found matched product in static DB: ${matchedProduct.name} (id: ${matchedProduct.id})`);
+    let finalProduct = { ...matchedProduct };
+
+    // If a specific variant was selected, update product name, price, and image to match that variant
+    if (parsedVariantId && finalProduct.variants) {
+      const variant = finalProduct.variants.find(v => Number(v.varientId) === parsedVariantId);
+      if (variant) {
+        console.log(`[resolveCartItem] Resolving variant attributes for variant ID ${parsedVariantId}:`, variant.variantAttributeValues_Only);
+        finalProduct = {
+          ...finalProduct,
+          price: variant.price,
+          name: `${finalProduct.name} (${variant.variantAttributeValues_Only})`
+        };
+      }
+    }
+
+    return {
+      product: {
+        ...finalProduct,
+        id: parsedVariantId ? `${matchedProduct.id}-${parsedVariantId}` : matchedProduct.id,
+        productId: parsedProductId,
+        variantId: parsedVariantId
+      },
+      quantity
+    };
+  }
+
+  // Fallback: If not found in global products list, construct a high-fidelity placeholder product
+  console.log(`[resolveCartItem] Product not found in DB. Creating fallback product for: ${productName} (ProductId: ${parsedProductId})`);
+
+  const imagePathRaw = getCaseInsensitiveProperty<string>(apiCartItem, "ImagePath") || "";
+  const resolvedImg = (() => {
+    if (imagePathRaw && typeof imagePathRaw === "string" && imagePathRaw.trim()) {
+      const pathStr = imagePathRaw.trim();
+      if (pathStr.startsWith("http://") || pathStr.startsWith("https://")) {
+        return pathStr;
+      } else {
+        const cleanPath = pathStr.replace(/\\/g, "/").replace(/^\/+/, "");
+        return `https://localhost:7103/${cleanPath}`;
+      }
+    }
+    return "https://localhost:7103/Uploads/Product/no-image.png";
+  })();
+
+  const fallbackProduct: Product = {
+    id: parsedVariantId ? `${parsedProductId}-${parsedVariantId}` : String(parsedProductId),
+    name: productName,
+    price: price,
+    originalPrice: Math.round(price * 1.8),
+    discount: "45% OFF",
+    tag: "",
+    images: [resolvedImg],
+    category: "mukhwas", // default category
+    tagline: "Indian heritage premium blend",
+    rating: 4.8,
+    ratingCount: 12,
+    desc: productName,
+    longDesc: productName,
+    benefits: ["100% natural, sugar-saccharin free"],
+    ingredients: [],
+    usage: [],
+    highlights: [],
+    reviews: [],
+    faqs: [],
+    productId: parsedProductId,
+    variantId: parsedVariantId
+  };
+
+  return {
+    product: fallbackProduct,
+    quantity
+  };
+}
+
+// Helper to extract customer ID from JWT token payload
+function getCustomerIdFromToken(token: string): string | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      window.atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    const decoded = JSON.parse(jsonPayload);
+    const customerId = decoded.CustomerId || decoded.customerId || decoded.Id || decoded.id || decoded.nameid;
+    console.log("[getCustomerIdFromToken] Decoded JWT CustomerId:", customerId);
+    return customerId ? String(customerId) : null;
+  } catch (e) {
+    console.error("[getCustomerIdFromToken] Failed to decode JWT token:", e);
+    return null;
+  }
+}
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [checkoutItems, setCheckoutItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCartLoading, setIsCartLoading] = useState(false);
+  const isSyncingRef = React.useRef(false);
+
+  // Helper to extract numeric product and variant IDs from a Product object
+  const getProductAndVariantIds = (product: Product): { productId: number; variantId: number } => {
+    let pId = product.productId;
+    let vId = product.variantId;
+
+    if (product.id && product.id.includes("-")) {
+      const parts = product.id.split("-");
+      if (!pId) pId = Number(parts[0]);
+      if (!vId) vId = Number(parts[1]);
+    }
+
+    if (!pId) {
+      pId = Number(product.id) || 0;
+    }
+
+    if (!vId) {
+      if (product.variants && product.variants.length > 0) {
+        vId = Number(product.variants[0].varientId);
+      } else {
+        vId = 0;
+      }
+    }
+
+    return {
+      productId: pId,
+      variantId: vId
+    };
+  };
+
+  // Sync cart with database API
+  const syncCartWithApi = async () => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      console.log("[syncCartWithApi] No auth token found in localStorage. Skipping sync.");
+      return;
+    }
+
+    // Resolve customer ID
+    let customerId = localStorage.getItem("customerId");
+    if (!customerId) {
+      customerId = getCustomerIdFromToken(token);
+      if (customerId) {
+        localStorage.setItem("customerId", customerId);
+      }
+    }
+
+    if (isSyncingRef.current) {
+      console.log("[syncCartWithApi] Cart sync already in progress. Skipping.");
+      return;
+    }
+
+    try {
+      isSyncingRef.current = true;
+      setIsCartLoading(true);
+
+      const url = `${API_BASE_URL}/Customer/GetAll`;
+      const headers = {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      };
+
+      const bodyObj = {
+        "Id": customerId ? Number(customerId) : 0,
+        "Search": ""
+      };
+
+      console.log(`[Cart API Request] POST url: ${url}, body:`, bodyObj);
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(bodyObj)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Customer API returned status ${response.status} (${response.statusText})`);
+      }
+
+      const result = await response.json();
+      console.log("[Cart API Response] Raw customer payload:", result);
+
+      const dataObj = getCaseInsensitiveProperty(result, "data") || result;
+
+      // Find table3 array (cart details)
+      let table3 = getCaseInsensitiveProperty<any[]>(dataObj, "table3");
+      if (!Array.isArray(table3)) {
+        for (const key of Object.keys(dataObj)) {
+          if (Array.isArray(dataObj[key]) && key.toLowerCase().includes("table3")) {
+            table3 = dataObj[key];
+            break;
+          }
+        }
+      }
+
+      console.log("[Cart API Response] Found table3 cart items:", table3);
+
+      const resolvedItems: CartItem[] = [];
+      if (Array.isArray(table3)) {
+        table3.forEach((item: any) => {
+          const resolved = resolveCartItem(item);
+          if (resolved) {
+            resolvedItems.push(resolved);
+          }
+        });
+      }
+
+      console.log("[Cart API Success] Mapped resolved cart items:", resolvedItems);
+      saveCart(resolvedItems);
+    } catch (e) {
+      console.error("[Cart API Error] Failed to sync cart with API:", e);
+    } finally {
+      isSyncingRef.current = false;
+      setIsCartLoading(false);
+    }
+  };
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -48,6 +295,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       console.error("Failed to load checkout from localStorage", e);
     }
+
+    // Trigger initial API cart sync if logged in
+    syncCartWithApi();
   }, []);
 
   // Save to localStorage on any cartItems changes
@@ -78,8 +328,164 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const addToCart = (product: Product, quantity = 1) => {
-    const existingIdx = cartItems.findIndex(item => item.product.id === product.id);
+  // Helper to post a cart mutation to the backend
+  const saveCartItemToApi = async (productId: number, variantId: number, quantityChange: number) => {
+    const token = localStorage.getItem("authToken");
+    const customerId = localStorage.getItem("customerId");
+    if (!token || !customerId) return false;
+
+    if (isSyncingRef.current) {
+      console.log("[saveCartItemToApi] API request already in progress. Ignoring.");
+      return false;
+    }
+
+    try {
+      isSyncingRef.current = true;
+      setIsCartLoading(true);
+      const url = `${API_BASE_URL}/Cart/SaveCart`;
+      const headers = {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      };
+
+      const payload = {
+        "customerId": Number(customerId),
+        "productId": Number(productId),
+        "variantId": Number(variantId),
+        "quantity": Number(quantityChange)
+      };
+
+      console.log("[saveCartItemToApi] Request payload:", payload);
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Cart API returned status ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("[saveCartItemToApi] Response result:", result);
+
+      const dataArray = getCaseInsensitiveProperty(result, "data") || result;
+
+      if (Array.isArray(dataArray)) {
+        console.log("[saveCartItemToApi] API returned updated cart array:", dataArray);
+        const resolvedItems: CartItem[] = [];
+        dataArray.forEach((item: any) => {
+          const resolved = resolveCartItem(item);
+          if (resolved) {
+            resolvedItems.push(resolved);
+          }
+        });
+        saveCart(resolvedItems);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error("[saveCartItemToApi] Failed to post cart mutation:", e);
+      return false;
+    } finally {
+      isSyncingRef.current = false;
+      setIsCartLoading(false);
+    }
+  };
+
+  // Helper to post a cart removal to the backend
+  const removeCartItemFromApi = async (productId: number, variantId: number, quantity: number) => {
+    const token = localStorage.getItem("authToken");
+    const customerId = localStorage.getItem("customerId");
+    if (!token || !customerId) return false;
+
+    if (isSyncingRef.current) {
+      console.log("[removeCartItemFromApi] API request already in progress. Ignoring.");
+      return false;
+    }
+
+    try {
+      isSyncingRef.current = true;
+      setIsCartLoading(true);
+      const url = `${API_BASE_URL}/Cart/RemoveCart`;
+      const headers = {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      };
+
+      const payload = {
+        "customerId": Number(customerId),
+        "productId": Number(productId),
+        "variantId": Number(variantId),
+        "quantity": Number(quantity)
+      };
+
+      console.log("[removeCartItemFromApi] Request payload:", payload);
+
+      const response = await fetch(url, {
+        method: "DELETE",
+        headers: headers,
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Cart API returned status ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("[removeCartItemFromApi] Response result:", result);
+
+      const dataArray = getCaseInsensitiveProperty(result, "data") || result;
+
+      if (Array.isArray(dataArray)) {
+        console.log("[removeCartItemFromApi] API returned updated cart array:", dataArray);
+        const resolvedItems: CartItem[] = [];
+        dataArray.forEach((item: any) => {
+          const resolved = resolveCartItem(item);
+          if (resolved) {
+            resolvedItems.push(resolved);
+          }
+        });
+        saveCart(resolvedItems);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error("[removeCartItemFromApi] Failed to post cart removal:", e);
+      return false;
+    } finally {
+      isSyncingRef.current = false;
+      setIsCartLoading(false);
+    }
+  };
+
+  const addToCart = async (product: Product, quantity = 1) => {
+    if (isCartLoading || isSyncingRef.current) {
+      console.log("[addToCart] Cart is loading/syncing. Ignoring request.");
+      return;
+    }
+
+    const token = localStorage.getItem("authToken");
+    const customerId = localStorage.getItem("customerId");
+
+    // Determine numerical productId and variantId from product
+    const { productId: resolvedProductId, variantId: resolvedVariantId } = getProductAndVariantIds(product);
+
+    if (token && customerId && !isNaN(resolvedProductId)) {
+      console.log(`[addToCart] Logged in. Syncing addition of ${product.name} (qty: ${quantity}) to API...`);
+      const success = await saveCartItemToApi(resolvedProductId, resolvedVariantId, quantity);
+      if (success) {
+        setIsCartOpen(true);
+        return;
+      }
+    }
+
+    // Local fallback
+    const existingIdx = cartItems.findIndex(item =>
+      item.product.id === product.id &&
+      Number(item.product.variantId || 0) === Number(product.variantId || 0)
+    );
     let newItems = [...cartItems];
 
     if (existingIdx > -1) {
@@ -92,17 +498,59 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsCartOpen(true); // Open the drawer as feedback
   };
 
-  const removeFromCart = (productId: string) => {
+  const removeFromCart = async (productId: string) => {
+    if (isCartLoading || isSyncingRef.current) {
+      console.log("[removeFromCart] Cart is loading/syncing. Ignoring request.");
+      return;
+    }
+
+    const item = cartItems.find(item => item.product.id === productId);
+    if (item) {
+      const token = localStorage.getItem("authToken");
+      const customerId = localStorage.getItem("customerId");
+
+      const { productId: resolvedProductId, variantId: resolvedVariantId } = getProductAndVariantIds(item.product);
+
+      if (token && customerId && !isNaN(resolvedProductId)) {
+        console.log(`[removeFromCart] Logged in. Syncing deletion of ${item.product.name} (qty: ${item.quantity}) to API...`);
+        const success = await removeCartItemFromApi(resolvedProductId, resolvedVariantId, item.quantity);
+        if (success) return;
+      }
+    }
+
+    // Local fallback
     const newItems = cartItems.filter(item => item.product.id !== productId);
     saveCart(newItems);
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = async (productId: string, quantity: number) => {
+    if (isCartLoading || isSyncingRef.current) {
+      console.log("[updateQuantity] Cart is loading/syncing. Ignoring request.");
+      return;
+    }
+
     if (quantity <= 0) {
       removeFromCart(productId);
       return;
     }
-    const newItems = cartItems.map(item => 
+
+    const item = cartItems.find(item => item.product.id === productId);
+    if (item) {
+      const token = localStorage.getItem("authToken");
+      const customerId = localStorage.getItem("customerId");
+
+      const { productId: resolvedProductId, variantId: resolvedVariantId } = getProductAndVariantIds(item.product);
+
+      if (token && customerId && !isNaN(resolvedProductId)) {
+        const quantityChange = quantity - item.quantity;
+        console.log(`[updateQuantity] Logged in. Syncing quantity change of ${item.product.name} (${quantityChange}) to API...`);
+        const success = await saveCartItemToApi(resolvedProductId, resolvedVariantId, quantityChange);
+        if (success) return;
+      }
+    }
+
+    // Local fallback
+    const newItems = cartItems.map(item =>
       item.product.id === productId ? { ...item, quantity } : item
     );
     saveCart(newItems);
@@ -115,6 +563,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const cartSubtotal = cartItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
+  const handleSetIsCartOpen = (open: boolean) => {
+    setIsCartOpen(open);
+    if (open) {
+      syncCartWithApi();
+    }
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -124,12 +579,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         updateQuantity,
         clearCart,
         isCartOpen,
-        setIsCartOpen,
+        setIsCartOpen: handleSetIsCartOpen,
         cartCount,
         cartSubtotal,
         checkoutItems,
         prepareCheckout,
-        clearCheckout
+        clearCheckout,
+        syncCartWithApi,
+        isCartLoading
       }}
     >
       {children}

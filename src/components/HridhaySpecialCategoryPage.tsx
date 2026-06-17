@@ -17,6 +17,7 @@ interface HridhaySpecialCardProps {
     benefits: string[];
     tag: string;
     discount: string;
+    variants?: any[];
   };
   index: number;
   cartState: Record<string, boolean>;
@@ -39,6 +40,16 @@ function HridhaySpecialCard({
     offset: ["start end", "end start"]
   });
   const y = useTransform(scrollYProgress, [0, 1], [40, -40]);
+
+  const renderPrice = () => {
+    if (product.variants && product.variants.length > 1) {
+      const prices = product.variants.map(v => v.price);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      return `₹${minPrice} - ₹${maxPrice}`;
+    }
+    return `₹${product.price}`;
+  };
 
   return (
     <motion.div
@@ -118,7 +129,7 @@ function HridhaySpecialCard({
             {product.name}
           </h3>
           <div className="flex items-center gap-2 font-serif text-lg">
-            <span className="text-[var(--color-primary)] font-semibold">₹{product.price}</span>
+            <span className="text-[var(--color-primary)] font-semibold">{renderPrice()}</span>
             <span className="text-xs text-[var(--color-dark-text)]/40 line-through">₹{product.originalPrice}</span>
           </div>
         </div>
@@ -140,19 +151,26 @@ function HridhaySpecialCard({
 
     </motion.div>
   );
-}
-
-export function HridhaySpecialCategoryPage() {
+}export function HridhaySpecialCategoryPage() {
   const pageRef = useRef<HTMLDivElement>(null);
+  const [specialsList, setSpecialsList] = useState<any[]>([]);
 
   // Scroll to top and set page title on mount
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
     document.title = "Hridhay Special Reserve Skincare | Hridhay Connect";
-  }, []);
 
-  // Filter only Hridhay Special products from database
-  const specials = products.filter(p => p.category === 'hridhay-special');
+    // Enrich with variants if present in global products list
+    const filtered = products.filter(p => p.category === 'hridhay-special');
+    const enriched = filtered.map(spec => {
+      const matchingProduct = products.find(p => p.id === spec.id || p.id.replace(/-100|-200/g, "") === spec.id.replace(/-100|-200/g, ""));
+      return {
+        ...spec,
+        variants: matchingProduct?.variants || spec.variants
+      };
+    });
+    setSpecialsList(enriched);
+  }, []);
 
   // Ingredients Data
   const keyIngredients = [
@@ -168,7 +186,7 @@ export function HridhaySpecialCategoryPage() {
       source: "Northern Territory Cooperatives",
       benefit: "Vitamin C Brightening",
       desc: "The world's richest natural source of active Vitamin C, boosting natural collagen synthesis and clearing pigmentation.",
-      img: "https://images.unsplash.com/photo-1629198728070-7815cf1be5e8?q=80&w=400&auto=format&fit=crop"
+      img: "https://images.unsplash.com/photo-1629198728070-7815cf1be5e8?q=400&auto=format&fit=crop"
     },
     {
       name: "Organic Chamomile Blossom",
@@ -253,13 +271,13 @@ export function HridhaySpecialCategoryPage() {
             </h2>
           </div>
           <span className="text-xs font-medium tracking-widest uppercase text-[var(--color-dark-text)]/50 mt-4 md:mt-0 font-general">
-            Showing {specials.length} Reserve Blends
+            Showing {specialsList.length} Reserve Blends
           </span>
         </div>
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-14">
-          {specials.map((product, index) => (
+          {specialsList.map((product, index) => (
             <HridhaySpecialCard
               key={product.id}
               product={product}

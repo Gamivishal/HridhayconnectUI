@@ -2,8 +2,9 @@ import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
 import { useRef, useEffect, useState } from "react";
 import { Award, Heart, Leaf, Star, Sparkle, Plus, ChevronDown, Check, Info } from "lucide-react";
 import { useCart } from "../context/CartContext";
-import { products } from "../data/products";
+import { products, syncProducts } from "../data/products";
 import { InnerPageBanner } from "./InnerPageBanner";
+import { getCaseInsensitiveProperty, getApiProducts } from "../api/productService";
 
 interface SoapCardProps {
   key?: any;
@@ -18,6 +19,7 @@ interface SoapCardProps {
     tag: string;
     ingredient: string;
     discount: string;
+    variants?: any[];
   };
   index: number;
   cartState: Record<string, boolean>;
@@ -40,6 +42,16 @@ function SoapCard({
     offset: ["start end", "end start"]
   });
   const y = useTransform(scrollYProgress, [0, 1], [40, -40]);
+
+  const renderPrice = () => {
+    if (soap.variants && soap.variants.length > 1) {
+      const prices = soap.variants.map(v => v.price);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      return `₹${minPrice} - ₹${maxPrice}`;
+    }
+    return `₹${soap.price}`;
+  };
 
   return (
     <motion.div
@@ -119,7 +131,7 @@ function SoapCard({
             {soap.name}
           </h3>
           <div className="flex items-center gap-2 font-serif text-lg">
-            <span className="text-[var(--color-primary)] font-semibold">₹{soap.price}</span>
+            <span className="text-[var(--color-primary)] font-semibold">{renderPrice()}</span>
             <span className="text-xs text-[var(--color-dark-text)]/40 line-through">₹{soap.originalPrice}</span>
           </div>
         </div>
@@ -143,8 +155,73 @@ function SoapCard({
   );
 }
 
+const staticSoaps = [
+  {
+    id: "beet-radiance",
+    name: "Beet Radiance Soap",
+    price: 85,
+    originalPrice: 160,
+    img: "https://images.unsplash.com/photo-1607006342411-92f1f5449174?q=80&w=800&auto=format&fit=crop",
+    desc: "Cold-pressed beetroot extracts blended with nourishing botanical oils for an organic, radiant glow.",
+    benefits: ["Deeply nourishes & brightens skin", "Antioxidant-rich to even out skin tone", "Keeps skin soft, plump & hydrated"],
+    tag: "Best Seller",
+    ingredient: "Organic Beetroot Extract",
+    discount: "47% OFF"
+  },
+  {
+    id: "kesudo-radiance",
+    name: "Kesudo Radiance Soap",
+    price: 70,
+    originalPrice: 130,
+    img: "https://images.unsplash.com/photo-1546554137-f86b9593a222?q=80&w=800&auto=format&fit=crop",
+    desc: "Infused with premium Kesudo (Saffron flower) nectars, honoring traditional Ayurvedic skin rejuvenation.",
+    benefits: ["Enhances natural skin complexion", "Soothes and smooths skin texture", "Protects with bio-active antioxidants"],
+    tag: "Ayurvedic Heritage",
+    ingredient: "Flame of the Forest (Kesudo)",
+    discount: "46% OFF"
+  },
+  {
+    id: "neem-aloe-fresh",
+    name: "Neem Aloe Fresh Soap",
+    price: 70,
+    originalPrice: 130,
+    img: "https://images.unsplash.com/photo-1607006482945-aa1a1827402c?q=80&w=800&auto=format&fit=crop",
+    desc: "A purifying, anti-bacterial blend of wild-harvested neem leaf essence and freshly extracted organic aloe vera.",
+    benefits: ["Deep pore detoxification & cleansing", "Soothes acne, irritation & dry patches", "Regulates sebum without drying skin"],
+    tag: "Deep Purifying",
+    ingredient: "Wild Neem & Aloe Vera",
+    discount: "46% OFF"
+  },
+  {
+    id: "glow-craft-detan",
+    name: "Glow Craft Detan Soap",
+    price: 90,
+    originalPrice: 190,
+    img: "https://images.unsplash.com/photo-1605264964528-06403738d6df?q=80&w=800&auto=format&fit=crop",
+    desc: "Dermatologically audited detanning soap formulated to pull out sun damage and restore your skin's natural tone.",
+    benefits: ["Gently exfoliates sun-damaged layers", "Reverses tan lines & pollution buildup", "Cooling botanical relief post-sun"],
+    tag: "Skin Restorative",
+    ingredient: "Detanning Botanical Actives",
+    discount: "52% OFF"
+  },
+  {
+    id: "rice-potato-bliss",
+    name: "Rice & Potato Bliss Soap",
+    price: 90,
+    originalPrice: 190,
+    img: "https://images.unsplash.com/photo-1607006483224-b1523f2ec8c9?q=80&w=800&auto=format&fit=crop",
+    desc: "Rich starch cream from organic rice water and active potato enzymes for fading spots and smoothing textures.",
+    benefits: ["Fades dark spots & hyperpigmentation", "Aids micro-exfoliation for smooth texture", "Provides a creamy, hydrating lather"],
+    tag: "Pigmentation Correcting",
+    ingredient: "Rice Starch & Potato Enzymes",
+    discount: "52% OFF"
+  }
+];
+
 export function SoapCategoryPage() {
   const pageRef = useRef<HTMLDivElement>(null);
+  const [soaps, setSoaps] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Scroll to top and set page title on mount
   useEffect(() => {
@@ -152,69 +229,132 @@ export function SoapCategoryPage() {
     document.title = "Handcrafted Home Made Soaps | Hridhay Connect";
   }, []);
 
-  // Products Data
-  const soaps = [
-    {
-      id: "beet-radiance",
-      name: "Beet Radiance Soap",
-      price: 85,
-      originalPrice: 160,
-      img: "https://images.unsplash.com/photo-1607006342411-92f1f5449174?q=80&w=800&auto=format&fit=crop",
-      desc: "Cold-pressed beetroot extracts blended with nourishing botanical oils for an organic, radiant glow.",
-      benefits: ["Deeply nourishes & brightens skin", "Antioxidant-rich to even out skin tone", "Keeps skin soft, plump & hydrated"],
-      tag: "Best Seller",
-      ingredient: "Organic Beetroot Extract",
-      discount: "47% OFF"
-    },
-    {
-      id: "kesudo-radiance",
-      name: "Kesudo Radiance Soap",
-      price: 70,
-      originalPrice: 130,
-      img: "https://images.unsplash.com/photo-1546554137-f86b9593a222?q=80&w=800&auto=format&fit=crop",
-      desc: "Infused with premium Kesudo (Saffron flower) nectars, honoring traditional Ayurvedic skin rejuvenation.",
-      benefits: ["Enhances natural skin complexion", "Soothes and smooths skin texture", "Protects with bio-active antioxidants"],
-      tag: "Ayurvedic Heritage",
-      ingredient: "Flame of the Forest (Kesudo)",
-      discount: "46% OFF"
-    },
-    {
-      id: "neem-aloe-fresh",
-      name: "Neem Aloe Fresh Soap",
-      price: 70,
-      originalPrice: 130,
-      img: "https://images.unsplash.com/photo-1607006482945-aa1a1827402c?q=80&w=800&auto=format&fit=crop",
-      desc: "A purifying, anti-bacterial blend of wild-harvested neem leaf essence and freshly extracted organic aloe vera.",
-      benefits: ["Deep pore detoxification & cleansing", "Soothes acne, irritation & dry patches", "Regulates sebum without drying skin"],
-      tag: "Deep Purifying",
-      ingredient: "Wild Neem & Aloe Vera",
-      discount: "46% OFF"
-    },
-    {
-      id: "glow-craft-detan",
-      name: "Glow Craft Detan Soap",
-      price: 90,
-      originalPrice: 190,
-      img: "https://images.unsplash.com/photo-1605264964528-06403738d6df?q=80&w=800&auto=format&fit=crop",
-      desc: "Dermatologically audited detanning soap formulated to pull out sun damage and restore your skin's natural tone.",
-      benefits: ["Gently exfoliates sun-damaged layers", "Reverses tan lines & pollution buildup", "Cooling botanical relief post-sun"],
-      tag: "Skin Restorative",
-      ingredient: "Detanning Botanical Actives",
-      discount: "52% OFF"
-    },
-    {
-      id: "rice-potato-bliss",
-      name: "Rice & Potato Bliss Soap",
-      price: 90,
-      originalPrice: 190,
-      img: "https://images.unsplash.com/photo-1607006483224-b1523f2ec8c9?q=80&w=800&auto=format&fit=crop",
-      desc: "Rich starch cream from organic rice water and active potato enzymes for fading spots and smoothing textures.",
-      benefits: ["Fades dark spots & hyperpigmentation", "Aids micro-exfoliation for smooth texture", "Provides a creamy, hydrating lather"],
-      tag: "Pigmentation Correcting",
-      ingredient: "Rice Starch & Potato Enzymes",
-      discount: "52% OFF"
+  // Fetch soaps from live API
+  useEffect(() => {
+    let isMounted = true;
+    async function loadProducts() {
+      try {
+        setIsLoading(true);
+        const url = "https://localhost:7103/api/Product/GetAll";
+        const body = {
+          id: -2,
+          categoryId: 15,
+          search: ""
+        };
+
+        console.log("[SoapPage API Request] Sending payload to:", url, body);
+
+        const token = localStorage.getItem("authToken");
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: headers,
+          body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status} (${response.statusText})`);
+        }
+
+        const result = await response.json();
+        console.log("[SoapPage API Response] Raw JSON Response:", result);
+
+        const apiProducts = getApiProducts(result);
+
+        // Match and overwrite only image, price, and description for the static soaps
+        const updatedSoaps = staticSoaps.map(staticSoap => {
+          // Find matching API product by name or SKU
+          const match = apiProducts.find((apiProd: any) => {
+            const prodName = getCaseInsensitiveProperty<string>(apiProd, "ProductName") || "";
+            const prodSku = getCaseInsensitiveProperty<string>(apiProd, "SKU") || "";
+
+            if (!prodName && !prodSku) return false;
+
+            const staticNormalized = staticSoap.name.toLowerCase().replace(/soap/g, "").replace(/[^a-z0-9]/g, "").trim();
+            const apiNormalizedName = prodName.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+            const apiNormalizedSku = prodSku.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+            
+            return (
+              (apiNormalizedName && (staticNormalized.includes(apiNormalizedName) || apiNormalizedName.includes(staticNormalized))) ||
+              (apiNormalizedSku && (staticNormalized.includes(apiNormalizedSku) || apiNormalizedSku.includes(staticNormalized)))
+            );
+          });
+
+          if (match) {
+            console.log(`[SoapPage Matching] Matched static soap "${staticSoap.name}" with API product:`, match);
+            
+            // Resolve image path
+            let resolvedImg = "https://localhost:7103/Uploads/Product/no-image.png";
+            const imagePathRaw = getCaseInsensitiveProperty<string>(match, "ImagePath");
+            if (imagePathRaw && typeof imagePathRaw === "string" && imagePathRaw.trim()) {
+              const pathStr = imagePathRaw.trim();
+              if (pathStr.startsWith("http://") || pathStr.startsWith("https://")) {
+                resolvedImg = pathStr;
+              } else {
+                // Normalize leading slashes
+                const cleanPath = pathStr.replace(/\\/g, "/").replace(/^\/+/, "");
+                resolvedImg = `https://localhost:7103/${cleanPath}`;
+              }
+            }
+
+            const matchProductId = getCaseInsensitiveProperty<number>(match, "ProductId");
+            const matchVariantId = getCaseInsensitiveProperty<number>(match, "VarientId");
+            const matchPrice = getCaseInsensitiveProperty<number>(match, "Price") || staticSoap.price;
+            const matchDesc = getCaseInsensitiveProperty<string>(match, "ProductDescription") || staticSoap.desc;
+
+            const matchingProduct = products.find(p => p.id === staticSoap.id);
+            return {
+              ...staticSoap,
+              price: matchPrice,
+              desc: matchDesc,
+              img: resolvedImg,
+              productId: matchProductId ? Number(matchProductId) : undefined,
+              variantId: matchVariantId ? Number(matchVariantId) : undefined,
+              variants: matchingProduct?.variants || staticSoap.variants
+            };
+          } else {
+            console.log(`[SoapPage Matching] No API match found for static soap "${staticSoap.name}". Using static data.`);
+            return staticSoap;
+          }
+        });
+
+        if (isMounted) {
+          setSoaps(updatedSoaps);
+          
+          // Sync updated soaps back into the global products database
+          const syncableProducts = updatedSoaps.map(s => {
+            const originalProduct = products.find(p => p.id === s.id);
+            return {
+              ...(originalProduct || {}),
+              id: s.id,
+              name: s.name,
+              price: s.price,
+              desc: s.desc,
+              images: [s.img, ...(originalProduct?.images?.slice(1) || [])],
+              productId: s.productId,
+              variantId: s.variantId
+            } as any;
+          });
+          syncProducts(syncableProducts);
+        }
+      } catch (error) {
+        console.error("[SoapPage API Error] Failed to load soaps from API:", error);
+        if (isMounted) {
+          setSoaps(staticSoaps);
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
     }
-  ];
+    loadProducts();
+    return () => { isMounted = false; };
+  }, []);
 
   // Ingredients Data
   const keyIngredients = [
@@ -320,19 +460,26 @@ export function SoapCategoryPage() {
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-14">
-          {soaps.map((soap, index) => (
-            <SoapCard
-              key={soap.id}
-              soap={soap}
-              index={index}
-              cartState={cartState}
-              wishlistState={wishlistState}
-              handleAddToCart={handleAddToCart}
-              toggleWishlist={toggleWishlist}
-            />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-32 text-[var(--color-primary)]">
+            <Sparkle className="w-10 h-10 animate-spin mb-4" />
+            <span className="text-xs uppercase tracking-[0.2em] font-medium font-general">Retrieving apothecary items...</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-14">
+            {soaps.map((soap, index) => (
+              <SoapCard
+                key={soap.id}
+                soap={soap}
+                index={index}
+                cartState={cartState}
+                wishlistState={wishlistState}
+                handleAddToCart={handleAddToCart}
+                toggleWishlist={toggleWishlist}
+              />
+            ))}
+          </div>
+        )}
 
       </section>
 

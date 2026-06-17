@@ -19,6 +19,16 @@ export interface ProductFAQ {
   a: string;
 }
 
+export interface ProductVariant {
+  varientId: number;
+  variantAttributeValues_Only: string;
+  variantAttributes: string;
+  sku: string;
+  price: number;
+  imagePath: string;
+  totalAvailableStock: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -39,7 +49,12 @@ export interface Product {
   highlights: string[];
   reviews: ProductReview[];
   faqs: ProductFAQ[];
+  variants?: ProductVariant[];
+  totalAvailableStock?: number;
+  productId?: number;
+  variantId?: number;
 }
+
 
 export const products: Product[] = [
   // 1. Soaps
@@ -1027,3 +1042,28 @@ export const products: Product[] = [
     ]
   }
 ];
+
+// Function to update the in-memory products array with live API data
+export function syncProducts(fetchedProducts: Product[]) {
+  fetchedProducts.forEach(fetched => {
+    const existingIdx = products.findIndex(p => p.id === fetched.id);
+    if (existingIdx !== -1) {
+      // Mutate in-place to preserve references across files
+      products[existingIdx] = {
+        ...products[existingIdx],
+        ...fetched,
+        // Preserve any sub-arrays/objects if API didn't return them
+        images: fetched.images && fetched.images.length > 0 ? fetched.images : products[existingIdx].images,
+        benefits: fetched.benefits && fetched.benefits.length > 0 ? fetched.benefits : products[existingIdx].benefits,
+        ingredients: fetched.ingredients && fetched.ingredients.length > 0 ? fetched.ingredients : products[existingIdx].ingredients,
+        usage: fetched.usage && fetched.usage.length > 0 ? fetched.usage : products[existingIdx].usage,
+        highlights: fetched.highlights && fetched.highlights.length > 0 ? fetched.highlights : products[existingIdx].highlights,
+        reviews: fetched.reviews && fetched.reviews.length > 0 ? fetched.reviews : products[existingIdx].reviews,
+        faqs: fetched.faqs && fetched.faqs.length > 0 ? fetched.faqs : products[existingIdx].faqs,
+      };
+    } else {
+      // Add new product from API
+      products.push(fetched);
+    }
+  });
+}

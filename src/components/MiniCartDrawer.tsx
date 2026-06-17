@@ -11,7 +11,8 @@ export function MiniCartDrawer() {
     updateQuantity, 
     removeFromCart, 
     cartSubtotal,
-    cartCount
+    cartCount,
+    isCartLoading
   } = useCart();
 
   const [isMobile, setIsMobile] = React.useState(false);
@@ -126,7 +127,8 @@ export function MiniCartDrawer() {
                           </h4>
                           <button 
                             onClick={() => removeFromCart(item.product.id)}
-                            className="text-[var(--color-dark-text)]/35 hover:text-red-500 transition-colors p-0.5 rounded cursor-pointer"
+                            disabled={isCartLoading}
+                            className={`text-[var(--color-dark-text)]/35 hover:text-red-500 transition-colors p-0.5 rounded ${isCartLoading ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                             aria-label="Remove item"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -142,7 +144,8 @@ export function MiniCartDrawer() {
                         <div className="flex items-center bg-black/5 rounded-full p-1 scale-90 origin-left">
                           <button 
                             onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                            className="w-5 h-5 rounded-full flex items-center justify-center hover:bg-black/5 transition-all cursor-pointer"
+                            disabled={isCartLoading || item.quantity <= 1}
+                            className={`w-5 h-5 rounded-full flex items-center justify-center hover:bg-black/5 transition-all ${(isCartLoading || item.quantity <= 1) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                           >
                             <Minus className="w-2 h-2 text-[var(--color-dark-text)]" />
                           </button>
@@ -151,7 +154,8 @@ export function MiniCartDrawer() {
                           </span>
                           <button 
                             onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                            className="w-5 h-5 rounded-full flex items-center justify-center hover:bg-black/5 transition-all cursor-pointer"
+                            disabled={isCartLoading}
+                            className={`w-5 h-5 rounded-full flex items-center justify-center hover:bg-black/5 transition-all ${isCartLoading ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                           >
                             <Plus className="w-2 h-2 text-[var(--color-dark-text)]" />
                           </button>

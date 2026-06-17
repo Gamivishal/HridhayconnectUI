@@ -5,8 +5,9 @@ import {
   ChevronDown, Check, Share2, ShoppingBag, ShieldCheck,
   RotateCcw, Truck, Maximize2, Sparkle, Award, Eye
 } from "lucide-react";
-import { products, Product } from "../data/products";
+import { products, Product, syncProducts } from "../data/products";
 import { useCart } from "../context/CartContext";
+import { fetchProductsFromApi } from "../api/productService";
 
 interface ProductPageProps {
   productId: string;
@@ -14,10 +15,16 @@ interface ProductPageProps {
 }
 
 export function ProductPage({ productId, onBack }: ProductPageProps) {
-  const currentProduct = products.find(p => p.id === productId) || products[0];
+  const [currentProduct, setCurrentProduct] = useState<Product>(() => {
+    return products.find(p => p.id === productId) || products[0];
+  });
 
   const { addToCart, prepareCheckout } = useCart();
 
+  const [isPageLoading, setIsPageLoading] = useState(() => {
+    return !products.some(p => p.id === productId);
+  });
+  const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [zoomStyle, setZoomStyle] = useState({ transformOrigin: "center center", display: "none" });
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -29,6 +36,74 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
   const [showStickyBar, setShowStickyBar] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
+  const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({});
+
+  // Helper to parse "Weight : 200, Packaging : Pouch" into { Weight: "200", Packaging: "Pouch" }
+  const parseAttributes = (attrStr: string): Record<string, string> => {
+    const result: Record<string, string> = {};
+    if (!attrStr) return result;
+    attrStr.split(",").forEach(part => {
+      const colonIdx = part.indexOf(":");
+      if (colonIdx !== -1) {
+        const key = part.substring(0, colonIdx).trim();
+        const value = part.substring(colonIdx + 1).trim();
+        if (key && value) {
+          result[key] = value;
+        }
+      }
+    });
+    return result;
+  };
+
+  // Sync selected attributes state whenever selectedVariant changes
+  useEffect(() => {
+    if (selectedVariant) {
+      setSelectedAttrs(parseAttributes(selectedVariant.variantAttributes));
+    }
+  }, [selectedVariant]);
+
+  const handleAttrSelect = (name: string, value: string) => {
+    const newAttrs = { ...selectedAttrs, [name]: value };
+    setSelectedAttrs(newAttrs);
+
+    // Find the variant that matches this new combination of attributes
+    const matchingVariant = (currentProduct.variants || []).find(v => {
+      const vAttrs = parseAttributes(v.variantAttributes);
+      return Object.keys(newAttrs).every(k => vAttrs[k] === newAttrs[k]);
+    });
+
+    if (matchingVariant) {
+      setSelectedVariant(matchingVariant);
+    } else {
+      // Fallback: select a variant that matches the clicked value, and as many other attributes as possible
+      const alternatives = (currentProduct.variants || []).filter(v => {
+        const vAttrs = parseAttributes(v.variantAttributes);
+        return vAttrs[name] === value;
+      });
+
+      if (alternatives.length > 0) {
+        let bestMatch = alternatives[0];
+        let maxOverlap = -1;
+
+        alternatives.forEach(alt => {
+          const altAttrs = parseAttributes(alt.variantAttributes);
+          let overlap = 0;
+          Object.keys(newAttrs).forEach(k => {
+            if (k !== name && altAttrs[k] === newAttrs[k]) {
+              overlap++;
+            }
+          });
+          if (overlap > maxOverlap) {
+            maxOverlap = overlap;
+            bestMatch = alt;
+          }
+        });
+
+        setSelectedVariant(bestMatch);
+      }
+    }
+  };
+
   const heroSectionRef = useRef<HTMLDivElement>(null);
 
   // Scroll triggers for sticky bar
@@ -36,7 +111,6 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
     const handleScroll = () => {
       if (heroSectionRef.current) {
         const heroBottom = heroSectionRef.current.getBoundingClientRect().bottom;
-        // Show sticky bar when the main purchase details are scrolled out of view
         setShowStickyBar(heroBottom < 100);
       }
     };
@@ -44,15 +118,85 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Reset states when product changes
+  // Reset states and fetch latest details when product changes
   useEffect(() => {
-    setActiveImageIdx(0);
-    setQuantity(1);
-    setActiveTab('desc');
-    setOpenFaqIdx(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    document.title = `${currentProduct.name} | Hridhay Connect`;
-  }, [productId, currentProduct]);
+    const local = products.find(p => p.id === productId);
+    let isMounted = true;
+
+    if (!local) {
+      setIsPageLoading(true);
+      async function fetchAndFind() {
+        try {
+          // Fetch both soaps (15) and mukhwas (17) in parallel to locate this dynamic product
+          const [soaps, mukhwas] = await Promise.all([
+            fetchProductsFromApi(15),
+            fetchProductsFromApi(17)
+          ]);
+          if (isMounted) {
+            if (soaps.length > 0) syncProducts(soaps);
+            if (mukhwas.length > 0) syncProducts(mukhwas);
+            const found = products.find(p => p.id === productId);
+            if (found) {
+              setCurrentProduct({ ...found });
+              setSelectedVariant(found.variants && found.variants.length > 0 ? found.variants[0] : null);
+              document.title = `${found.name} | Hridhay Connect`;
+              setIsPageLoading(false);
+            } else {
+              setCurrentProduct(products[0]);
+              setIsPageLoading(false);
+            }
+          }
+        } catch (error) {
+          console.error("Failed to fetch and find dynamic product:", error);
+          if (isMounted) {
+            setCurrentProduct(products[0]);
+            setIsPageLoading(false);
+          }
+        }
+      }
+      fetchAndFind();
+    } else {
+      setIsPageLoading(false);
+      setCurrentProduct(local);
+      setSelectedVariant(local.variants && local.variants.length > 0 ? local.variants[0] : null);
+      setActiveImageIdx(0);
+      setQuantity(1);
+      setActiveTab('desc');
+      setOpenFaqIdx(null);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      document.title = `${local.name} | Hridhay Connect`;
+
+      const categoryMap: Record<string, number> = {
+        'soap': 15,
+        'mukhwas': 17
+      };
+      const catId = categoryMap[local.category];
+      if (catId === 15 || catId === 17) {
+        async function syncLatest() {
+          try {
+            const fetched = await fetchProductsFromApi(catId);
+            if (fetched && fetched.length > 0 && isMounted) {
+              syncProducts(fetched);
+              const updated = products.find(p => p.id === productId) || products[0];
+              setCurrentProduct({ ...updated });
+              document.title = `${updated.name} | Hridhay Connect`;
+              if (updated.variants && updated.variants.length > 0) {
+                setSelectedVariant(prev => {
+                  const stillExists = updated.variants?.find(v => v.varientId === prev?.varientId);
+                  return stillExists || updated.variants?.[0] || null;
+                });
+              }
+            }
+          } catch (error) {
+            console.error("Failed to sync latest product info:", error);
+          }
+        }
+        syncLatest();
+      }
+    }
+
+    return () => { isMounted = false; };
+  }, [productId]);
 
   // Image Zoom on Hover
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -69,14 +213,32 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
     setZoomStyle(prev => ({ ...prev, display: "none" }));
   };
 
+  const handleVariantSelect = (variant: any) => {
+    setSelectedVariant(variant);
+  };
+
   const handleAddToCart = () => {
-    addToCart(currentProduct, quantity);
+    const productToAdd = selectedVariant ? {
+      ...currentProduct,
+      price: selectedVariant.price,
+      name: `${currentProduct.name} (${selectedVariant.variantAttributeValues_Only})`,
+      variantId: selectedVariant.varientId
+    } : currentProduct;
+
+    addToCart(productToAdd, quantity);
     setCartAdded(true);
     setTimeout(() => setCartAdded(false), 2000);
   };
 
   const handleBuyNow = () => {
-    prepareCheckout([{ product: currentProduct, quantity }]);
+    const productToAdd = selectedVariant ? {
+      ...currentProduct,
+      price: selectedVariant.price,
+      name: `${currentProduct.name} (${selectedVariant.variantAttributeValues_Only})`,
+      variantId: selectedVariant.varientId
+    } : currentProduct;
+
+    prepareCheckout([{ product: productToAdd, quantity }]);
     window.location.hash = "#checkout";
   };
 
@@ -90,6 +252,15 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
   const relatedProducts = products
     .filter(p => p.category === currentProduct.category && p.id !== currentProduct.id)
     .slice(0, 3);
+
+  if (isPageLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[75vh] bg-[var(--color-cream)] text-[var(--color-primary)]">
+        <Sparkle className="w-12 h-12 animate-spin mb-4 text-[var(--color-primary)]" />
+        <span className="text-sm uppercase tracking-[0.2em] font-medium font-general">Loading product details...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full bg-[var(--color-cream)] text-[var(--color-dark-text)] overflow-hidden font-sans pt-[90px]">
@@ -128,7 +299,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
           <div className="w-full lg:col-span-7 flex flex-col lg:grid lg:grid-cols-12 gap-4">
 
             {/* Main Interactive Zoom Box */}
-            <div className="w-full lg:col-span-10 order-1 lg:order-2 relative aspect-[4/5] bg-[var(--color-beige)]/30 rounded-[2.5rem] overflow-hidden border border-white/50 shadow-md group">
+            <div className={`w-full ${currentProduct.images.length > 1 ? 'lg:col-span-10' : 'lg:col-span-12'} order-1 lg:order-2 relative aspect-[4/5] bg-[var(--color-beige)]/30 rounded-[2.5rem] overflow-hidden border border-white/50 shadow-md group`}>
 
               <div
                 className="w-full h-full overflow-hidden cursor-zoom-in relative"
@@ -170,17 +341,19 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
             </div>
 
             {/* Horizontal or Vertical Thumbnails */}
-            <div className="w-full lg:col-span-2 order-2 lg:order-1 flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-none">
-              {currentProduct.images.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveImageIdx(idx)}
-                  className={`w-16 h-16 sm:w-20 sm:h-20 lg:w-full lg:h-auto lg:aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300 flex-shrink-0 ${activeImageIdx === idx ? 'border-[var(--color-primary)] scale-[1.02] shadow-sm' : 'border-black/5 hover:border-black/20 opacity-80 hover:opacity-100'}`}
-                >
-                  <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
+            {currentProduct.images.length > 1 && (
+              <div className="w-full lg:col-span-2 order-2 lg:order-1 flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-none">
+                {currentProduct.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImageIdx(idx)}
+                    className={`w-16 h-16 sm:w-20 sm:h-20 lg:w-full lg:h-auto lg:aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300 flex-shrink-0 ${activeImageIdx === idx ? 'border-[var(--color-primary)] scale-[1.02] shadow-sm' : 'border-black/5 hover:border-black/20 opacity-80 hover:opacity-100'}`}
+                  >
+                    <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right Column: Product Detail CTAs */}
@@ -218,10 +391,14 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
 
             {/* Pricing Section */}
             <div className="flex items-baseline gap-4 mb-8 bg-gradient-to-r from-[var(--color-primary)]/5 via-transparent to-transparent p-4 rounded-2xl border-l-2 border-[var(--color-primary)]/30">
-              <span className="text-3xl font-serif font-bold text-[var(--color-primary)]">₹{currentProduct.price}</span>
+              <span className="text-3xl font-serif font-bold text-[var(--color-primary)]">
+                ₹{selectedVariant ? selectedVariant.price : currentProduct.price}
+              </span>
               <span className="text-sm text-[var(--color-dark-text)]/40 line-through">₹{currentProduct.originalPrice}</span>
               <span className="bg-[var(--color-primary)] text-white text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider">
-                {currentProduct.discount}
+                {selectedVariant 
+                  ? `${Math.round((1 - selectedVariant.price / currentProduct.originalPrice) * 100)}% OFF` 
+                  : currentProduct.discount}
               </span>
             </div>
 
@@ -229,6 +406,111 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
             <p className="text-sm sm:text-base text-[var(--color-dark-text)]/75 font-light font-satoshi leading-relaxed mb-8 break-words">
               {currentProduct.longDesc}
             </p>
+
+            {/* Variant Selector Pills */}
+            {currentProduct.variants && currentProduct.variants.length > 1 && (() => {
+              const variants = currentProduct.variants || [];
+              const hasParsedAttrs = variants.some(v => v.variantAttributes && v.variantAttributes.includes(":"));
+
+              if (hasParsedAttrs) {
+                // Parse all variants
+                const parsedVariants = variants.map(v => ({
+                  variant: v,
+                  attrs: parseAttributes(v.variantAttributes)
+                }));
+
+                // Find all unique attribute keys (e.g., ["Weight", "Packaging"])
+                const attributeKeys = Array.from(
+                  new Set(parsedVariants.flatMap(pv => Object.keys(pv.attrs)))
+                );
+
+                // Map each key to its unique values across all variants
+                const attributeMap: Record<string, string[]> = {};
+                attributeKeys.forEach(key => {
+                  attributeMap[key] = Array.from(
+                    new Set(parsedVariants.map(pv => pv.attrs[key]).filter(Boolean))
+                  );
+                });
+
+                return (
+                  <div className="mb-8 space-y-6">
+                    {attributeKeys.map((key) => {
+                      const currentSelectedValue = selectedAttrs[key];
+                      const values = attributeMap[key] || [];
+                      return (
+                        <div key={key} className="flex flex-col">
+                          <span className="text-[11px] uppercase tracking-[0.2em] text-[var(--color-dark-text)]/50 font-semibold block mb-2.5 font-general">
+                            Select {key}
+                          </span>
+                          <div className="flex flex-wrap gap-2.5">
+                            {values.map((val) => {
+                              const isSelected = currentSelectedValue === val;
+                              return (
+                                <button
+                                  key={val}
+                                  onClick={() => handleAttrSelect(key, val)}
+                                  className={`px-5 py-2.5 text-xs font-semibold rounded-full border transition-all duration-300 cursor-pointer ${
+                                    isSelected
+                                      ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-md shadow-[var(--color-primary)]/10"
+                                      : "bg-white/80 text-[var(--color-dark-text)]/80 border-black/10 hover:border-black/30 hover:bg-white"
+                                  }`}
+                                >
+                                  {val}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              }
+
+              // Fallback to original variant selector
+              return (
+                <div className="mb-8">
+                  <span className="text-[11px] uppercase tracking-[0.2em] text-[var(--color-dark-text)]/50 font-semibold block mb-3 font-general">
+                    Select Option
+                  </span>
+                  <div className="flex flex-wrap gap-2.5">
+                    {variants.map((v) => {
+                      const isSelected = selectedVariant?.varientId === v.varientId;
+                      return (
+                        <button
+                          key={v.varientId}
+                          onClick={() => handleVariantSelect(v)}
+                          className={`px-5 py-2.5 text-xs font-semibold rounded-full border transition-all duration-300 cursor-pointer ${
+                            isSelected 
+                              ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-md shadow-[var(--color-primary)]/10" 
+                              : "bg-white/80 text-[var(--color-dark-text)]/80 border-black/10 hover:border-black/30 hover:bg-white"
+                          }`}
+                        >
+                          {v.variantAttributeValues_Only || `Variant ${v.varientId}`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Stock status indicator */}
+            {((selectedVariant ? selectedVariant.totalAvailableStock : currentProduct.totalAvailableStock) !== undefined) && (
+              <div className="mb-8">
+                {(selectedVariant ? selectedVariant.totalAvailableStock : currentProduct.totalAvailableStock) < 10 ? (
+                  <div className="inline-flex items-center gap-1.5 text-red-600 font-semibold text-xs uppercase tracking-wider bg-red-50 px-4 py-2.5 rounded-2xl border border-red-100">
+                    <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                    <span>Available only: {selectedVariant ? selectedVariant.totalAvailableStock : currentProduct.totalAvailableStock}</span>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 text-emerald-700 text-xs font-semibold uppercase tracking-wider bg-emerald-50 px-4 py-2.5 rounded-2xl border border-emerald-100">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-700" />
+                    <span>In Stock ({selectedVariant ? selectedVariant.totalAvailableStock : currentProduct.totalAvailableStock} available)</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Quantity Selector & CTAs */}
             <div className="space-y-6 mb-8">
@@ -239,9 +521,10 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                 </span>
                 <div className="flex items-center bg-white/80 backdrop-blur-xl border border-[#5B2A86]/10 rounded-full p-1.5 shadow-sm max-w-[160px]">
                   <motion.button
-                    whileTap={{ scale: 0.9 }}
+                    whileTap={quantity <= 1 ? {} : { scale: 0.9 }}
                     onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--color-dark-text)] hover:bg-[var(--color-primary)]/5 transition-all cursor-pointer"
+                    disabled={quantity <= 1}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-[var(--color-dark-text)] transition-all ${quantity <= 1 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[var(--color-primary)]/5 cursor-pointer'}`}
                   >
                     <Minus className="w-4 h-4 text-[#5B2A86]" />
                   </motion.button>
@@ -641,15 +924,19 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
             <div className="max-w-7xl mx-auto px-8 flex justify-between items-center w-full">
 
               <div className="flex items-center gap-3">
-                <img src={currentProduct.images[0]} alt={currentProduct.name} className="w-10 h-10 rounded-lg object-cover" />
+                <img src={selectedVariant ? selectedVariant.imagePath : currentProduct.images[0]} alt={currentProduct.name} className="w-10 h-10 rounded-lg object-cover" />
                 <div>
-                  <h4 className="text-xs font-serif font-bold text-black">{currentProduct.name}</h4>
+                  <h4 className="text-xs font-serif font-bold text-black">
+                    {selectedVariant ? `${currentProduct.name} (${selectedVariant.variantAttributeValues_Only})` : currentProduct.name}
+                  </h4>
                   <span className="text-[10px] text-[var(--color-primary)] font-semibold uppercase tracking-widest">{currentProduct.tagline}</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-6">
-                <span className="text-sm font-serif font-bold text-[var(--color-primary)]">₹{currentProduct.price}</span>
+                <span className="text-sm font-serif font-bold text-[var(--color-primary)]">
+                  ₹{selectedVariant ? selectedVariant.price : currentProduct.price}
+                </span>
 
                 <div className="flex items-center bg-black/5 rounded-full p-1 shadow-sm scale-90">
                   <button

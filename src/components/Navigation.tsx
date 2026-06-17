@@ -15,8 +15,36 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileCategoryOpen, setMobileCategoryOpen] = useState(false);
 
-  const { cartCount, setIsCartOpen } = useCart();
+  const { cartCount, setIsCartOpen, clearCart } = useCart();
   const { openSignUp } = useSignUp();
+
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return typeof window !== 'undefined' && !!localStorage.getItem("authToken");
+  });
+
+  useEffect(() => {
+    const checkAuth = () => {
+      setIsLoggedIn(!!localStorage.getItem("authToken"));
+    };
+    window.addEventListener("auth-change", checkAuth);
+    window.addEventListener("storage", checkAuth);
+    checkAuth();
+    return () => {
+      window.removeEventListener("auth-change", checkAuth);
+      window.removeEventListener("storage", checkAuth);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("customerId");
+    localStorage.removeItem("customerProfile");
+    localStorage.removeItem("hridhay_checkout");
+    localStorage.removeItem("hridhay_cart");
+    clearCart();
+    window.dispatchEvent(new Event("auth-change"));
+    window.location.reload();
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -227,21 +255,39 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
             </motion.button>
 
             {/* Desktop Sign Up CTA — desktop only, never shows on mobile */}
-            <StarButton
-              onClick={openSignUp}
-              style={{
-                paddingLeft: "1.375rem",
-                paddingRight: "1.375rem",
-                paddingTop: "0.55rem",
-                paddingBottom: "0.55rem",
-                fontSize: "0.625rem",
-                letterSpacing: "0.18em",
-                display: typeof window !== 'undefined' && window.innerWidth < 768 ? 'none' : undefined,
-              }}
-              className="!hidden md:!inline-flex"
-            >
-              Sign Up
-            </StarButton>
+            {isLoggedIn ? (
+              <StarButton
+                onClick={handleLogout}
+                style={{
+                  paddingLeft: "1.375rem",
+                  paddingRight: "1.375rem",
+                  paddingTop: "0.55rem",
+                  paddingBottom: "0.55rem",
+                  fontSize: "0.625rem",
+                  letterSpacing: "0.18em",
+                  display: typeof window !== 'undefined' && window.innerWidth < 768 ? 'none' : undefined,
+                }}
+                className="!hidden md:!inline-flex"
+              >
+                Logout
+              </StarButton>
+            ) : (
+              <StarButton
+                onClick={openSignUp}
+                style={{
+                  paddingLeft: "1.375rem",
+                  paddingRight: "1.375rem",
+                  paddingTop: "0.55rem",
+                  paddingBottom: "0.55rem",
+                  fontSize: "0.625rem",
+                  letterSpacing: "0.18em",
+                  display: typeof window !== 'undefined' && window.innerWidth < 768 ? 'none' : undefined,
+                }}
+                className="!hidden md:!inline-flex"
+              >
+                Sign Up
+              </StarButton>
+            )}
 
             {/* Mobile Hamburger */}
             <motion.button
@@ -485,78 +531,107 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                   </span>
                 </motion.a>
 
-                {/* Sign Up / Login */}
-                <motion.button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    openSignUp();
-                  }}
-                  className="flex items-center justify-between w-full py-3.5 px-1 cursor-pointer"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.30, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  whileTap={{ x: 4 }}
-                >
-                  <span className="font-serif text-base tracking-wide text-[#5B2A86] font-semibold">
-                    Sign Up / Login
-                  </span>
-                  <span
-                    className="inline-flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0"
-                    style={{
-                      background: "linear-gradient(135deg, #5B2A86, #A678D6)",
-                      boxShadow: "0 2px 10px rgba(91,42,134,0.3)",
+                {/* Sign Up / Login or Logout */}
+                {isLoggedIn ? (
+                  <motion.button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handleLogout();
                     }}
+                    className="flex items-center justify-between w-full py-3.5 px-1 cursor-pointer border-b border-[#5B2A86]/6"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.30, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    whileTap={{ x: 4 }}
                   >
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                      <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                  </span>
-                </motion.button>
+                    <span className="font-serif text-base tracking-wide text-red-600 font-semibold">
+                      Logout
+                    </span>
+                    <span
+                      className="inline-flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0 bg-red-100 text-red-600 shadow"
+                    >
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                      </svg>
+                    </span>
+                  </motion.button>
+                ) : (
+                  <motion.button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      openSignUp();
+                    }}
+                    className="flex items-center justify-between w-full py-3.5 px-1 cursor-pointer border-b border-[#5B2A86]/6"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.30, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    whileTap={{ x: 4 }}
+                  >
+                    <span className="font-serif text-base tracking-wide text-[#5B2A86] font-semibold">
+                      Sign Up / Login
+                    </span>
+                    <span
+                      className="inline-flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0"
+                      style={{
+                        background: "linear-gradient(135deg, #5B2A86, #A678D6)",
+                        boxShadow: "0 2px 10px rgba(91,42,134,0.3)",
+                      }}
+                    >
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                    </span>
+                  </motion.button>
+                )}
               </div>
 
               {/* Drawer CTA Footer */}
-              <motion.div
-                className="relative px-6 py-5 border-t border-[#5B2A86]/8"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    openSignUp();
-                  }}
-                  className="relative w-full flex items-center justify-center overflow-hidden rounded-2xl cursor-pointer"
-                  style={{
-                    height: "52px",
-                    background: "linear-gradient(135deg, #5B2A86 0%, #7A49A5 55%, #A678D6 100%)",
-                    border: "1px solid rgba(166,120,214,0.3)",
-                    boxShadow: "0 8px 28px rgba(91,42,134,0.32), inset 0 1px 0 rgba(255,255,255,0.12)",
-                    color: "#fff",
-                    fontSize: "0.65rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
-                    fontFamily: "Inter, sans-serif",
-                  }}
+              {!isLoggedIn && (
+                <motion.div
+                  className="relative px-6 py-5 border-t border-[#5B2A86]/8"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  {/* Shimmer sweep */}
-                  <span
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                      background: "linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.1) 50%, transparent 65%)",
-                      backgroundSize: "200% 100%",
-                      animation: "shimmerPill 3.5s ease-in-out infinite",
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      openSignUp();
                     }}
-                  />
-                  <span className="relative z-10">Create Account — It's Free</span>
-                </button>
+                    className="relative w-full flex items-center justify-center overflow-hidden rounded-2xl cursor-pointer"
+                    style={{
+                      height: "52px",
+                      background: "linear-gradient(135deg, #5B2A86 0%, #7A49A5 55%, #A678D6 100%)",
+                      border: "1px solid rgba(166,120,214,0.3)",
+                      boxShadow: "0 8px 28px rgba(91,42,134,0.32), inset 0 1px 0 rgba(255,255,255,0.12)",
+                      color: "#fff",
+                      fontSize: "0.65rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.18em",
+                      textTransform: "uppercase",
+                      fontFamily: "Inter, sans-serif",
+                    }}
+                  >
+                    {/* Shimmer sweep */}
+                    <span
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        background: "linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.1) 50%, transparent 65%)",
+                        backgroundSize: "200% 100%",
+                        animation: "shimmerPill 3.5s ease-in-out infinite",
+                      }}
+                    />
+                    <span className="relative z-10">Create Account — It's Free</span>
+                  </button>
 
-                <p className="text-center text-[10px] text-[#1B1720]/35 mt-3 font-satoshi font-light tracking-wide">
-                  Join 2,400+ wellness seekers
-                </p>
-              </motion.div>
+                  <p className="text-center text-[10px] text-[#1B1720]/35 mt-3 font-satoshi font-light tracking-wide">
+                    Join 2,400+ wellness seekers
+                  </p>
+                </motion.div>
+              )}
             </motion.div>
           </>
         )}

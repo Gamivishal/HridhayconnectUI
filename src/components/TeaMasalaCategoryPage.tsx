@@ -1,9 +1,10 @@
 import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
 import { useRef, useEffect, useState } from "react";
 import { Award, Heart, Leaf, Star, Sparkle, Plus, ChevronDown, Check, Info } from "lucide-react";
-import { products } from "../data/products";
+import { products, syncProducts } from "../data/products";
 import { useCart } from "../context/CartContext";
 import { InnerPageBanner } from "./InnerPageBanner";
+import { fetchProductsFromApi } from "../api/productService";
 
 interface TeaMasalaCardProps {
   key?: any;
@@ -17,6 +18,8 @@ interface TeaMasalaCardProps {
     benefits: string[];
     tag: string;
     discount: string;
+    totalAvailableStock?: number;
+    variants?: any[];
   };
   index: number;
   cartState: Record<string, boolean>;
@@ -39,6 +42,16 @@ function TeaMasalaCard({
     offset: ["start end", "end start"]
   });
   const y = useTransform(scrollYProgress, [0, 1], [40, -40]);
+
+  const renderPrice = () => {
+    if (masala.variants && masala.variants.length > 1) {
+      const prices = masala.variants.map(v => v.price);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      return `₹${minPrice} - ₹${maxPrice}`;
+    }
+    return `₹${masala.price}`;
+  };
 
   return (
     <motion.div
@@ -118,7 +131,7 @@ function TeaMasalaCard({
             {masala.name}
           </h3>
           <div className="flex items-center gap-2 font-serif text-lg">
-            <span className="text-[var(--color-primary)] font-semibold">₹{masala.price}</span>
+            <span className="text-[var(--color-primary)] font-semibold">{renderPrice()}</span>
             <span className="text-xs text-[var(--color-dark-text)]/40 line-through">₹{masala.originalPrice}</span>
           </div>
         </div>
@@ -126,6 +139,12 @@ function TeaMasalaCard({
         <p className="text-[11.5px] text-[var(--color-dark-text)]/60 font-light font-satoshi mb-4 leading-relaxed line-clamp-2">
           {masala.desc}
         </p>
+
+        {masala.totalAvailableStock !== undefined && masala.totalAvailableStock < 10 && (
+          <div className="text-[10px] font-semibold text-red-600 mb-2.5 uppercase tracking-wider">
+            Available only: {masala.totalAvailableStock}
+          </div>
+        )}
 
         {/* Subtle benefit items list */}
         <ul className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2">
@@ -144,6 +163,8 @@ function TeaMasalaCard({
 
 export function TeaMasalaCategoryPage() {
   const pageRef = useRef<HTMLDivElement>(null);
+  const [teaMasalaList, setTeaMasalaList] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Scroll to top and set page title on mount
   useEffect(() => {
@@ -151,8 +172,58 @@ export function TeaMasalaCategoryPage() {
     document.title = "Artisanal Tea Masala | Hridhay Connect";
   }, []);
 
-  // Filter only Tea Masala products from database
-  const teaMasalas = products.filter(p => p.category === 'tea-masala');
+  // Fetch tea masalas from live API (CategoryId: 18)
+  useEffect(() => {
+    let isMounted = true;
+    async function loadProducts() {
+      try {
+        setIsLoading(true);
+        const fetched = await fetchProductsFromApi(18);
+        if (isMounted) {
+          const cardMasalas = fetched.map(p => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            originalPrice: p.originalPrice,
+            images: p.images,
+            desc: p.desc,
+            benefits: p.benefits || [
+              "Supports digestion and bloating relief",
+              "Stone pounded to preserve volatile oils"
+            ],
+            tag: p.tag || "",
+            discount: p.discount,
+            totalAvailableStock: p.totalAvailableStock,
+            variants: p.variants
+          }));
+          setTeaMasalaList(cardMasalas);
+          syncProducts(fetched);
+        }
+      } catch (error) {
+        console.error("[TeaMasalaPage API Error] Failed to load tea masalas from API:", error);
+        if (isMounted) {
+          const fallbackList = products.filter(p => p.category === 'tea-masala').map(p => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            originalPrice: p.originalPrice,
+            images: p.images,
+            desc: p.desc,
+            benefits: p.benefits,
+            tag: p.tag,
+            discount: p.discount,
+            totalAvailableStock: p.totalAvailableStock,
+            variants: p.variants
+          }));
+          setTeaMasalaList(fallbackList);
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+    loadProducts();
+    return () => { isMounted = false; };
+  }, []);
 
   // Ingredients Data
   const keyIngredients = [
@@ -267,24 +338,31 @@ export function TeaMasalaCategoryPage() {
             </h2>
           </div>
           <span className="text-xs font-medium tracking-widest uppercase text-[var(--color-dark-text)]/50 mt-4 md:mt-0 font-general">
-            Showing {teaMasalas.length} Exclusive Blends
+            Showing {teaMasalaList.length} Exclusive Blends
           </span>
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-14">
-          {teaMasalas.map((masala, index) => (
-            <TeaMasalaCard
-              key={masala.id}
-              masala={masala}
-              index={index}
-              cartState={cartState}
-              wishlistState={wishlistState}
-              handleAddToCart={handleAddToCart}
-              toggleWishlist={toggleWishlist}
-            />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-32 text-[var(--color-primary)]">
+            <Sparkle className="w-10 h-10 animate-spin mb-4" />
+            <span className="text-xs uppercase tracking-[0.2em] font-medium font-general">Retrieving apothecary items...</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-14">
+            {teaMasalaList.map((masala, index) => (
+              <TeaMasalaCard
+                key={masala.id}
+                masala={masala}
+                index={index}
+                cartState={cartState}
+                wishlistState={wishlistState}
+                handleAddToCart={handleAddToCart}
+                toggleWishlist={toggleWishlist}
+              />
+            ))}
+          </div>
+        )}
 
       </section>
 
