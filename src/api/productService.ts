@@ -1,6 +1,11 @@
 import { products, Product } from "../data/products";
 import { API_BASE_URL } from "./config";
 
+export interface ApiProductImage {
+  imagePath: string;
+  isPrimary: boolean;
+}
+
 export interface ApiProduct {
   ProductId: number;
   ProductDescription: string;
@@ -15,6 +20,7 @@ export interface ApiProduct {
   SKU: string;
   Price: number;
   ImagePath: any;
+  Images: ApiProductImage[];
   TotalAvailableStock: number;
 }
 
@@ -93,6 +99,57 @@ export function getApiProducts(result: any): any[] {
 }
 
 /**
+ * Resolves a raw image path from the API into a full URL.
+ * Handles absolute URLs, relative paths, and fallback to a no-image placeholder.
+ */
+export function resolveImageUrl(rawPath: string | undefined | null): string {
+  if (rawPath && typeof rawPath === "string" && rawPath.trim()) {
+    const pathStr = rawPath.trim();
+    if (pathStr.startsWith("http://") || pathStr.startsWith("https://")) {
+      return pathStr;
+    } else {
+      const cleanPath = pathStr.replace(/\\/g, "/").replace(/^\/+/, "");
+      return `https://localhost:7103/${cleanPath}`;
+    }
+  }
+  return "https://localhost:7103/Uploads/Product/no-image.png";
+}
+
+/**
+ * Extracts all resolved image URLs from a variant's Images array.
+ * Returns images sorted with isPrimary=true first.
+ * Falls back to the legacy single ImagePath field if Images array is empty.
+ */
+function extractImagesFromVariant(apiVar: any): string[] {
+  const imagesArray = getCaseInsensitiveProperty<any[]>(apiVar, "Images");
+
+  if (Array.isArray(imagesArray) && imagesArray.length > 0) {
+    // Sort: primary images first
+    const sorted = [...imagesArray].sort((a, b) => {
+      const aP = a.isPrimary || a.IsPrimary ? 1 : 0;
+      const bP = b.isPrimary || b.IsPrimary ? 1 : 0;
+      return bP - aP;
+    });
+
+    return sorted
+      .map((img: any) => {
+        const path = img.imagePath || img.ImagePath || "";
+        return resolveImageUrl(path);
+      })
+      .filter((url: string) => url !== "https://localhost:7103/Uploads/Product/no-image.png");
+  }
+
+  // Fallback to legacy single ImagePath field
+  const legacyPath = getCaseInsensitiveProperty<string>(apiVar, "ImagePath") || "";
+  const resolved = resolveImageUrl(legacyPath);
+  if (resolved !== "https://localhost:7103/Uploads/Product/no-image.png") {
+    return [resolved];
+  }
+
+  return [];
+}
+
+/**
  * Fetches products for a specific category ID from the backend API.
  * Maps and merges them with the local high-fidelity products metadata.
  */
@@ -155,6 +212,7 @@ export async function fetchProductsFromApi(categoryId: number): Promise<Product[
       const prodId = getCaseInsensitiveProperty<number>(primaryApiProd, "ProductId");
       const prodDesc = getCaseInsensitiveProperty<string>(primaryApiProd, "ProductDescription") || "";
       const categoryIdVal = getCaseInsensitiveProperty<number>(primaryApiProd, "CategoryId");
+      const categoryNameVal = getCaseInsensitiveProperty<string>(primaryApiProd, "CategoryName") || "";
       const priceVal = getCaseInsensitiveProperty<number>(primaryApiProd, "Price") || 0;
       const totalStock = getCaseInsensitiveProperty<number>(primaryApiProd, "TotalAvailableStock") || 0;
 
@@ -182,8 +240,10 @@ export async function fetchProductsFromApi(categoryId: number): Promise<Product[
         const variantAttributes = getCaseInsensitiveProperty<string>(apiVar, "VariantAttributes") || "";
         const sku = getCaseInsensitiveProperty<string>(apiVar, "SKU") || "";
         const price = getCaseInsensitiveProperty<number>(apiVar, "Price") || 0;
-        const imagePathRaw = getCaseInsensitiveProperty<string>(apiVar, "ImagePath") || "";
         const totalAvailableStock = getCaseInsensitiveProperty<number>(apiVar, "TotalAvailableStock") || 0;
+
+        // Extract images from the new Images array format
+        const variantImageUrls = extractImagesFromVariant(apiVar);
 
         return {
           varientId,
@@ -191,25 +251,19 @@ export async function fetchProductsFromApi(categoryId: number): Promise<Product[
           variantAttributes,
           sku,
           price,
-          imagePath: (() => {
-            if (imagePathRaw && typeof imagePathRaw === "string" && imagePathRaw.trim()) {
-              const pathStr = imagePathRaw.trim();
-              if (pathStr.startsWith("http://") || pathStr.startsWith("https://")) {
-                return pathStr;
-              } else {
-                const cleanPath = pathStr.replace(/\\/g, "/").replace(/^\/+/, "");
-                return `https://localhost:7103/${cleanPath}`;
-              }
-            }
-            return "https://localhost:7103/Uploads/Product/no-image.png";
-          })(),
+          imagePath: variantImageUrls[0] || "https://localhost:7103/Uploads/Product/no-image.png",
           totalAvailableStock
         };
       });
 
-      // Gather unique images from all variants for gallery
-      const variantImages = variants.map(v => v.imagePath).filter(Boolean);
-      const uniqueImages = Array.from(new Set(variantImages));
+      // Gather product images from the first variant's Images array
+      // (all variants for the same product share the same images)
+      const productImages = extractImagesFromVariant(primaryApiProd);
+
+      // Also collect any unique variant-specific images as fallback
+      const variantOnlyImages = variants.map(v => v.imagePath).filter(Boolean);
+      const allImages = Array.from(new Set([...productImages, ...variantOnlyImages]))
+        .filter(url => url !== "https://localhost:7103/Uploads/Product/no-image.png");
 
       return {
         id: localProduct?.id || apiSlug || apiSkuSlug || String(prodId),
@@ -218,7 +272,7 @@ export async function fetchProductsFromApi(categoryId: number): Promise<Product[
         originalPrice: localProduct?.originalPrice ?? Math.round(priceVal * 1.8),
         discount: localProduct?.discount ?? `${Math.round((1 - priceVal / (priceVal * 1.8)) * 100)}% OFF`,
         tag: localProduct?.tag ?? "",
-        images: uniqueImages.length > 0 ? uniqueImages : ["https://localhost:7103/Uploads/Product/no-image.png"],
+        images: allImages.length > 0 ? allImages : ["https://localhost:7103/Uploads/Product/no-image.png"],
         category: (localProduct?.category ?? (categoryIdVal === 17 ? "mukhwas" : "soap")) as any,
         tagline: localProduct?.tagline ?? prodDesc ?? "",
         rating: localProduct?.rating ?? 4.8,
@@ -236,7 +290,8 @@ export async function fetchProductsFromApi(categoryId: number): Promise<Product[
         faqs: localProduct?.faqs ?? [],
         variants: variants,
         totalAvailableStock: totalStock,
-        productId: prodId ? Number(prodId) : undefined
+        productId: prodId ? Number(prodId) : undefined,
+        categoryName: categoryNameVal
       };
     });
   } catch (error) {

@@ -4,7 +4,7 @@ import { Award, Heart, Leaf, Star, Sparkle, Plus, ChevronDown, Check, Info } fro
 import { useCart } from "../context/CartContext";
 import { products, syncProducts } from "../data/products";
 import { InnerPageBanner } from "./InnerPageBanner";
-import { getCaseInsensitiveProperty, getApiProducts } from "../api/productService";
+import { getCaseInsensitiveProperty, getApiProducts, resolveImageUrl } from "../api/productService";
 
 interface SoapCardProps {
   key?: any;
@@ -222,6 +222,7 @@ export function SoapCategoryPage() {
   const pageRef = useRef<HTMLDivElement>(null);
   const [soaps, setSoaps] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [categoryName, setCategoryName] = useState("Home Made Soaps");
 
   // Scroll to top and set page title on mount
   useEffect(() => {
@@ -267,6 +268,13 @@ export function SoapCategoryPage() {
 
         const apiProducts = getApiProducts(result);
 
+        if (apiProducts.length > 0 && isMounted) {
+          const apiCatName = getCaseInsensitiveProperty<string>(apiProducts[0], "CategoryName");
+          if (apiCatName) {
+            setCategoryName(apiCatName);
+          }
+        }
+
         // Match and overwrite only image, price, and description for the static soaps
         const updatedSoaps = staticSoaps.map(staticSoap => {
           // Find matching API product by name or SKU
@@ -289,20 +297,22 @@ export function SoapCategoryPage() {
           if (match) {
             console.log(`[SoapPage Matching] Matched static soap "${staticSoap.name}" with API product:`, match);
             
-            // Resolve image path
+            // Resolve image path from the new Images array (primary first)
             let resolvedImg = "https://localhost:7103/Uploads/Product/no-image.png";
-            const imagePathRaw = getCaseInsensitiveProperty<string>(match, "ImagePath");
-            if (imagePathRaw && typeof imagePathRaw === "string" && imagePathRaw.trim()) {
-              const pathStr = imagePathRaw.trim();
-              if (pathStr.startsWith("http://") || pathStr.startsWith("https://")) {
-                resolvedImg = pathStr;
-              } else {
-                // Normalize leading slashes
-                const cleanPath = pathStr.replace(/\\/g, "/").replace(/^\/+/, "");
-                resolvedImg = `https://localhost:7103/${cleanPath}`;
-              }
+            const imagesArray = getCaseInsensitiveProperty<any[]>(match, "Images");
+
+            if (Array.isArray(imagesArray) && imagesArray.length > 0) {
+              // Find the primary image first, fallback to first image
+              const primaryImg = imagesArray.find((img: any) => img.isPrimary || img.IsPrimary) || imagesArray[0];
+              const primaryPath = primaryImg?.imagePath || primaryImg?.ImagePath || "";
+              resolvedImg = resolveImageUrl(primaryPath);
+            } else {
+              // Fallback to legacy single ImagePath field
+              const imagePathRaw = getCaseInsensitiveProperty<string>(match, "ImagePath");
+              resolvedImg = resolveImageUrl(imagePathRaw);
             }
 
+            const matchProductName = getCaseInsensitiveProperty<string>(match, "ProductName") || staticSoap.name;
             const matchProductId = getCaseInsensitiveProperty<number>(match, "ProductId");
             const matchVariantId = getCaseInsensitiveProperty<number>(match, "VarientId");
             const matchPrice = getCaseInsensitiveProperty<number>(match, "Price") || staticSoap.price;
@@ -311,12 +321,13 @@ export function SoapCategoryPage() {
             const matchingProduct = products.find(p => p.id === staticSoap.id);
             return {
               ...staticSoap,
+              name: matchProductName,
               price: matchPrice,
               desc: matchDesc,
               img: resolvedImg,
               productId: matchProductId ? Number(matchProductId) : undefined,
               variantId: matchVariantId ? Number(matchVariantId) : undefined,
-              variants: matchingProduct?.variants || staticSoap.variants
+              variants: matchingProduct?.variants
             };
           } else {
             console.log(`[SoapPage Matching] No API match found for static soap "${staticSoap.name}". Using static data.`);
@@ -328,7 +339,7 @@ export function SoapCategoryPage() {
           setSoaps(updatedSoaps);
           
           // Sync updated soaps back into the global products database
-          const syncableProducts = updatedSoaps.map(s => {
+          const syncableProducts = updatedSoaps.map((s: any) => {
             const originalProduct = products.find(p => p.id === s.id);
             return {
               ...(originalProduct || {}),
@@ -428,12 +439,12 @@ export function SoapCategoryPage() {
 
       <InnerPageBanner
         eyebrow="Skin Care"
-        title="Home Made"
-        titleAccent="Soaps"
+        title={categoryName}
+        titleAccent=""
         subtitle="Cold-pressed, handcrafted botanical soaps — slow-stirred with organic nectars and wild forest botanicals to nourish and purify skin."
         breadcrumbs={[
           { label: "Home", href: "#" },
-          { label: "Home Made Soaps" },
+          { label: categoryName },
         ]}
         bgImage="https://images.unsplash.com/photo-1607006342456-ba275cd34226?q=80&w=600&auto=format&fit=crop"
         decorativeEmoji="🌸"

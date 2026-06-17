@@ -127,14 +127,20 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
       setIsPageLoading(true);
       async function fetchAndFind() {
         try {
-          // Fetch both soaps (15) and mukhwas (17) in parallel to locate this dynamic product
-          const [soaps, mukhwas] = await Promise.all([
+          // Fetch all categories in parallel to locate this dynamic product
+          const [soaps, oils, mukhwas, tea, specials] = await Promise.all([
             fetchProductsFromApi(15),
-            fetchProductsFromApi(17)
+            fetchProductsFromApi(16),
+            fetchProductsFromApi(17),
+            fetchProductsFromApi(18),
+            fetchProductsFromApi(19)
           ]);
           if (isMounted) {
             if (soaps.length > 0) syncProducts(soaps);
+            if (oils.length > 0) syncProducts(oils);
             if (mukhwas.length > 0) syncProducts(mukhwas);
+            if (tea.length > 0) syncProducts(tea);
+            if (specials.length > 0) syncProducts(specials);
             const found = products.find(p => p.id === productId);
             if (found) {
               setCurrentProduct({ ...found });
@@ -168,10 +174,13 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
 
       const categoryMap: Record<string, number> = {
         'soap': 15,
-        'mukhwas': 17
+        'hair-oil': 16,
+        'mukhwas': 17,
+        'tea-masala': 18,
+        'hridhay-special': 19
       };
       const catId = categoryMap[local.category];
-      if (catId === 15 || catId === 17) {
+      if (catId) {
         async function syncLatest() {
           try {
             const fetched = await fetchProductsFromApi(catId);

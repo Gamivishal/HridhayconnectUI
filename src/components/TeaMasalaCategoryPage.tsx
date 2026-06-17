@@ -165,6 +165,7 @@ export function TeaMasalaCategoryPage() {
   const pageRef = useRef<HTMLDivElement>(null);
   const [teaMasalaList, setTeaMasalaList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [categoryName, setCategoryName] = useState("Artisanal Tea Masala");
 
   // Scroll to top and set page title on mount
   useEffect(() => {
@@ -180,6 +181,9 @@ export function TeaMasalaCategoryPage() {
         setIsLoading(true);
         const fetched = await fetchProductsFromApi(18);
         if (isMounted) {
+          if (fetched.length > 0 && fetched[0].categoryName) {
+            setCategoryName(fetched[0].categoryName);
+          }
           const cardMasalas = fetched.map(p => ({
             id: p.id,
             name: p.name,
@@ -311,12 +315,12 @@ export function TeaMasalaCategoryPage() {
 
       <InnerPageBanner
         eyebrow="Chai Masala"
-        title="Artisanal Tea"
-        titleAccent="Masala"
+        title={categoryName}
+        titleAccent=""
         subtitle="Stone-ground, wood-roasted botanical tea masalas blended slowly to preserve the healing aromatic oils of organic spices."
         breadcrumbs={[
           { label: "Home", href: "#" },
-          { label: "Tea Masala" },
+          { label: categoryName },
         ]}
         bgImage="https://images.unsplash.com/photo-1532336414038-cf1905047b2b?q=80&w=600&auto=format&fit=crop"
         decorativeEmoji="☕"

@@ -205,6 +205,7 @@ export function MukhwasCategoryPage() {
   const pageRef = useRef<HTMLDivElement>(null);
   const [mukhwasList, setMukhwasList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [categoryName, setCategoryName] = useState("Mukhwas & Digestives");
 
   // Scroll to top and set page title on mount
   useEffect(() => {
@@ -220,6 +221,9 @@ export function MukhwasCategoryPage() {
         setIsLoading(true);
         const fetched = await fetchProductsFromApi(17);
         if (isMounted) {
+          if (fetched.length > 0 && fetched[0].categoryName) {
+            setCategoryName(fetched[0].categoryName);
+          }
           const cardMukhwas = fetched.map(p => ({
             id: p.id,
             name: p.name,
@@ -333,12 +337,12 @@ export function MukhwasCategoryPage() {
 
       <InnerPageBanner
         eyebrow="Heritage Digestives"
-        title="Mukhwas &"
-        titleAccent="Digestives"
+        title={categoryName}
+        titleAccent=""
         subtitle="Indian heritage mouth fresheners hand-roasted in artisanal batches — chemical-free, sun-cured and sweetened with natural gulkand."
         breadcrumbs={[
           { label: "Home", href: "#" },
-          { label: "Mukhwas & Digestives" },
+          { label: categoryName },
         ]}
         bgImage="https://images.unsplash.com/photo-1599940824399-b87987ceb72a?q=80&w=600&auto=format&fit=crop"
         decorativeEmoji="🌿"

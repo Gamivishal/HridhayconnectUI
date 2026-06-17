@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Product, products } from "../data/products";
-import { getCaseInsensitiveProperty, normalizeSlug } from "../api/productService";
+import { getCaseInsensitiveProperty, normalizeSlug, resolveImageUrl } from "../api/productService";
 import { API_BASE_URL } from "../api/config";
 
 export interface CartItem {
@@ -23,6 +23,7 @@ interface CartContextType {
   prepareCheckout: (items: CartItem[]) => void;
   clearCheckout: () => void;
   syncCartWithApi: () => Promise<void>;
+  mergeGuestCartToApi: () => Promise<void>;
   isCartLoading: boolean;
 }
 
@@ -87,18 +88,7 @@ export function resolveCartItem(apiCartItem: any): CartItem | null {
   console.log(`[resolveCartItem] Product not found in DB. Creating fallback product for: ${productName} (ProductId: ${parsedProductId})`);
 
   const imagePathRaw = getCaseInsensitiveProperty<string>(apiCartItem, "ImagePath") || "";
-  const resolvedImg = (() => {
-    if (imagePathRaw && typeof imagePathRaw === "string" && imagePathRaw.trim()) {
-      const pathStr = imagePathRaw.trim();
-      if (pathStr.startsWith("http://") || pathStr.startsWith("https://")) {
-        return pathStr;
-      } else {
-        const cleanPath = pathStr.replace(/\\/g, "/").replace(/^\/+/, "");
-        return `https://localhost:7103/${cleanPath}`;
-      }
-    }
-    return "https://localhost:7103/Uploads/Product/no-image.png";
-  })();
+  const resolvedImg = resolveImageUrl(imagePathRaw);
 
   const fallbackProduct: Product = {
     id: parsedVariantId ? `${parsedProductId}-${parsedVariantId}` : String(parsedProductId),
@@ -274,6 +264,84 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       isSyncingRef.current = false;
       setIsCartLoading(false);
     }
+  };
+
+  // Merge guest (pre-login) cart items into the server cart after login
+  // Reads whatever is currently in localStorage, pushes each item to SaveCart API,
+  // then does a full sync to get the merged result from the server.
+  const mergeGuestCartToApi = async () => {
+    const token = localStorage.getItem("authToken");
+    const customerId = localStorage.getItem("customerId");
+    if (!token || !customerId) {
+      console.log("[mergeGuestCartToApi] No auth credentials. Falling back to syncCartWithApi.");
+      await syncCartWithApi();
+      return;
+    }
+
+    // Read the guest cart from localStorage (items added before login)
+    let guestItems: CartItem[] = [];
+    try {
+      const stored = localStorage.getItem("hridhay_cart");
+      if (stored) {
+        guestItems = JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error("[mergeGuestCartToApi] Failed to parse guest cart from localStorage:", e);
+    }
+
+    if (!guestItems || guestItems.length === 0) {
+      console.log("[mergeGuestCartToApi] No guest cart items to merge. Syncing server cart.");
+      await syncCartWithApi();
+      return;
+    }
+
+    console.log(`[mergeGuestCartToApi] Found ${guestItems.length} guest item(s). Pushing to server...`);
+    setIsCartLoading(true);
+
+    const headers = {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    };
+
+    // Push each guest item to the SaveCart API sequentially
+    for (const item of guestItems) {
+      const { productId, variantId } = getProductAndVariantIds(item.product);
+      if (!productId || isNaN(productId)) {
+        console.warn("[mergeGuestCartToApi] Skipping item with invalid productId:", item.product.name);
+        continue;
+      }
+
+      const payload = {
+        customerId: Number(customerId),
+        productId: Number(productId),
+        variantId: Number(variantId),
+        quantity: Number(item.quantity)
+      };
+
+      try {
+        console.log(`[mergeGuestCartToApi] Saving guest item: ${item.product.name} (qty: ${item.quantity})`, payload);
+        const response = await fetch(`${API_BASE_URL}/Cart/SaveCart`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          console.error(`[mergeGuestCartToApi] SaveCart failed for ${item.product.name}: status ${response.status}`);
+        } else {
+          const result = await response.json();
+          console.log(`[mergeGuestCartToApi] SaveCart success for ${item.product.name}:`, result);
+        }
+      } catch (e) {
+        console.error(`[mergeGuestCartToApi] Network error saving ${item.product.name}:`, e);
+      }
+    }
+
+    setIsCartLoading(false);
+
+    // After all guest items are pushed, do a full sync to get the merged result
+    console.log("[mergeGuestCartToApi] All guest items pushed. Syncing merged cart from server...");
+    await syncCartWithApi();
   };
 
   // Load from localStorage on mount
@@ -586,6 +654,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         prepareCheckout,
         clearCheckout,
         syncCartWithApi,
+        mergeGuestCartToApi,
         isCartLoading
       }}
     >

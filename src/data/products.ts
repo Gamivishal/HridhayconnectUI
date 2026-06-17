@@ -53,6 +53,7 @@ export interface Product {
   totalAvailableStock?: number;
   productId?: number;
   variantId?: number;
+  categoryName?: string;
 }
 
 

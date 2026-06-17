@@ -205,6 +205,7 @@ export function HairOilCategoryPage() {
   const pageRef = useRef<HTMLDivElement>(null);
   const [oilsList, setOilsList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [categoryName, setCategoryName] = useState("Home Made Hair Oil");
 
   // Scroll to top and set page title on mount
   useEffect(() => {
@@ -220,6 +221,9 @@ export function HairOilCategoryPage() {
         setIsLoading(true);
         const fetched = await fetchProductsFromApi(16);
         if (isMounted) {
+          if (fetched.length > 0 && fetched[0].categoryName) {
+            setCategoryName(fetched[0].categoryName);
+          }
           const cardOils = fetched.map(p => ({
             id: p.id,
             name: p.name,
@@ -333,12 +337,12 @@ export function HairOilCategoryPage() {
 
       <InnerPageBanner
         eyebrow="Hair Wellness"
-        title="Home Made"
-        titleAccent="Hair Oil"
+        title={categoryName}
+        titleAccent=""
         subtitle="Traditional copper-cured Ayurvedic hair oils, slow-infused with Bhringraj, Amla, and Hibiscus for deep root nourishment."
         breadcrumbs={[
           { label: "Home", href: "#" },
-          { label: "Hair Oil" },
+          { label: categoryName },
         ]}
         bgImage="https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=600&auto=format&fit=crop"
         decorativeEmoji="🌺"

@@ -1,9 +1,10 @@
 import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
 import { useRef, useEffect, useState } from "react";
 import { Award, Heart, Leaf, Star, Sparkle, Plus, ChevronDown, Check } from "lucide-react";
-import { products } from "../data/products";
+import { products, syncProducts } from "../data/products";
 import { useCart } from "../context/CartContext";
 import { InnerPageBanner } from "./InnerPageBanner";
+import { fetchProductsFromApi } from "../api/productService";
 
 interface HridhaySpecialCardProps {
   key?: any;
@@ -154,22 +155,63 @@ function HridhaySpecialCard({
 }export function HridhaySpecialCategoryPage() {
   const pageRef = useRef<HTMLDivElement>(null);
   const [specialsList, setSpecialsList] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [categoryName, setCategoryName] = useState("Hridhay Special");
 
   // Scroll to top and set page title on mount
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
     document.title = "Hridhay Special Reserve Skincare | Hridhay Connect";
+  }, []);
 
-    // Enrich with variants if present in global products list
-    const filtered = products.filter(p => p.category === 'hridhay-special');
-    const enriched = filtered.map(spec => {
-      const matchingProduct = products.find(p => p.id === spec.id || p.id.replace(/-100|-200/g, "") === spec.id.replace(/-100|-200/g, ""));
-      return {
-        ...spec,
-        variants: matchingProduct?.variants || spec.variants
-      };
-    });
-    setSpecialsList(enriched);
+  // Fetch reserve products from live API (CategoryId: 19)
+  useEffect(() => {
+    let isMounted = true;
+    async function loadProducts() {
+      try {
+        setIsLoading(true);
+        const fetched = await fetchProductsFromApi(19);
+        if (isMounted) {
+          if (fetched.length > 0 && fetched[0].categoryName) {
+            setCategoryName(fetched[0].categoryName);
+          }
+          const cardSpecials = fetched.map(p => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            originalPrice: p.originalPrice,
+            images: p.images,
+            desc: p.desc,
+            benefits: p.benefits || [
+              "Cellular healing & soothing benefits",
+              "100% clean & chemical-free"
+            ],
+            tag: p.tag || "",
+            discount: p.discount,
+            variants: p.variants
+          }));
+          setSpecialsList(cardSpecials);
+          syncProducts(fetched);
+        }
+      } catch (error) {
+        console.error("[HridhaySpecialPage API Error] Failed to load reserve products from API:", error);
+        if (isMounted) {
+          const filtered = products.filter(p => p.category === 'hridhay-special');
+          const enriched = filtered.map(spec => {
+            const matchingProduct = products.find(p => p.id === spec.id || p.id.replace(/-100|-200/g, "") === spec.id.replace(/-100|-200/g, ""));
+            return {
+              ...spec,
+              variants: matchingProduct?.variants || spec.variants
+            };
+          });
+          setSpecialsList(enriched);
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+    loadProducts();
+    return () => { isMounted = false; };
   }, []);
 
   // Ingredients Data
@@ -244,12 +286,12 @@ function HridhaySpecialCard({
 
       <InnerPageBanner
         eyebrow="Reserve Collection"
-        title="Hridhay"
-        titleAccent="Special"
+        title={categoryName}
+        titleAccent=""
         subtitle="Premium micro-batch botanical skincare — crystal-charged, slow-stirred actives for overnight cellular repair and luminous skin."
         breadcrumbs={[
           { label: "Home", href: "#" },
-          { label: "Hridhay Special" },
+          { label: categoryName },
         ]}
         bgImage="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=600&auto=format&fit=crop"
         decorativeEmoji="✨"
@@ -276,19 +318,26 @@ function HridhaySpecialCard({
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-14">
-          {specialsList.map((product, index) => (
-            <HridhaySpecialCard
-              key={product.id}
-              product={product}
-              index={index}
-              cartState={cartState}
-              wishlistState={wishlistState}
-              handleAddToCart={handleAddToCart}
-              toggleWishlist={toggleWishlist}
-            />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-32 text-[var(--color-primary)]">
+            <Sparkle className="w-10 h-10 animate-spin mb-4" />
+            <span className="text-xs uppercase tracking-[0.2em] font-medium font-general">Retrieving apothecary items...</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-14">
+            {specialsList.map((product, index) => (
+              <HridhaySpecialCard
+                key={product.id}
+                product={product}
+                index={index}
+                cartState={cartState}
+                wishlistState={wishlistState}
+                handleAddToCart={handleAddToCart}
+                toggleWishlist={toggleWishlist}
+              />
+            ))}
+          </div>
+        )}
 
       </section>
 

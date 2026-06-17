@@ -111,7 +111,7 @@ interface SignUpModalProps {
 }
 
 export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
-  const { syncCartWithApi } = useCart();
+  const { syncCartWithApi, mergeGuestCartToApi } = useCart();
   const [authMode, setAuthMode] = useState<'signup' | 'signin'>('signup');
   const [form, setForm] = useState({
     fullName: "",
@@ -241,7 +241,7 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
             }
             localStorage.setItem("customerProfile", JSON.stringify(customerData));
             
-            syncCartWithApi();
+            mergeGuestCartToApi();
             window.dispatchEvent(new Event("auth-change"));
           }
 
