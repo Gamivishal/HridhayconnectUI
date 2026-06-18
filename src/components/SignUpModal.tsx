@@ -234,20 +234,28 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
             
             // Extract and save Customer ID and Profile
             const customerData = getCaseInsensitiveProperty(result, "data") || {};
-            const customerId = getCaseInsensitiveProperty(customerData, "Id") || getCaseInsensitiveProperty(result, "Id");
+            const customerId = getCaseInsensitiveProperty(customerData, "Id") || 
+                               getCaseInsensitiveProperty(customerData, "CustomerId") || 
+                               getCaseInsensitiveProperty(customerData, "UserId") || 
+                               getCaseInsensitiveProperty(result, "Id") || 
+                               getCaseInsensitiveProperty(result, "CustomerId") || 
+                               getCaseInsensitiveProperty(result, "UserId");
             if (customerId) {
               console.log("[Login API Success] Storing customerId:", customerId);
               localStorage.setItem("customerId", String(customerId));
             }
             localStorage.setItem("customerProfile", JSON.stringify(customerData));
             
-            mergeGuestCartToApi();
+            await mergeGuestCartToApi();
             window.dispatchEvent(new Event("auth-change"));
           }
 
           setIsLoading(false);
           setIsSuccess(true);
-          setTimeout(() => onClose(), 2500);
+          setTimeout(() => {
+            onClose();
+            window.location.reload();
+          }, 2500);
         } else {
           const errorMsg = result.message || result.Message || "Login failed. Please check your credentials.";
           setErrors({ email: errorMsg });

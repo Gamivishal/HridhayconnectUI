@@ -19,6 +19,8 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
     return products.find(p => p.id === productId) || products[0];
   });
 
+  const [packaging, setPackaging] = useState("Pouch");
+
   const { addToCart, prepareCheckout } = useCart();
 
   const [isPageLoading, setIsPageLoading] = useState(() => {
@@ -234,7 +236,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
       variantId: selectedVariant.varientId
     } : currentProduct;
 
-    addToCart(productToAdd, quantity);
+    addToCart(productToAdd, quantity, currentProduct.category === "mukhwas" ? packaging : undefined);
     setCartAdded(true);
     setTimeout(() => setCartAdded(false), 2000);
   };
@@ -247,7 +249,11 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
       variantId: selectedVariant.varientId
     } : currentProduct;
 
-    prepareCheckout([{ product: productToAdd, quantity }]);
+    prepareCheckout([{
+      product: productToAdd,
+      quantity,
+      packingType: currentProduct.category === "mukhwas" ? packaging : undefined
+    }]);
     window.location.hash = "#checkout";
   };
 
@@ -405,8 +411,8 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
               </span>
               <span className="text-sm text-[var(--color-dark-text)]/40 line-through">₹{currentProduct.originalPrice}</span>
               <span className="bg-[var(--color-primary)] text-white text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider">
-                {selectedVariant 
-                  ? `${Math.round((1 - selectedVariant.price / currentProduct.originalPrice) * 100)}% OFF` 
+                {selectedVariant
+                  ? `${Math.round((1 - selectedVariant.price / currentProduct.originalPrice) * 100)}% OFF`
                   : currentProduct.discount}
               </span>
             </div>
@@ -458,11 +464,10 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                                 <button
                                   key={val}
                                   onClick={() => handleAttrSelect(key, val)}
-                                  className={`px-5 py-2.5 text-xs font-semibold rounded-full border transition-all duration-300 cursor-pointer ${
-                                    isSelected
+                                  className={`px-5 py-2.5 text-xs font-semibold rounded-full border transition-all duration-300 cursor-pointer ${isSelected
                                       ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-md shadow-[var(--color-primary)]/10"
                                       : "bg-white/80 text-[var(--color-dark-text)]/80 border-black/10 hover:border-black/30 hover:bg-white"
-                                  }`}
+                                    }`}
                                 >
                                   {val}
                                 </button>
@@ -489,11 +494,10 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                         <button
                           key={v.varientId}
                           onClick={() => handleVariantSelect(v)}
-                          className={`px-5 py-2.5 text-xs font-semibold rounded-full border transition-all duration-300 cursor-pointer ${
-                            isSelected 
-                              ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-md shadow-[var(--color-primary)]/10" 
+                          className={`px-5 py-2.5 text-xs font-semibold rounded-full border transition-all duration-300 cursor-pointer ${isSelected
+                              ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-md shadow-[var(--color-primary)]/10"
                               : "bg-white/80 text-[var(--color-dark-text)]/80 border-black/10 hover:border-black/30 hover:bg-white"
-                          }`}
+                            }`}
                         >
                           {v.variantAttributeValues_Only || `Variant ${v.varientId}`}
                         </button>
@@ -503,6 +507,31 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                 </div>
               );
             })()}
+
+            {currentProduct.category === "mukhwas" && (
+              <div className="mb-8 flex flex-col">
+                <span className="text-[11px] uppercase tracking-[0.2em] text-[var(--color-dark-text)]/50 font-semibold block mb-2.5 font-general">
+                  Select Packaging
+                </span>
+                <div className="flex flex-wrap gap-2.5">
+                  {["Pouch", "Bottle"].map((type) => {
+                    const isSelected = packaging === type;
+                    return (
+                      <button
+                        key={type}
+                        onClick={() => setPackaging(type)}
+                        className={`px-5 py-2.5 text-xs font-semibold rounded-full border transition-all duration-300 cursor-pointer ${isSelected
+                            ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-md shadow-[var(--color-primary)]/10"
+                            : "bg-white/80 text-[var(--color-dark-text)]/80 border-black/10 hover:border-black/30 hover:bg-white"
+                          }`}
+                      >
+                        {type}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Stock status indicator */}
             {((selectedVariant ? selectedVariant.totalAvailableStock : currentProduct.totalAvailableStock) !== undefined) && (
@@ -575,9 +604,9 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
 
                 {/* Buy Now with custom cinematic purple gradient and soft glow */}
                 <motion.button
-                  whileHover={{ 
+                  whileHover={{
                     scale: 1.03,
-                    boxShadow: "0 10px 25px -5px rgba(91, 42, 134, 0.4)" 
+                    boxShadow: "0 10px 25px -5px rgba(91, 42, 134, 0.4)"
                   }}
                   whileTap={{ scale: 0.97 }}
                   onClick={handleBuyNow}

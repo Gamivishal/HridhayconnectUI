@@ -51,3 +51,12 @@
 - [x] Implement dynamic price formatting `renderPrice()` in `TeaMasalaCategoryPage.tsx`
 - [x] Implement dynamic price formatting `renderPrice()` in `HairOilCategoryPage.tsx`
 - [x] Implement dynamic price formatting `renderPrice()` and mount-time variant enrichment in `HridhaySpecialCategoryPage.tsx`
+
+## Packaging Option for Mukhwas Products
+- [x] Update `CartItem` and related methods in `CartContext.tsx`
+- [x] Add packaging selection dropdown to `MukhwasCategoryPage.tsx`
+- [x] Add packaging selection dropdown to `ProductPage.tsx`
+- [x] Display selected packaging type in `CartPage.tsx`
+- [x] Display selected packaging type in `MiniCartDrawer.tsx`
+- [x] Display selected packaging type in `CheckoutPage.tsx`
+- [x] Verify everything compiles and works correctly

@@ -1,51 +1,54 @@
-# Implementation Plan - Mukhwas Variants and Stock Curation
+# Implementation Plan - Packaging Option for Mukhwas Products
 
-We will enhance the API product fetching to support multiple variants per product, display only one entry per product in the listing, and show variant options and low-stock warnings on the details page.
+We will add a premium packaging option selection (Pouch vs. Bottle) for all products on the Mukhwas Category Page and the Product Details page (for Mukhwas category). The selected option will be synced dynamically to the cart (local state and API calls) via a new `packingType` parameter, ensuring consistent checkout selections.
 
 ## Proposed Changes
 
-### 1. API Product Service
-#### [MODIFY] [productService.ts](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/api/productService.ts)
-* Update `fetchProductsFromApi` to group API response records by `ProductId`.
-* For each unique `ProductId`, collect all variant records (prices, SKUs, images, attribute values, stock levels) into a new `variants` array.
-* Set the main product properties (price, description, main image) using the first variant as default, and assign the variants list to the product object.
+### 1. Cart Context and State Management
+#### [MODIFY] [CartContext.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/context/CartContext.tsx)
+* Extend the `CartItem` interface to include an optional `packingType?: string` field.
+* Update `resolveCartItem` to retrieve `packingType` case-insensitively from the API response (e.g. mapping `apiCartItem.packingType` or `apiCartItem.PackingType`).
+* Update `addToCart` to accept an optional `packingType?: string` argument.
+* Update `saveCartItemToApi` and `removeCartItemFromApi` to accept and send `packingType` inside the POST/DELETE payload under the key `"packingType"`.
+* Update the guest cart localStorage fallback to merge items with matching `id` AND matching `packingType`, treating different packaging types as separate line items.
 
-### 2. Product Interfaces
-#### [MODIFY] [products.ts](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/data/products.ts)
-* Extend the `Product` interface to include optional fields:
-  * `totalAvailableStock?: number`
-  * `variants?: ProductVariant[]`
-* Define the `ProductVariant` interface:
-  ```typescript
-  export interface ProductVariant {
-    varientId: number;
-    variantAttributeValues_Only: string;
-    variantAttributes: string;
-    sku: string;
-    price: number;
-    imagePath: string;
-    totalAvailableStock: number;
-  }
-  ```
+---
 
-### 3. Mukhwas Category Page
+### 2. Mukhwas Category Page UI
 #### [MODIFY] [MukhwasCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/MukhwasCategoryPage.tsx)
-* Instead of mapping only `staticMukhwas`, map all mukhwas products returned by the API (grouped and resolved).
-* In the `MukhwasCard` details block, check if `totalAvailableStock` is under 10. If so, display a red label: `"Available only: {stock}"`.
-* Update `MukhwasCardProps` to reflect the new `totalAvailableStock` field.
+* Introduce state `packaging` (defaulting to `"Pouch"`) inside the `MukhwasCard` component.
+* Add a styled dropdown selection for "Packaging" with options `"Pouch"` and `"Bottle"` inside the `MukhwasCard` details layout, stopping propagation of clicks to prevent accidental navigation.
+* Pass the selected `packaging` value to `handleAddToCart` when the user clicks the "Add to Ritual" button.
+* Update the page-level `handleAddToCart` function signature to receive and forward `packingType` to `addToCart`.
 
-### 4. Product Details Page
+---
+
+### 3. Product Details Page UI
 #### [MODIFY] [ProductPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ProductPage.tsx)
-* Introduce state `selectedVariant` (defaulting to the first variant if present).
-* If a product has multiple variants, display a premium selector (pills) for attributes (e.g. `"100, Pouch"`, `"200, Pouch"`).
-* When a variant is selected, update the active price, main image, and stock status.
-* If stock is under 10, display a red warning message: `"Available only: {stock}"`.
+* Add a state `packaging` (defaulting to `"Pouch"`) inside `ProductPage`.
+* If the active product belongs to the `"mukhwas"` category, render a premium select dropdown for "Select Packaging" with options `"Pouch"` and `"Bottle"`.
+* Pass the selected `packaging` to `addToCart` during `handleAddToCart` and `prepareCheckout` during `handleBuyNow`.
+
+---
+
+### 4. Cart Page & Drawer UI Displays
+#### [MODIFY] [CartPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/CartPage.tsx)
+* If `item.packingType` is present, display it under the product name as a subtle pill/badge: `Packaging: {item.packingType}`.
+
+#### [MODIFY] [MiniCartDrawer.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/MiniCartDrawer.tsx)
+* If `item.packingType` is present, display it under the category name as a badge: `Packaging: {item.packingType}`.
+
+#### [MODIFY] [CheckoutPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/CheckoutPage.tsx)
+* If `item.packingType` is present in checkout item listings, render it under the product tagline.
 
 ---
 
 ## Verification Plan
 
 ### Manual Verification
-* Ensure Mukhwas listing shows exactly one card per product (e.g., Chocolate Mukhwas, Dhana Dal, Digest).
-* Ensure low stock (< 10) displays "Available only: {stock}" in red on the card.
-* Ensure clicking into details displays weight/packaging options and updates price/image/stock on option change.
+1. Open the Mukhwas Category Page.
+2. Select "Bottle" as the packaging for a mukhwas card and click "Add to Ritual".
+3. Verify that the Cart Drawer slides open and displays the product name with a "Packaging: Bottle" badge.
+4. Try adding the same product with "Pouch" as the packaging and check that they are added as two separate line items.
+5. Proceed to Cart Page and Checkout Page to verify the chosen packaging options are displayed correctly.
+6. Verify console logs for the `/Cart/SaveCart` request payload to confirm `"packingType": "Bottle"` or `"Pouch"` is sent to the server.

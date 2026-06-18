@@ -6,11 +6,12 @@ import { API_BASE_URL } from "../api/config";
 export interface CartItem {
   product: Product;
   quantity: number;
+  packingType?: string;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (product: Product, quantity?: number) => void;
+  addToCart: (product: Product, quantity?: number, packingType?: string) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -32,16 +33,22 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 // Helper to resolve API cart item to local CartItem structure
 export function resolveCartItem(apiCartItem: any): CartItem | null {
   console.log("[resolveCartItem] Raw API Cart Item:", apiCartItem);
-  const productId = getCaseInsensitiveProperty<any>(apiCartItem, "ProductId");
-  const variantId = getCaseInsensitiveProperty<any>(apiCartItem, "VariantId");
-  const quantity = getCaseInsensitiveProperty<number>(apiCartItem, "Quantity") || 1;
-  const productName = getCaseInsensitiveProperty<string>(apiCartItem, "ProductName") || "";
+  const productId = getCaseInsensitiveProperty<any>(apiCartItem, "ProductId") || getCaseInsensitiveProperty<any>(apiCartItem, "id");
+  const variantId = getCaseInsensitiveProperty<any>(apiCartItem, "VariantId") || getCaseInsensitiveProperty<any>(apiCartItem, "VarientId");
+  const quantity = getCaseInsensitiveProperty<number>(apiCartItem, "Quantity") || getCaseInsensitiveProperty<number>(apiCartItem, "qty") || 1;
+  const productName = getCaseInsensitiveProperty<string>(apiCartItem, "ProductName") || getCaseInsensitiveProperty<string>(apiCartItem, "name") || "";
   const price = getCaseInsensitiveProperty<number>(apiCartItem, "Price") || 0;
+  
+  const rawPackingType = getCaseInsensitiveProperty<any>(apiCartItem, "packingType") || getCaseInsensitiveProperty<any>(apiCartItem, "PackingType") || "";
+  const packingType = typeof rawPackingType === "string" ? rawPackingType : String(rawPackingType);
+
+  const imagePathRaw = getCaseInsensitiveProperty<string>(apiCartItem, "ImagePath") || getCaseInsensitiveProperty<string>(apiCartItem, "imagepath") || "";
+  const resolvedImg = imagePathRaw ? resolveImageUrl(imagePathRaw) : null;
 
   const parsedProductId = (productId && typeof productId !== "object" && !isNaN(Number(productId))) ? Number(productId) : 0;
   const parsedVariantId = (variantId && typeof variantId !== "object" && !isNaN(Number(variantId)) && Number(variantId) !== 0) ? Number(variantId) : undefined;
 
-  console.log(`[resolveCartItem] Extracted values: ProductId=${parsedProductId}, VariantId=${parsedVariantId}, Quantity=${quantity}, ProductName=${productName}, Price=${price}`);
+  console.log(`[resolveCartItem] Extracted values: ProductId=${parsedProductId}, VariantId=${parsedVariantId}, Quantity=${quantity}, ProductName=${productName}, Price=${price}, PackingType=${packingType}, ImagePath=${imagePathRaw}`);
 
   if (!parsedProductId) {
     console.warn("[resolveCartItem] Falsy ProductId, skipping resolution");
@@ -60,6 +67,11 @@ export function resolveCartItem(apiCartItem: any): CartItem | null {
     console.log(`[resolveCartItem] Found matched product in static DB: ${matchedProduct.name} (id: ${matchedProduct.id})`);
     let finalProduct = { ...matchedProduct };
 
+    // Update with dynamic API image if provided
+    if (resolvedImg) {
+      finalProduct.images = [resolvedImg, ...finalProduct.images.slice(1)];
+    }
+
     // If a specific variant was selected, update product name, price, and image to match that variant
     if (parsedVariantId && finalProduct.variants) {
       const variant = finalProduct.variants.find(v => Number(v.varientId) === parsedVariantId);
@@ -70,6 +82,10 @@ export function resolveCartItem(apiCartItem: any): CartItem | null {
           price: variant.price,
           name: `${finalProduct.name} (${variant.variantAttributeValues_Only})`
         };
+        // Use variant image if no dynamic image was provided by the API cart item
+        if (!resolvedImg && variant.imagePath) {
+           finalProduct.images = [resolveImageUrl(variant.imagePath), ...finalProduct.images.slice(1)];
+        }
       }
     }
 
@@ -80,24 +96,26 @@ export function resolveCartItem(apiCartItem: any): CartItem | null {
         productId: parsedProductId,
         variantId: parsedVariantId
       },
-      quantity
+      quantity,
+      packingType
     };
   }
 
   // Fallback: If not found in global products list, construct a high-fidelity placeholder product
   console.log(`[resolveCartItem] Product not found in DB. Creating fallback product for: ${productName} (ProductId: ${parsedProductId})`);
 
-  const imagePathRaw = getCaseInsensitiveProperty<string>(apiCartItem, "ImagePath") || "";
-  const resolvedImg = resolveImageUrl(imagePathRaw);
+  const defaultImg = resolvedImg || "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800&q=80";
 
   const fallbackProduct: Product = {
-    id: parsedVariantId ? `${parsedProductId}-${parsedVariantId}` : String(parsedProductId),
+    id: parsedVariantId 
+      ? `${parsedProductId}-${parsedVariantId}${packingType ? `-${packingType.toLowerCase()}` : ""}` 
+      : `${parsedProductId}${packingType ? `-${packingType.toLowerCase()}` : ""}`,
     name: productName,
     price: price,
     originalPrice: Math.round(price * 1.8),
     discount: "45% OFF",
     tag: "",
-    images: [resolvedImg],
+    images: [defaultImg],
     category: "mukhwas", // default category
     tagline: "Indian heritage premium blend",
     rating: 4.8,
@@ -116,7 +134,8 @@ export function resolveCartItem(apiCartItem: any): CartItem | null {
 
   return {
     product: fallbackProduct,
-    quantity
+    quantity,
+    packingType
   };
 }
 
@@ -134,7 +153,17 @@ function getCustomerIdFromToken(token: string): string | null {
         .join("")
     );
     const decoded = JSON.parse(jsonPayload);
-    const customerId = decoded.CustomerId || decoded.customerId || decoded.Id || decoded.id || decoded.nameid;
+    const customerId = decoded.CustomerId || 
+                       decoded.customerId || 
+                       decoded.Id || 
+                       decoded.id || 
+                       decoded.nameid || 
+                       decoded.sub ||
+                       decoded.uid ||
+                       decoded.UserId ||
+                       decoded.userid ||
+                       decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+                       decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
     console.log("[getCustomerIdFromToken] Decoded JWT CustomerId:", customerId);
     return customerId ? String(customerId) : null;
   } catch (e) {
@@ -155,14 +184,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     let pId = product.productId;
     let vId = product.variantId;
 
-    if (product.id && product.id.includes("-")) {
-      const parts = product.id.split("-");
+    let cleanId = product.id;
+    if (cleanId) {
+      cleanId = cleanId.replace(/-(pouch|bottle)$/i, "");
+    }
+
+    if (cleanId && cleanId.includes("-")) {
+      const parts = cleanId.split("-");
       if (!pId) pId = Number(parts[0]);
       if (!vId) vId = Number(parts[1]);
     }
 
     if (!pId) {
-      pId = Number(product.id) || 0;
+      pId = Number(cleanId) || 0;
     }
 
     if (!vId) {
@@ -244,6 +278,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
+      // If table3 is still not found, try to find the "Third Table" by counting arrays
+      if (!Array.isArray(table3)) {
+        const arrayKeys = Object.keys(dataObj).filter(k => Array.isArray(dataObj[k]));
+        if (arrayKeys.length >= 3) {
+          console.log(`[Cart API] table3 not found by name. Using the 3rd array: ${arrayKeys[2]}`);
+          table3 = dataObj[arrayKeys[2]];
+        } else if (arrayKeys.length > 0) {
+          // Fallback to the last array if there are less than 3
+          console.log(`[Cart API] Less than 3 arrays found. Using the last array: ${arrayKeys[arrayKeys.length - 1]}`);
+          table3 = dataObj[arrayKeys[arrayKeys.length - 1]];
+        }
+      }
+
       console.log("[Cart API Response] Found table3 cart items:", table3);
 
       const resolvedItems: CartItem[] = [];
@@ -315,7 +362,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         customerId: Number(customerId),
         productId: Number(productId),
         variantId: Number(variantId),
-        quantity: Number(item.quantity)
+        quantity: Number(item.quantity),
+        packingType: item.packingType || ""
       };
 
       try {
@@ -344,7 +392,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     await syncCartWithApi();
   };
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount and listen to auth changes
   useEffect(() => {
     try {
       const storedCart = localStorage.getItem("hridhay_cart");
@@ -366,6 +414,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     // Trigger initial API cart sync if logged in
     syncCartWithApi();
+
+    const handleAuthChange = () => {
+      console.log("[CartProvider] auth-change event detected. Syncing cart with API...");
+      syncCartWithApi();
+    };
+
+    window.addEventListener("auth-change", handleAuthChange);
+    return () => {
+      window.removeEventListener("auth-change", handleAuthChange);
+    };
   }, []);
 
   // Save to localStorage on any cartItems changes
@@ -397,7 +455,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Helper to post a cart mutation to the backend
-  const saveCartItemToApi = async (productId: number, variantId: number, quantityChange: number) => {
+  const saveCartItemToApi = async (productId: number, variantId: number, quantityChange: number, packingType?: string) => {
     const token = localStorage.getItem("authToken");
     const customerId = localStorage.getItem("customerId");
     if (!token || !customerId) return false;
@@ -420,7 +478,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         "customerId": Number(customerId),
         "productId": Number(productId),
         "variantId": Number(variantId),
-        "quantity": Number(quantityChange)
+        "quantity": Number(quantityChange),
+        "packingType": packingType || ""
       };
 
       console.log("[saveCartItemToApi] Request payload:", payload);
@@ -463,7 +522,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Helper to post a cart removal to the backend
-  const removeCartItemFromApi = async (productId: number, variantId: number, quantity: number) => {
+  const removeCartItemFromApi = async (productId: number, variantId: number, quantity: number, packingType?: string) => {
     const token = localStorage.getItem("authToken");
     const customerId = localStorage.getItem("customerId");
     if (!token || !customerId) return false;
@@ -486,7 +545,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         "customerId": Number(customerId),
         "productId": Number(productId),
         "variantId": Number(variantId),
-        "quantity": Number(quantity)
+        "quantity": Number(quantity),
+        "packingType": packingType || ""
       };
 
       console.log("[removeCartItemFromApi] Request payload:", payload);
@@ -528,7 +588,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const addToCart = async (product: Product, quantity = 1) => {
+  const addToCart = async (product: Product, quantity = 1, packingType?: string) => {
     if (isCartLoading || isSyncingRef.current) {
       console.log("[addToCart] Cart is loading/syncing. Ignoring request.");
       return;
@@ -542,7 +602,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     if (token && customerId && !isNaN(resolvedProductId)) {
       console.log(`[addToCart] Logged in. Syncing addition of ${product.name} (qty: ${quantity}) to API...`);
-      const success = await saveCartItemToApi(resolvedProductId, resolvedVariantId, quantity);
+      const success = await saveCartItemToApi(resolvedProductId, resolvedVariantId, quantity, packingType);
       if (success) {
         setIsCartOpen(true);
         return;
@@ -550,16 +610,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Local fallback
+    // Modify product ID locally if packaging is specified to distinguish the cart items
+    const localProduct = packingType 
+      ? { ...product, id: `${product.id}-${packingType.toLowerCase()}` } 
+      : product;
+
     const existingIdx = cartItems.findIndex(item =>
-      item.product.id === product.id &&
-      Number(item.product.variantId || 0) === Number(product.variantId || 0)
+      item.product.id === localProduct.id &&
+      Number(item.product.variantId || 0) === Number(localProduct.variantId || 0) &&
+      (item.packingType || "") === (packingType || "")
     );
     let newItems = [...cartItems];
 
     if (existingIdx > -1) {
       newItems[existingIdx].quantity += quantity;
     } else {
-      newItems.push({ product, quantity });
+      newItems.push({ product: localProduct, quantity, packingType });
     }
 
     saveCart(newItems);
@@ -581,7 +647,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       if (token && customerId && !isNaN(resolvedProductId)) {
         console.log(`[removeFromCart] Logged in. Syncing deletion of ${item.product.name} (qty: ${item.quantity}) to API...`);
-        const success = await removeCartItemFromApi(resolvedProductId, resolvedVariantId, item.quantity);
+        const success = await removeCartItemFromApi(resolvedProductId, resolvedVariantId, item.quantity, item.packingType);
         if (success) return;
       }
     }
@@ -612,7 +678,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (token && customerId && !isNaN(resolvedProductId)) {
         const quantityChange = quantity - item.quantity;
         console.log(`[updateQuantity] Logged in. Syncing quantity change of ${item.product.name} (${quantityChange}) to API...`);
-        const success = await saveCartItemToApi(resolvedProductId, resolvedVariantId, quantityChange);
+        const success = await saveCartItemToApi(resolvedProductId, resolvedVariantId, quantityChange, item.packingType);
         if (success) return;
       }
     }

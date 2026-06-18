@@ -219,6 +219,13 @@ export function CartPage() {
                         <p className="text-[11.5px] text-[var(--color-dark-text)]/50 font-light font-satoshi line-clamp-2 leading-relaxed">
                           {item.product.tagline}
                         </p>
+                        {item.packingType && (
+                          <div className="mt-1.5">
+                            <span className="text-[10px] text-[var(--color-primary)] font-satoshi font-semibold bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 px-2 py-0.5 rounded-full inline-block">
+                              Packaging: {item.packingType}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       {/* Quantity & Pricing details */}
                       <div className="flex justify-between items-center mt-4 pt-3 border-t border-black/5">

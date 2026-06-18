@@ -736,6 +736,13 @@ export function CheckoutPage() {
                     <div className="flex-1 min-w-0">
                       <h4 className="text-xs font-semibold text-[var(--color-dark-text)] truncate">{item.product.name}</h4>
                       <span className="text-[10px] text-[var(--color-dark-text)]/40 block mt-0.5 uppercase tracking-wider font-light">{item.product.tagline}</span>
+                      {item.packingType && (
+                        <div className="mt-1">
+                          <span className="text-[9px] text-[var(--color-primary)] font-satoshi font-semibold bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 px-2 py-0.5 rounded-md inline-block">
+                            Packaging: {item.packingType}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-[var(--color-primary)] font-bold">₹{item.product.price}</span>
                         <span className="text-[10px] text-[var(--color-dark-text)]/40 font-light">Qty: {item.quantity}</span>

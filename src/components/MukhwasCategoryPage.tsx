@@ -25,7 +25,7 @@ interface MukhwasCardProps {
   index: number;
   cartState: Record<string, boolean>;
   wishlistState: Record<string, boolean>;
-  handleAddToCart: (id: string) => void;
+  handleAddToCart: (id: string, packingType?: string) => void;
   toggleWishlist: (id: string) => void;
 }
 
@@ -37,6 +37,7 @@ function MukhwasCard({
   handleAddToCart,
   toggleWishlist
 }: MukhwasCardProps) {
+  const [packaging, setPackaging] = useState("Pouch");
   const productRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: productRef,
@@ -106,7 +107,7 @@ function MukhwasCard({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleAddToCart(mukhwas.id);
+              handleAddToCart(mukhwas.id, packaging);
             }}
             className="bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] backdrop-blur-md text-white px-8 py-3.5 rounded-full text-[10px] font-semibold uppercase tracking-wider transition-colors duration-300 flex items-center gap-2 shadow-lg cursor-pointer"
           >
@@ -137,9 +138,26 @@ function MukhwasCard({
           </div>
         </div>
 
-        <p className="text-[11.5px] text-[var(--color-dark-text)]/60 font-light font-satoshi mb-4 leading-relaxed line-clamp-2">
+        <p className="text-[11.5px] text-[var(--color-dark-text)]/60 font-light font-satoshi mb-3 leading-relaxed line-clamp-2">
           {mukhwas.desc}
         </p>
+
+        {/* Packaging Dropdown Selection */}
+        <div 
+          className="flex items-center justify-between gap-4 mt-1 mb-3 text-xs"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className="text-[var(--color-dark-text)]/50 font-satoshi font-light">Packaging:</span>
+          <select
+            value={packaging}
+            onChange={(e) => setPackaging(e.target.value)}
+            className="bg-white/60 border border-black/10 rounded-xl px-3 py-1.5 text-xs text-[var(--color-dark-text)] focus:border-[var(--color-primary)] focus:outline-none transition-all cursor-pointer font-satoshi font-medium"
+          >
+            <option value="Pouch">Pouch</option>
+            <option value="Bottle">Bottle</option>
+          </select>
+        </div>
+
 
         {mukhwas.totalAvailableStock !== undefined && mukhwas.totalAvailableStock < 10 && (
           <div className="text-[10px] font-semibold text-red-600 mb-2.5 uppercase tracking-wider">
@@ -317,10 +335,10 @@ export function MukhwasCategoryPage() {
 
   const { addToCart } = useCart();
 
-  const handleAddToCart = (id: string) => {
+  const handleAddToCart = (id: string, packingType?: string) => {
     const product = products.find(p => p.id === id);
     if (product) {
-      addToCart(product, 1);
+      addToCart(product, 1, packingType);
     }
     setCartState(prev => ({ ...prev, [id]: true }));
     setTimeout(() => {

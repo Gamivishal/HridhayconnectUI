@@ -137,6 +137,13 @@ export function MiniCartDrawer() {
                         <span className="text-[9px] uppercase tracking-wider text-[var(--color-primary)] font-semibold mt-0.5 block">
                           {item.product.category.replace("-", " ")}
                         </span>
+                        {item.packingType && (
+                          <div className="mt-1">
+                            <span className="text-[9px] text-[var(--color-primary)] font-satoshi font-semibold bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 px-2 py-0.5 rounded-md inline-block">
+                              Packaging: {item.packingType}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Quantity Controls & Price */}
