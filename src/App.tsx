@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "./components/Navigation";
 import { HeroSection } from "./components/HeroSection";
+import { CategoryCarousel } from "./components/CategoryCarousel";
 import { Marquee } from "./components/Marquee";
 import { BrandStory } from "./components/BrandStory";
 import { Ingredients } from "./components/Ingredients";
@@ -175,7 +176,9 @@ export default function App() {
       {currentPage === 'home' ? (
         <>
           <HeroSection />
+
           <Marquee />
+          <CategoryCarousel />
           <BrandStory />
           <Ingredients />
           <FeaturedCollection />

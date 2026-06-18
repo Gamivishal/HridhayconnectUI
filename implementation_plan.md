@@ -1,54 +1,36 @@
-# Implementation Plan - Packaging Option for Mukhwas Products
+# Dynamic Category Carousel Section
 
-We will add a premium packaging option selection (Pouch vs. Bottle) for all products on the Mukhwas Category Page and the Product Details page (for Mukhwas category). The selected option will be synced dynamically to the cart (local state and API calls) via a new `packingType` parameter, ensuring consistent checkout selections.
+## Goal
+To implement a new category-filtered product carousel section at the top of the homepage (just below the Hero section). This section will fetch all products dynamically, filter them client-side instantly based on the selected category tab, and display them in a smooth, auto-playing 4-item carousel, ensuring no variant duplicates are shown.
 
-## Proposed Changes
+## User Review Required
+> [!IMPORTANT]
+> Since there are no third-party carousel libraries installed (like Swiper), I will build a highly-performant, custom carousel using `motion/react` (Framer Motion) and native CSS which you already have installed. It will feature seamless autoplay and next/prev controls as requested. 
 
-### 1. Cart Context and State Management
-#### [MODIFY] [CartContext.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/context/CartContext.tsx)
-* Extend the `CartItem` interface to include an optional `packingType?: string` field.
-* Update `resolveCartItem` to retrieve `packingType` case-insensitively from the API response (e.g. mapping `apiCartItem.packingType` or `apiCartItem.PackingType`).
-* Update `addToCart` to accept an optional `packingType?: string` argument.
-* Update `saveCartItemToApi` and `removeCartItemFromApi` to accept and send `packingType` inside the POST/DELETE payload under the key `"packingType"`.
-* Update the guest cart localStorage fallback to merge items with matching `id` AND matching `packingType`, treating different packaging types as separate line items.
+> [!NOTE]
+> For the layout, since displaying 4 items on mobile screens would make them incredibly small, the carousel will intelligently scale down to showing 1-2 items on mobile/tablets, but will show the requested 4 items at a time on desktop screens. Does this sound good?
 
----
+## Proposed Approach
 
-### 2. Mukhwas Category Page UI
-#### [MODIFY] [MukhwasCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/MukhwasCategoryPage.tsx)
-* Introduce state `packaging` (defaulting to `"Pouch"`) inside the `MukhwasCard` component.
-* Add a styled dropdown selection for "Packaging" with options `"Pouch"` and `"Bottle"` inside the `MukhwasCard` details layout, stopping propagation of clicks to prevent accidental navigation.
-* Pass the selected `packaging` value to `handleAddToCart` when the user clicks the "Add to Ritual" button.
-* Update the page-level `handleAddToCart` function signature to receive and forward `packingType` to `addToCart`.
+1. **Data Fetching (Performance Optimized)**:
+   - Client-side filtering is absolutely the fastest and best approach for your site. We will call your API endpoint `https://localhost:7103/api/Product/GetAll` with `{ "id": -2, "categoryId": 0, "search": "" }` exactly once on mount to retrieve ALL products.
+   - We will use your existing `productService.ts` mapping logic, which inherently handles deduplicating variants and returning only the single base product per item.
 
----
+2. **Component Architecture**:
+   - Create a new component `CategoryCarousel.tsx` in `src/components`.
+   - Add category tabs (`All`, `Soap`, `Hair Oil`, `Mukhwas`, `Tea Masala`, `Hridhay Special`) with `All` selected by default.
+   - Filtering will apply instantly without any additional API calls.
+   - Include Next/Prev buttons to slide through the products.
+   - Implement an autoplay timer (e.g. 3-4 seconds per slide) that pauses when the user hovers over a product.
 
-### 3. Product Details Page UI
-#### [MODIFY] [ProductPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ProductPage.tsx)
-* Add a state `packaging` (defaulting to `"Pouch"`) inside `ProductPage`.
-* If the active product belongs to the `"mukhwas"` category, render a premium select dropdown for "Select Packaging" with options `"Pouch"` and `"Bottle"`.
-* Pass the selected `packaging` to `addToCart` during `handleAddToCart` and `prepareCheckout` during `handleBuyNow`.
-
----
-
-### 4. Cart Page & Drawer UI Displays
-#### [MODIFY] [CartPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/CartPage.tsx)
-* If `item.packingType` is present, display it under the product name as a subtle pill/badge: `Packaging: {item.packingType}`.
-
-#### [MODIFY] [MiniCartDrawer.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/MiniCartDrawer.tsx)
-* If `item.packingType` is present, display it under the category name as a badge: `Packaging: {item.packingType}`.
-
-#### [MODIFY] [CheckoutPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/CheckoutPage.tsx)
-* If `item.packingType` is present in checkout item listings, render it under the product tagline.
-
----
+3. **Homepage Integration**:
+   - Place this new `<CategoryCarousel />` component directly below the `<HeroSection />` in `App.tsx` so it forms the "first section" of the main content.
 
 ## Verification Plan
-
+### Automated Verification
+- Ensure the API payload sends exactly what was requested.
+- Ensure only base products are rendered (no multiple variants of the same product).
 ### Manual Verification
-1. Open the Mukhwas Category Page.
-2. Select "Bottle" as the packaging for a mukhwas card and click "Add to Ritual".
-3. Verify that the Cart Drawer slides open and displays the product name with a "Packaging: Bottle" badge.
-4. Try adding the same product with "Pouch" as the packaging and check that they are added as two separate line items.
-5. Proceed to Cart Page and Checkout Page to verify the chosen packaging options are displayed correctly.
-6. Verify console logs for the `/Cart/SaveCart` request payload to confirm `"packingType": "Bottle"` or `"Pouch"` is sent to the server.
+- Test that clicking category tabs instantly filters the products.
+- Verify the auto-play functionality works and transitions smoothly.
+- Test that clicking next/prev correctly changes the viewed products.

@@ -265,6 +265,16 @@ export async function fetchProductsFromApi(categoryId: number): Promise<Product[
       const allImages = Array.from(new Set([...productImages, ...variantOnlyImages]))
         .filter(url => url !== "https://localhost:7103/Uploads/Product/no-image.png");
 
+      // Determine category string
+      const catMap: Record<number, string> = {
+        15: "soap",
+        16: "hair-oil",
+        17: "mukhwas",
+        18: "tea-masala",
+        19: "hridhay-special"
+      };
+      const resolvedCategory = localProduct?.category ?? (categoryIdVal ? catMap[categoryIdVal] : "soap");
+
       return {
         id: localProduct?.id || apiSlug || apiSkuSlug || String(prodId),
         name: prodName || (localProduct?.name ?? ""),
@@ -273,7 +283,7 @@ export async function fetchProductsFromApi(categoryId: number): Promise<Product[
         discount: localProduct?.discount ?? `${Math.round((1 - priceVal / (priceVal * 1.8)) * 100)}% OFF`,
         tag: localProduct?.tag ?? "",
         images: allImages.length > 0 ? allImages : ["https://localhost:7103/Uploads/Product/no-image.png"],
-        category: (localProduct?.category ?? (categoryIdVal === 17 ? "mukhwas" : "soap")) as any,
+        category: resolvedCategory as any,
         tagline: localProduct?.tagline ?? prodDesc ?? "",
         rating: localProduct?.rating ?? 4.8,
         ratingCount: localProduct?.ratingCount ?? 120,
