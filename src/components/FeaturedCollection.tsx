@@ -44,11 +44,14 @@ function CollectionProductCard({ p, i }: CollectionProductCardProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-dark-text)]/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
         
+        {/*
+        // NOTE: To re-add the product tag (e.g. "Deep Purifying" or "Bestseller") in the future, uncomment this block:
         {p.tag && (
-          <div className="absolute top-4 left-4 bg-white/80 backdrop-blur-md px-3 py-1 rounded-full text-[0.65rem] font-medium tracking-widest uppercase text-[var(--color-primary)] z-10">
+          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-[0.6rem] font-bold uppercase tracking-wider text-[var(--color-primary)] z-10 shadow-sm">
             {p.tag}
           </div>
         )}
+        */}
 
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-700 ease-out z-20">
           <button className="bg-[var(--color-primary)]/90 backdrop-blur-md text-white px-8 py-3 rounded-full text-xs font-medium uppercase tracking-[0.1em] hover:bg-white hover:text-[var(--color-primary)] transition-colors">
@@ -92,7 +95,7 @@ export function FeaturedCollection() {
   ];
 
   return (
-    <section id="featured" className="py-16 md:py-24 px-6 md:px-12 max-w-[1600px] mx-auto relative">
+    <section id="featured" className="py-16 md:py-24 px-2 sm:px-4 md:px-12 max-w-[1600px] mx-auto relative">
       <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-16 md:mb-24 relative z-10">
         <div>
           <span className="text-[var(--color-primary)] font-medium tracking-[0.2em] uppercase text-xs sm:text-sm mb-6 flex items-center gap-4">
@@ -112,7 +115,7 @@ export function FeaturedCollection() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-16">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-8">
         {products.map((p, i) => (
           <CollectionProductCard key={i} p={p} i={i} />
         ))}

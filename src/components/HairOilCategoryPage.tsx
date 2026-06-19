@@ -13,6 +13,8 @@ interface HairOilCardProps {
     name: string;
     price: number;
     originalPrice: number;
+    sellPrice?: number;
+    discountPercent?: number;
     img: string;
     desc: string;
     benefits: string[];
@@ -46,12 +48,13 @@ function HairOilCard({
 
   const renderPrice = () => {
     if (oil.variants && oil.variants.length > 1) {
-      const prices = oil.variants.map(v => v.price);
+      const prices = oil.variants.map(v => v.sellPrice ?? v.price);
       const minPrice = Math.min(...prices);
       const maxPrice = Math.max(...prices);
+      if (minPrice === maxPrice) return `₹${minPrice}`;
       return `₹${minPrice} - ₹${maxPrice}`;
     }
-    return `₹${oil.price}`;
+    return `₹${oil.sellPrice ?? oil.price}`;
   };
 
   return (
@@ -79,14 +82,28 @@ function HairOilCard({
 
         {/* Floating Badges */}
         <div className="absolute top-5 left-5 flex flex-col gap-2 items-start">
+          {/*
+          // NOTE: To re-add the product tag (e.g. "Deep Purifying" or "Bestseller") in the future, uncomment this block:
           {oil.tag && (
             <div className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-semibold tracking-widest uppercase text-[var(--color-primary)] border border-[var(--color-primary)]/5 z-10 shadow-sm">
               {oil.tag}
             </div>
           )}
-          <div className="bg-[var(--color-primary)] text-white px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wider z-10 shadow-sm">
-            {oil.discount}
-          </div>
+          */}
+          {(() => {
+            const sp = oil.sellPrice ?? oil.price;
+            const op = oil.originalPrice ?? oil.price;
+            const dp = oil.discountPercent ?? 0;
+            if (sp === op) return null;
+            if (dp > 0) {
+              return (
+                <div className="bg-[var(--color-primary)] text-white px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wider z-10 shadow-sm">
+                  {Math.round(dp)}% OFF
+                </div>
+              );
+            }
+            return null;
+          })()}
         </div>
 
         {/* Wishlist Toggle Button */}
@@ -133,7 +150,14 @@ function HairOilCard({
           </h3>
           <div className="flex items-center gap-2 font-serif text-lg">
             <span className="text-[var(--color-primary)] font-semibold">{renderPrice()}</span>
-            <span className="text-xs text-[var(--color-dark-text)]/40 line-through">₹{oil.originalPrice}</span>
+            {(() => {
+              const sp = oil.sellPrice ?? oil.price;
+              const op = oil.originalPrice ?? oil.price;
+              if (sp !== op) {
+                return <span className="text-xs text-[var(--color-dark-text)]/40 line-through">₹{op}</span>;
+              }
+              return null;
+            })()}
           </div>
         </div>
 
@@ -227,9 +251,11 @@ export function HairOilCategoryPage() {
           const cardOils = fetched.map(p => ({
             id: p.id,
             name: p.name,
-            price: p.price,
-            originalPrice: p.originalPrice,
-            img: p.images?.[0] || "https://localhost:7103/Uploads/Product/no-image.png",
+            price: p.originalPrice ?? p.price,
+            sellPrice: p.sellPrice ?? p.price,
+            discountPercent: p.discountPercent ?? 0,
+            originalPrice: p.originalPrice ?? p.price,
+            img: p.images?.[0] || "/Image/Noimage.jpg",
             desc: p.desc,
             benefits: p.benefits || [
               "Nourishes the scalp & strengthens roots",
@@ -349,7 +375,7 @@ export function HairOilCategoryPage() {
       />
 
       {/* 2. Premium Product Showcase Grid */}
-      <section id="products-grid" className="py-24 md:py-32 px-6 md:px-12 max-w-[1600px] mx-auto z-20 relative border-t border-[var(--color-primary)]/5">
+      <section id="products-grid" className="py-24 md:py-32 px-2 sm:px-4 md:px-12 max-w-[1600px] mx-auto z-20 relative border-t border-[var(--color-primary)]/5">
 
         {/* Section Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-20">
@@ -375,7 +401,7 @@ export function HairOilCategoryPage() {
             <span className="text-xs uppercase tracking-[0.2em] font-medium font-general">Retrieving apothecary items...</span>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-14">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-8">
             {oilsList.map((oil, index) => (
               <HairOilCard
                 key={oil.id}

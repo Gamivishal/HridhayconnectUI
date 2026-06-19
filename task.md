@@ -1,5 +1,4 @@
-- [x] Create `CategoryCarousel.tsx` component with category tabs and slider logic.
-- [x] Implement data fetching (`fetchProductsFromApi`) with category client-side filtering.
-- [x] Build the UI for the carousel items (similar to ProductCard).
-- [x] Add autoplay and next/prev controls.
-- [x] Inject the component into `App.tsx` below `HeroSection`.
+- [x] Update `productService.ts` with `fetchHomepageSectionsFromApi` to parse the new 3-table format.
+- [x] Create `DynamicHomeSections.tsx` to render the grouped sections from `table2` and `table3`.
+- [x] Implement a reusable carousel for the dynamic sections (handling both categories and products).
+- [x] Inject `<DynamicHomeSections />` into `App.tsx` below `<CategoryCarousel />`.

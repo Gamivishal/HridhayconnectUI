@@ -405,17 +405,29 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
             </div>
 
             {/* Pricing Section */}
-            <div className="flex items-baseline gap-4 mb-8 bg-gradient-to-r from-[var(--color-primary)]/5 via-transparent to-transparent p-4 rounded-2xl border-l-2 border-[var(--color-primary)]/30">
-              <span className="text-3xl font-serif font-bold text-[var(--color-primary)]">
-                ₹{selectedVariant ? selectedVariant.price : currentProduct.price}
-              </span>
-              <span className="text-sm text-[var(--color-dark-text)]/40 line-through">₹{currentProduct.originalPrice}</span>
-              <span className="bg-[var(--color-primary)] text-white text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider">
-                {selectedVariant
-                  ? `${Math.round((1 - selectedVariant.price / currentProduct.originalPrice) * 100)}% OFF`
-                  : currentProduct.discount}
-              </span>
-            </div>
+            {(() => {
+              const variantSellPrice = selectedVariant ? (selectedVariant.sellPrice ?? selectedVariant.price) : (currentProduct.sellPrice ?? currentProduct.price);
+              const variantOriginalPrice = selectedVariant ? selectedVariant.price : (currentProduct.originalPrice ?? currentProduct.price);
+              const variantDiscountPercent = selectedVariant ? (selectedVariant.discountPercent ?? 0) : (currentProduct.discountPercent ?? 0);
+              const showBothPrices = variantSellPrice !== variantOriginalPrice;
+              const showDiscountBadge = showBothPrices && variantDiscountPercent > 0;
+
+              return (
+                <div className="flex items-baseline gap-4 mb-8 bg-gradient-to-r from-[var(--color-primary)]/5 via-transparent to-transparent p-4 rounded-2xl border-l-2 border-[var(--color-primary)]/30">
+                  <span className="text-3xl font-serif font-bold text-[var(--color-primary)]">
+                    ₹{variantSellPrice}
+                  </span>
+                  {showBothPrices && (
+                    <span className="text-sm text-[var(--color-dark-text)]/40 line-through">₹{variantOriginalPrice}</span>
+                  )}
+                  {showDiscountBadge && (
+                    <span className="bg-[var(--color-primary)] text-white text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider">
+                      {Math.round(variantDiscountPercent)}% OFF
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Short Editorial Description */}
             <p className="text-sm sm:text-base text-[var(--color-dark-text)]/75 font-light font-satoshi leading-relaxed mb-8 break-words">
@@ -919,7 +931,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-8">
               {relatedProducts.map((p, idx) => (
                 <a
                   key={idx}

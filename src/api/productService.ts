@@ -19,6 +19,9 @@ export interface ApiProduct {
   VariantAttributes: any;
   SKU: string;
   Price: number;
+  SellPrice: number;
+  DiscountPercent: number;
+  IsPercentagePricing: boolean;
   ImagePath: any;
   Images: ApiProductImage[];
   TotalAvailableStock: number;
@@ -62,6 +65,16 @@ export function getCaseInsensitiveProperty<T = any>(obj: any, key: string): T | 
   const lowerTarget = key.toLowerCase();
   const foundKey = Object.keys(obj).find(k => k.toLowerCase() === lowerTarget);
   return foundKey ? obj[foundKey] : undefined;
+}
+
+/**
+ * Safely extracts a numeric property, avoiding returning objects or NaN
+ */
+export function getNumericProperty(obj: any, key: string): number | undefined {
+  const val = getCaseInsensitiveProperty(obj, key);
+  if (val === undefined || val === null || typeof val === 'object' || Array.isArray(val)) return undefined;
+  const num = Number(val);
+  return isNaN(num) ? undefined : num;
 }
 
 /**
@@ -112,7 +125,7 @@ export function resolveImageUrl(rawPath: string | undefined | null): string {
       return `https://localhost:7103/${cleanPath}`;
     }
   }
-  return "https://localhost:7103/Uploads/Product/no-image.png";
+  return "/Image/Noimage.jpg";
 }
 
 /**
@@ -136,13 +149,13 @@ function extractImagesFromVariant(apiVar: any): string[] {
         const path = img.imagePath || img.ImagePath || "";
         return resolveImageUrl(path);
       })
-      .filter((url: string) => url !== "https://localhost:7103/Uploads/Product/no-image.png");
+      .filter((url: string) => url !== "/Image/Noimage.jpg");
   }
 
   // Fallback to legacy single ImagePath field
   const legacyPath = getCaseInsensitiveProperty<string>(apiVar, "ImagePath") || "";
   const resolved = resolveImageUrl(legacyPath);
-  if (resolved !== "https://localhost:7103/Uploads/Product/no-image.png") {
+  if (resolved !== "/Image/Noimage.jpg") {
     return [resolved];
   }
 
@@ -205,107 +218,256 @@ export async function fetchProductsFromApi(categoryId: number): Promise<Product[
     // Map each group to a single Product with a variants array
     return Object.keys(groupedProducts).map((prodIdStr) => {
       const group = groupedProducts[Number(prodIdStr)];
-      const primaryApiProd = group[0]; // Use first variant as default details
-
-      const prodName = getCaseInsensitiveProperty<string>(primaryApiProd, "ProductName") || "";
-      const prodSku = getCaseInsensitiveProperty<string>(primaryApiProd, "SKU") || "";
-      const prodId = getCaseInsensitiveProperty<number>(primaryApiProd, "ProductId");
-      const prodDesc = getCaseInsensitiveProperty<string>(primaryApiProd, "ProductDescription") || "";
-      const categoryIdVal = getCaseInsensitiveProperty<number>(primaryApiProd, "CategoryId");
-      const categoryNameVal = getCaseInsensitiveProperty<string>(primaryApiProd, "CategoryName") || "";
-      const priceVal = getCaseInsensitiveProperty<number>(primaryApiProd, "Price") || 0;
-      const totalStock = getCaseInsensitiveProperty<number>(primaryApiProd, "TotalAvailableStock") || 0;
-
-      const apiSlug = normalizeSlug(prodName);
-      const apiSkuSlug = normalizeSlug(prodSku);
-
-      // Find a matching static product in local storage to enrich
-      const localProduct = products.find((p) => {
-        const localSlug = normalizeSlug(p.name);
-        const localId = normalizeSlug(p.id);
-        return (
-          localId === apiSlug ||
-          localId === apiSkuSlug ||
-          localSlug === apiSlug ||
-          localSlug === apiSkuSlug ||
-          p.id.replace(/-100|-200/g, "") === apiSlug ||
-          p.id.replace(/-100|-200/g, "") === apiSkuSlug
-        );
-      });
-
-      // Map the variants
-      const variants = group.map(apiVar => {
-        const varientId = getCaseInsensitiveProperty<number>(apiVar, "VarientId") || 0;
-        const variantAttributeValues_Only = getCaseInsensitiveProperty<string>(apiVar, "VariantAttributeValues_Only") || "";
-        const variantAttributes = getCaseInsensitiveProperty<string>(apiVar, "VariantAttributes") || "";
-        const sku = getCaseInsensitiveProperty<string>(apiVar, "SKU") || "";
-        const price = getCaseInsensitiveProperty<number>(apiVar, "Price") || 0;
-        const totalAvailableStock = getCaseInsensitiveProperty<number>(apiVar, "TotalAvailableStock") || 0;
-
-        // Extract images from the new Images array format
-        const variantImageUrls = extractImagesFromVariant(apiVar);
-
-        return {
-          varientId,
-          variantAttributeValues_Only,
-          variantAttributes,
-          sku,
-          price,
-          imagePath: variantImageUrls[0] || "https://localhost:7103/Uploads/Product/no-image.png",
-          totalAvailableStock
-        };
-      });
-
-      // Gather product images from the first variant's Images array
-      // (all variants for the same product share the same images)
-      const productImages = extractImagesFromVariant(primaryApiProd);
-
-      // Also collect any unique variant-specific images as fallback
-      const variantOnlyImages = variants.map(v => v.imagePath).filter(Boolean);
-      const allImages = Array.from(new Set([...productImages, ...variantOnlyImages]))
-        .filter(url => url !== "https://localhost:7103/Uploads/Product/no-image.png");
-
-      // Determine category string
-      const catMap: Record<number, string> = {
-        15: "soap",
-        16: "hair-oil",
-        17: "mukhwas",
-        18: "tea-masala",
-        19: "hridhay-special"
-      };
-      const resolvedCategory = localProduct?.category ?? (categoryIdVal ? catMap[categoryIdVal] : "soap");
-
-      return {
-        id: localProduct?.id || apiSlug || apiSkuSlug || String(prodId),
-        name: prodName || (localProduct?.name ?? ""),
-        price: priceVal,
-        originalPrice: localProduct?.originalPrice ?? Math.round(priceVal * 1.8),
-        discount: localProduct?.discount ?? `${Math.round((1 - priceVal / (priceVal * 1.8)) * 100)}% OFF`,
-        tag: localProduct?.tag ?? "",
-        images: allImages.length > 0 ? allImages : ["https://localhost:7103/Uploads/Product/no-image.png"],
-        category: resolvedCategory as any,
-        tagline: localProduct?.tagline ?? prodDesc ?? "",
-        rating: localProduct?.rating ?? 4.8,
-        ratingCount: localProduct?.ratingCount ?? 120,
-        desc: prodDesc || (localProduct?.desc ?? ""),
-        longDesc: localProduct?.longDesc ?? prodDesc ?? "",
-        benefits: localProduct?.benefits ?? [
-          "Deeply nourishes & brightens skin",
-          "Keeps skin soft, plump & hydrated"
-        ],
-        ingredients: localProduct?.ingredients ?? [],
-        usage: localProduct?.usage ?? [],
-        highlights: localProduct?.highlights ?? [],
-        reviews: localProduct?.reviews ?? [],
-        faqs: localProduct?.faqs ?? [],
-        variants: variants,
-        totalAvailableStock: totalStock,
-        productId: prodId ? Number(prodId) : undefined,
-        categoryName: categoryNameVal
-      };
+      return parseApiProductGroup(group);
     });
   } catch (error) {
     console.error(`Error fetching products for categoryId ${categoryId}:`, error);
     return [];
   }
+}
+
+/**
+ * Parses a group of API variants (with the same ProductId) into a single high-fidelity Product object.
+ */
+export function parseApiProductGroup(group: any[]): Product {
+  const primaryApiProd = group[0]; // Use first variant as default details
+
+  const prodName = getCaseInsensitiveProperty<string>(primaryApiProd, "ProductName") || "";
+  const prodSku = getCaseInsensitiveProperty<string>(primaryApiProd, "SKU") || "";
+  const prodId = getCaseInsensitiveProperty<number>(primaryApiProd, "ProductId");
+  const prodDesc = getCaseInsensitiveProperty<string>(primaryApiProd, "ProductDescription") || "";
+  const categoryIdVal = getNumericProperty(primaryApiProd, "CategoryId");
+  const categoryNameVal = getCaseInsensitiveProperty<string>(primaryApiProd, "CategoryName") || "";
+  const priceVal = getNumericProperty(primaryApiProd, "Price") || 0;
+  const sellPriceVal = getNumericProperty(primaryApiProd, "SellPrice");
+  const discountPercentVal = getNumericProperty(primaryApiProd, "DiscountPercent");
+  const isPercentagePricingVal = getCaseInsensitiveProperty<boolean>(primaryApiProd, "IsPercentagePricing");
+  const totalStock = getNumericProperty(primaryApiProd, "TotalAvailableStock") || 0;
+
+  const apiSlug = normalizeSlug(prodName);
+  const apiSkuSlug = normalizeSlug(prodSku);
+
+  // Find a matching static product in local storage to enrich
+  const localProduct = products.find((p) => {
+    const localSlug = normalizeSlug(p.name);
+    const localId = normalizeSlug(p.id);
+    return (
+      localId === apiSlug ||
+      localId === apiSkuSlug ||
+      localSlug === apiSlug ||
+      localSlug === apiSkuSlug ||
+      p.id.replace(/-100|-200/g, "") === apiSlug ||
+      p.id.replace(/-100|-200/g, "") === apiSkuSlug
+    );
+  });
+
+  // Map the variants
+  const variants = group.map(apiVar => {
+    const varientId = getNumericProperty(apiVar, "VarientId") || 0;
+    const variantAttributeValues_Only = getCaseInsensitiveProperty<string>(apiVar, "VariantAttributeValues_Only") || "";
+    const variantAttributes = getCaseInsensitiveProperty<string>(apiVar, "VariantAttributes") || "";
+    const sku = getCaseInsensitiveProperty<string>(apiVar, "SKU") || "";
+    const price = getNumericProperty(apiVar, "Price") || 0;
+    const varSellPrice = getNumericProperty(apiVar, "SellPrice");
+    const varDiscountPercent = getNumericProperty(apiVar, "DiscountPercent");
+    const varIsPercentagePricing = getCaseInsensitiveProperty<boolean>(apiVar, "IsPercentagePricing");
+    const totalAvailableStock = getNumericProperty(apiVar, "TotalAvailableStock") || 0;
+
+    // Extract images from the new Images array format
+    const variantImageUrls = extractImagesFromVariant(apiVar);
+
+    return {
+      varientId,
+      variantAttributeValues_Only,
+      variantAttributes,
+      sku,
+      price,
+      sellPrice: varSellPrice ?? price,
+      discountPercent: varDiscountPercent ?? 0,
+      isPercentagePricing: varIsPercentagePricing ?? false,
+      imagePath: variantImageUrls[0] || "/Image/Noimage.jpg",
+      totalAvailableStock
+    };
+  });
+
+  // Gather product images from the first variant's Images array
+  // (all variants for the same product share the same images)
+  const productImages = extractImagesFromVariant(primaryApiProd);
+
+  // Also collect any unique variant-specific images as fallback
+  const variantOnlyImages = variants.map(v => v.imagePath).filter(Boolean);
+  const allImages = Array.from(new Set([...productImages, ...variantOnlyImages]))
+    .filter(url => url !== "/Image/Noimage.jpg");
+
+  // Determine category string
+  const catMap: Record<number, string> = {
+    15: "soap",
+    16: "hair-oil",
+    17: "mukhwas",
+    18: "tea-masala",
+    19: "hridhay-special"
+  };
+  const resolvedCategory = localProduct?.category ?? (categoryIdVal ? catMap[categoryIdVal] : "soap");
+
+  // Compute dynamic pricing fields
+  const resolvedSellPrice = sellPriceVal ?? priceVal;
+  const resolvedDiscountPercent = discountPercentVal ?? 0;
+  const resolvedIsPercentagePricing = isPercentagePricingVal ?? false;
+
+  // Derive originalPrice and discount string from API data
+  const computedOriginalPrice = priceVal; // Price from API is the MRP/original price
+  const computedDiscount = resolvedDiscountPercent > 0
+    ? `${Math.round(resolvedDiscountPercent)}% OFF`
+    : (priceVal !== resolvedSellPrice ? `${Math.round((1 - resolvedSellPrice / priceVal) * 100)}% OFF` : "");
+
+  return {
+    id: localProduct?.id || apiSlug || apiSkuSlug || String(prodId),
+    name: prodName || (localProduct?.name ?? ""),
+    price: resolvedSellPrice,
+    originalPrice: computedOriginalPrice,
+    discount: computedDiscount,
+    tag: localProduct?.tag ?? "",
+    images: allImages.length > 0 ? allImages : ["/Image/Noimage.jpg"],
+    category: resolvedCategory as any,
+    tagline: localProduct?.tagline ?? prodDesc ?? "",
+    rating: localProduct?.rating ?? 4.8,
+    ratingCount: localProduct?.ratingCount ?? 120,
+    desc: prodDesc || (localProduct?.desc ?? ""),
+    longDesc: localProduct?.longDesc ?? prodDesc ?? "",
+    benefits: localProduct?.benefits ?? [
+      "Deeply nourishes & brightens skin",
+      "Keeps skin soft, plump & hydrated"
+    ],
+    ingredients: localProduct?.ingredients ?? [],
+    usage: localProduct?.usage ?? [],
+    highlights: localProduct?.highlights ?? [],
+    reviews: localProduct?.reviews ?? [],
+    faqs: localProduct?.faqs ?? [],
+    variants: variants,
+    totalAvailableStock: totalStock,
+    productId: prodId ? Number(prodId) : undefined,
+    categoryName: categoryNameVal,
+    sellPrice: resolvedSellPrice,
+    discountPercent: resolvedDiscountPercent,
+    isPercentagePricing: resolvedIsPercentagePricing
+  };
+}
+
+export interface HomeSection {
+  id: number; // table2.Id
+  componentId: number; // table2.ComponentId
+  title: string;
+  refType: string;
+  displayOrder: number;
+  items: any[]; // Product[] or { id, name, categoryId, image }[]
+}
+
+let homeSectionsCache: HomeSection[] | null = null;
+let homeSectionsPromise: Promise<HomeSection[]> | null = null;
+
+/**
+ * Fetches dynamic homepage sections (table1, table2, table3 format) with caching.
+ */
+export async function fetchHomepageSectionsFromApi(forceRefresh = false): Promise<HomeSection[]> {
+  if (!forceRefresh && homeSectionsCache) return homeSectionsCache;
+  if (!forceRefresh && homeSectionsPromise) return homeSectionsPromise;
+
+  const url = `${API_BASE_URL}/Home/GetHomeComponent`;
+
+  homeSectionsPromise = (async () => {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+
+    if (!response.ok) return [];
+
+    const result = await response.json();
+    const data = getCaseInsensitiveProperty(result, "data") || result;
+
+    const table2 = getCaseInsensitiveProperty<any[]>(data, "table2") || [];
+    const table3 = getCaseInsensitiveProperty<any[]>(data, "table3") || [];
+
+    if (!Array.isArray(table2) || !Array.isArray(table3)) return [];
+
+    const sections: HomeSection[] = [];
+
+    // Sort table2 by DisplayOrder (if available) or by ID
+    const sortedSections = [...table2].sort((a, b) => {
+      const orderA = getCaseInsensitiveProperty<number>(a, "DisplayOrder") ?? 999;
+      const orderB = getCaseInsensitiveProperty<number>(b, "DisplayOrder") ?? 999;
+      return orderA - orderB;
+    });
+
+    for (const t2 of sortedSections) {
+      const primaryId = getCaseInsensitiveProperty<number>(t2, "Id") ?? 0;
+      const logicalComponentId = getCaseInsensitiveProperty<number>(t2, "ComponentId") ?? 0;
+      const title = getCaseInsensitiveProperty<string>(t2, "Title") ?? "";
+      const refType = getCaseInsensitiveProperty<string>(t2, "RefType") ?? "";
+      const displayOrder = getCaseInsensitiveProperty<number>(t2, "DisplayOrder") ?? 0;
+
+      const rawItems = table3.filter((t3: any) => {
+        const cid = getCaseInsensitiveProperty<number>(t3, "ComponentItemId");
+        return cid === primaryId; // Match table3.ComponentItemId with table2.Id
+      });
+
+      let parsedItems: any[] = [];
+
+      if (refType.toLowerCase() === "category") {
+        parsedItems = rawItems.map((r: any) => {
+          const catId = getCaseInsensitiveProperty<number>(r, "CategoryId");
+          const catName = getCaseInsensitiveProperty<string>(r, "CategoryName");
+          const imgPath = getCaseInsensitiveProperty<string>(r, "ImagePath");
+
+          let resolvedCat = "soap";
+          if (catId === 15) resolvedCat = "soap";
+          else if (catId === 16) resolvedCat = "hair-oil";
+          else if (catId === 17) resolvedCat = "mukhwas";
+          else if (catId === 18) resolvedCat = "tea-masala";
+          else if (catId === 19) resolvedCat = "hridhay-special";
+
+          return {
+            id: resolvedCat,
+            categoryId: catId,
+            name: catName || resolvedCat,
+            image: resolveImageUrl(imgPath)
+          };
+        });
+      } else {
+        const grouped: Record<number, any[]> = {};
+        rawItems.forEach((r: any) => {
+          const pId = getCaseInsensitiveProperty<number>(r, "ProductId");
+          if (pId) {
+            if (!grouped[pId]) grouped[pId] = [];
+            grouped[pId].push(r);
+          }
+        });
+
+        parsedItems = Object.keys(grouped).map(pIdStr => {
+          return parseApiProductGroup(grouped[Number(pIdStr)]);
+        });
+      }
+
+      if (parsedItems.length > 0) {
+        sections.push({
+          id: primaryId,
+          componentId: logicalComponentId,
+          title,
+          refType,
+          displayOrder,
+          items: parsedItems
+        });
+      }
+    }
+
+    homeSectionsCache = sections;
+    return sections;
+  } catch (error) {
+    console.error("Failed to fetch homepage sections", error);
+    return [];
+  }
+  })();
+  
+  return homeSectionsPromise;
 }

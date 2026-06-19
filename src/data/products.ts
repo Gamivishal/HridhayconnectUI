@@ -25,6 +25,9 @@ export interface ProductVariant {
   variantAttributes: string;
   sku: string;
   price: number;
+  sellPrice?: number;
+  discountPercent?: number;
+  isPercentagePricing?: boolean;
   imagePath: string;
   totalAvailableStock: number;
 }
@@ -54,6 +57,9 @@ export interface Product {
   productId?: number;
   variantId?: number;
   categoryName?: string;
+  sellPrice?: number;
+  discountPercent?: number;
+  isPercentagePricing?: boolean;
 }
 
 

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "motion/react";
-import { ChevronLeft, ChevronRight, ShoppingBag, Loader2 } from "lucide-react";
+import { ShoppingBag, Loader2, Heart } from "lucide-react";
 import { fetchProductsFromApi } from "../api/productService";
 import { Product } from "../data/products";
 import { useCart } from "../context/CartContext";
@@ -18,11 +17,9 @@ export function CategoryCarousel() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [activeTab, setActiveTab] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-  const [itemsPerView, setItemsPerView] = useState(4);
   const { addToCart } = useCart();
-  
+  const [wishlist, setWishlist] = useState<string[]>([]);
+
   useEffect(() => {
     let isMounted = true;
     async function loadProducts() {
@@ -39,49 +36,24 @@ export function CategoryCarousel() {
       }
     }
     loadProducts();
-
-    const handleResize = () => {
-      if (window.innerWidth >= 1024) setItemsPerView(4);
-      else if (window.innerWidth >= 768) setItemsPerView(3);
-      else if (window.innerWidth >= 640) setItemsPerView(2);
-      else setItemsPerView(1);
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-
-    return () => { 
-      isMounted = false; 
-      window.removeEventListener('resize', handleResize);
+    return () => {
+      isMounted = false;
     };
   }, []);
 
-  const filteredProducts = activeTab === 'all' 
-    ? allProducts 
+  const filteredProducts = activeTab === 'all'
+    ? allProducts
     : allProducts.filter(p => p.category === activeTab);
 
-  const maxIndex = Math.max(0, filteredProducts.length - itemsPerView);
+  // Reset limit/index when tab changes if needed, but since it's a grid we show all
+  // auto-play and resize logic removed
 
-  // Auto-play logic
-  useEffect(() => {
-    if (isHovered || filteredProducts.length <= itemsPerView) return;
-    const timer = setInterval(() => {
-      setCurrentIndex(prev => (prev >= maxIndex ? 0 : prev + 1));
-    }, 3500);
-    return () => clearInterval(timer);
-  }, [isHovered, filteredProducts.length, itemsPerView, maxIndex]);
-
-  // Reset index when tab changes
-  useEffect(() => {
-    setCurrentIndex(0);
-  }, [activeTab]);
-
-  const handleNext = () => {
-    setCurrentIndex(prev => (prev >= maxIndex ? 0 : prev + 1));
+  const toggleWishlist = (id: string) => {
+    setWishlist(prev =>
+      prev.includes(id) ? prev.filter(wId => wId !== id) : [...prev, id]
+    );
   };
-
-  const handlePrev = () => {
-    setCurrentIndex(prev => (prev <= 0 ? maxIndex : prev - 1));
-  };
+  const isInWishlist = (id: string) => wishlist.includes(id);
 
   return (
     <section className="py-16 md:py-24 px-4 sm:px-6 md:px-12 max-w-[1600px] mx-auto bg-[var(--color-cream)] relative z-10">
@@ -100,23 +72,18 @@ export function CategoryCarousel() {
           <button
             key={cat.id}
             onClick={() => setActiveTab(cat.id)}
-            className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium tracking-[0.05em] transition-all duration-300 ${
-              activeTab === cat.id
+            className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium tracking-[0.05em] transition-all duration-300 ${activeTab === cat.id
                 ? "bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 scale-105"
                 : "bg-white text-[var(--color-dark-text)] hover:bg-[var(--color-primary)]/10 hover:scale-105"
-            }`}
+              }`}
           >
             {cat.label}
           </button>
         ))}
       </div>
 
-      {/* Carousel */}
-      <div 
-        className="relative group/carousel"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
+      {/* Product Grid */}
+      <div className="relative">
         {isLoading ? (
           <div className="flex flex-col justify-center items-center h-64 text-[var(--color-primary)]">
             <Loader2 className="w-8 h-8 animate-spin mb-4" />
@@ -127,35 +94,63 @@ export function CategoryCarousel() {
             No masterpieces found in this category yet.
           </div>
         ) : (
-          <div className="overflow-hidden relative px-2">
-            <motion.div 
-              className="flex gap-4 w-full"
-              animate={{ 
-                x: `calc(-${currentIndex} * (100% / ${itemsPerView} + ${16 / itemsPerView}px))` 
-              }}
-              transition={{ type: "spring", stiffness: 250, damping: 25 }}
-            >
+          <div className="px-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-8">
               {filteredProducts.map((product) => (
-                <div 
-                  key={product.id} 
-                  className="shrink-0 group cursor-pointer"
-                  style={{ width: `calc(${100 / itemsPerView}% - ${(itemsPerView - 1) * 16 / itemsPerView}px)` }}
+                <div
+                  key={product.id}
+                  className="group cursor-pointer"
                   onClick={() => window.location.hash = `#product-${product.id}`}
                 >
                   <div className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-[var(--color-primary)]/10 transition-all duration-700 relative aspect-[4/5] mb-5">
-                    <img 
-                      src={product.images[0]} 
+                    <img
+                      src={product.images[0]}
                       alt={product.name}
                       className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    
-                    {product.tag && (
-                      <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-[0.6rem] font-bold uppercase tracking-wider text-[var(--color-primary)] shadow-sm">
-                        {product.tag}
-                      </div>
-                    )}
-                    <button 
+
+                    {/* Floating Badges */}
+                    <div className="absolute top-4 left-4 flex flex-col gap-2 items-start z-10">
+                      {/*
+                      // NOTE: To re-add the product tag (e.g. "Deep Purifying" or "Bestseller") in the future, uncomment this block:
+                      {product.tag && (
+                        <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-[0.6rem] font-bold uppercase tracking-wider text-[var(--color-primary)] shadow-sm">
+                          {product.tag}
+                        </div>
+                      )}
+                      */}
+                      {(() => {
+                        const dp = typeof product.discountPercent === 'number' ? product.discountPercent : 0;
+                        const sp = typeof product.sellPrice === 'number' ? product.sellPrice : product.price;
+                        const op = typeof product.originalPrice === 'number' ? product.originalPrice : product.price;
+                        if (dp > 0 && sp !== op) {
+                          return (
+                            <div className="bg-[var(--color-primary)] text-white px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wider shadow-sm">
+                              {Math.round(dp)}% OFF
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
+
+                    {/* Wishlist Toggle Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleWishlist(String(product.id));
+                      }}
+                      className="absolute top-4 right-4 z-20 p-2 rounded-full bg-white/80 backdrop-blur-md shadow-sm hover:bg-white hover:scale-110 transition-all duration-300 group/wishlist"
+                    >
+                      <Heart
+                        className={`w-4 h-4 transition-colors duration-300 ${isInWishlist(String(product.id))
+                            ? 'fill-[var(--color-primary)] text-[var(--color-primary)]'
+                            : 'text-[var(--color-dark-text)]/60 group-hover/wishlist:text-[var(--color-primary)]'
+                          }`}
+                      />
+                    </button>
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         addToCart(product, 1, product.category === 'mukhwas' ? 'Pouch' : undefined);
@@ -170,34 +165,20 @@ export function CategoryCarousel() {
                       {product.name}
                     </h3>
                     <div className="flex items-center justify-center md:justify-start gap-3 mt-2">
-                      <span className="text-[var(--color-primary)] font-semibold text-lg">₹{product.price}</span>
-                      {product.originalPrice > product.price && (
-                        <span className="text-sm text-[var(--color-dark-text)]/40 line-through">₹{product.originalPrice}</span>
+                      <span className="text-[var(--color-primary)] font-semibold text-lg">
+                        ₹{typeof product.sellPrice === 'object' ? (product.price || 0) : (product.sellPrice ?? product.price)}
+                      </span>
+                      {(product.originalPrice ?? product.price) !== (product.sellPrice ?? product.price) && (
+                        <span className="text-sm text-[var(--color-dark-text)]/40 line-through">
+                          ₹{typeof product.originalPrice === 'object' ? (product.price || 0) : product.originalPrice}
+                        </span>
                       )}
                     </div>
                   </div>
                 </div>
               ))}
-            </motion.div>
+            </div>
           </div>
-        )}
-
-        {/* Navigation Buttons */}
-        {!isLoading && filteredProducts.length > itemsPerView && (
-          <>
-            <button 
-              onClick={handlePrev}
-              className="absolute -left-4 md:-left-6 top-[40%] -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-md rounded-full shadow-xl flex items-center justify-center text-[var(--color-dark-text)] hover:text-white hover:bg-[var(--color-primary)] hover:scale-110 transition-all z-10 opacity-0 group-hover/carousel:opacity-100 -translate-x-4 group-hover/carousel:translate-x-0"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button 
-              onClick={handleNext}
-              className="absolute -right-4 md:-right-6 top-[40%] -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-md rounded-full shadow-xl flex items-center justify-center text-[var(--color-dark-text)] hover:text-white hover:bg-[var(--color-primary)] hover:scale-110 transition-all z-10 opacity-0 group-hover/carousel:opacity-100 translate-x-4 group-hover/carousel:translate-x-0"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-          </>
         )}
       </div>
     </section>
