@@ -20,6 +20,7 @@ import { Testimonials } from "./components/Testimonials";
 import { TrustBadges } from "./components/TrustBadges";
 import { Footer } from "./components/Footer";
 import { InstagramSection } from "./components/InstagramSection";
+import { HomepageImageShowcase } from "./components/HomepageImageShowcase";
 import { AboutPage } from "./components/AboutPage";
 import { SoapCategoryPage } from "./components/SoapCategoryPage";
 import { HairOilCategoryPage } from "./components/HairOilCategoryPage";
@@ -201,6 +202,7 @@ export default function App() {
           <WellnessExperience />
           <Testimonials />
           <TrustBadges />
+          <HomepageImageShowcase />
           <InstagramSection />
         </>
       ) : currentPage === 'about' ? (
