@@ -2,3 +2,6 @@
 - [x] Support both Category cards and Product cards in the carousel structure
 - [x] Verify there are no typescript or build errors
 - [x] Manually verify responsiveness and autoplay behavior on localhost
+- [x] Create a new static Instagram Section component (`InstagramSection.tsx`)
+- [x] Place the Instagram Section immediately above the Footer in `App.tsx`
+- [x] Style it to be responsive (Desktop: 4, Tablet/Mobile: 2 per row) with hover overlay and brand colors

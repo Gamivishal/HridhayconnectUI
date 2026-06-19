@@ -19,6 +19,7 @@ import { InteractiveScroll } from "./components/InteractiveScroll";
 import { Testimonials } from "./components/Testimonials";
 import { TrustBadges } from "./components/TrustBadges";
 import { Footer } from "./components/Footer";
+import { InstagramSection } from "./components/InstagramSection";
 import { AboutPage } from "./components/AboutPage";
 import { SoapCategoryPage } from "./components/SoapCategoryPage";
 import { HairOilCategoryPage } from "./components/HairOilCategoryPage";
@@ -200,6 +201,7 @@ export default function App() {
           <WellnessExperience />
           <Testimonials />
           <TrustBadges />
+          <InstagramSection />
         </>
       ) : currentPage === 'about' ? (
         <AboutPage />

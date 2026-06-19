@@ -1,31 +1,52 @@
-# Walkthrough - Infinite Autoplay Carousel Integration
+# Walkthrough - Updates & Integration
 
-I have successfully updated the homepage sections to use an infinite auto-sliding carousel layout matching the behavior of `CategoryCarousel`.
+## 1. Infinite Autoplay Carousel for Home Sections
 
-## Changes Made
+I have updated the homepage product lists (New Arrivals and Best Sellers via `SectionCarousel.tsx`) to use the infinite-scroll autoplaying slider structure matching `CategoryCarousel.tsx`.
 
-### Component: SectionCarousel
+### Changes Made
+- **[SectionCarousel.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/SectionCarousel.tsx)**:
+  - Replaced the static grid layout with a `framer-motion` container (`motion.div`) using a custom animation controller (`useAnimation`).
+  - Added dynamic resizing logic for card counts (`itemsPerView` dynamic state).
+  - Array duplication logic (duplicating 5 times) to ensure smooth infinite loop wraps.
+  - Setup hover pauses and drag support.
+  - Added back manual arrow click handlers.
 
-#### [SectionCarousel.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/SectionCarousel.tsx)
-- Replaced the static grid layout with a `framer-motion` container (`motion.div`) using a custom animation controller (`useAnimation`).
-- Dynamically calculates the number of visible cards based on screen size (`itemsPerView` dynamic state).
-- Duplicates the source array 5 times to enable seamless, infinite looping without jump or flicker when sliding.
-- Automatic scrolling triggers every 3 seconds unless the user hovers over the carousel or manually drags/swipes.
-- Navigation arrows are displayed on hover, enabling manual left/right paging.
-- Handled click logic so cards can be clicked/navigated but won't navigate on dragging.
+---
+
+## 2. New Static Instagram Section
+
+I have created and placed a premium, responsive static Instagram Section at the bottom of the Home Page, immediately above the Footer.
+
+### Changes Made
+- **[InstagramSection.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/InstagramSection.tsx)**:
+  - Created a static component containing the 4 specified posts with their respective local images under `/Instagram/` and exact redirection URLs.
+  - Integrated an Instagram icon near the main heading.
+  - Styled with Hridhay Connect's brand colors and typography.
+  - Applied rounded corners (`rounded-3xl`), smooth shadow transitions, and hover scale animations (`group-hover:scale-110`).
+  - Designed a premium hover overlay displaying a white blur and the Instagram icon.
+  - Responsive configuration:
+    - **Desktop**: 4 columns in a single row
+    - **Tablet**: 2 columns (2 per row)
+    - **Mobile**: 2 columns (2 per row)
+  - Added a centered primary call-to-action button linking directly to `https://www.instagram.com/hridhayconnect/`.
+- **[App.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/App.tsx)**:
+  - Imported and placed the `InstagramSection` immediately above the `Footer` on the Home Page.
+
+---
 
 ## How to Verify
 
-1. **Verify Server Execution**
-   - Start the local development server:
-     ```bash
-     npm run dev
-     ```
-   - Open your browser to `http://localhost:3001` or standard port.
-
-2. **Verify Sliding Behavior**
-   - Scroll down to the **New Arrivals** or **Best Sellers** section.
-   - Observe that the list slides smoothly every 3 seconds.
-   - Hover over the carousel to confirm sliding pauses.
-   - Drag or swipe the carousel left/right and verify that it moves responsively.
-   - Verify that clicking a product correctly redirects you without registering drag offsets as clicks.
+1. **Start the local server**:
+   ```bash
+   npm run dev
+   ```
+2. **Verify Instagram Section**:
+   - Scroll down to the bottom of the Home Page, right before the Footer.
+   - Confirm that the Instagram section is present with the title: **Follow Us On Instagram**.
+   - Check the layout on different screen sizes:
+     - On desktop, you should see 4 images in a single row.
+     - On tablet/mobile, you should see 2 images per row.
+   - Hover over any image to verify the smooth zoom-in scale and the Instagram overlay icon.
+   - Click an image to verify it opens the corresponding Instagram post in a new tab.
+   - Click the **Follow @hridhayconnect** CTA button to verify it successfully redirects to the Instagram profile page.
