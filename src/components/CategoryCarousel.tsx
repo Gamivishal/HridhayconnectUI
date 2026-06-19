@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { ShoppingBag, Loader2, Heart } from "lucide-react";
+import { motion, useAnimation } from "motion/react";
+import { ShoppingBag, Loader2, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { fetchProductsFromApi } from "../api/productService";
 import { Product } from "../data/products";
 import { useCart } from "../context/CartContext";
@@ -19,6 +20,11 @@ export function CategoryCarousel() {
   const [isLoading, setIsLoading] = useState(true);
   const { addToCart } = useCart();
   const [wishlist, setWishlist] = useState<string[]>([]);
+  const [itemsPerView, setItemsPerView] = useState(4);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const controls = useAnimation();
 
   useEffect(() => {
     let isMounted = true;
@@ -36,8 +42,20 @@ export function CategoryCarousel() {
       }
     }
     loadProducts();
+
+    const handleResize = () => {
+      if (window.innerWidth >= 1280) setItemsPerView(4);
+      else if (window.innerWidth >= 1024) setItemsPerView(4);
+      else if (window.innerWidth >= 768) setItemsPerView(3);
+      else if (window.innerWidth >= 640) setItemsPerView(2);
+      else setItemsPerView(1.5);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
     return () => {
       isMounted = false;
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
@@ -45,8 +63,45 @@ export function CategoryCarousel() {
     ? allProducts
     : allProducts.filter(p => p.category === activeTab);
 
-  // Reset limit/index when tab changes if needed, but since it's a grid we show all
-  // auto-play and resize logic removed
+  const N = filteredProducts.length;
+
+  useEffect(() => {
+    if (N > 0) {
+      setCurrentIndex(N * 2);
+      controls.set({ x: `-${N * 2 * (100 / itemsPerView)}%` });
+    }
+  }, [activeTab, N, itemsPerView, controls]);
+
+  useEffect(() => {
+    if (isHovered || isDragging || N === 0) return;
+    const timer = setInterval(() => {
+      setCurrentIndex(prev => prev + 1);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [isHovered, isDragging, N]);
+
+  useEffect(() => {
+    if (N === 0) return;
+    const slide = async () => {
+      await controls.start({
+        x: `-${currentIndex * (100 / itemsPerView)}%`,
+        transition: { type: "tween", ease: "easeInOut", duration: 0.6 }
+      });
+
+      if (currentIndex >= N * 3) {
+        controls.set({ x: `-${N * 2 * (100 / itemsPerView)}%` });
+        setCurrentIndex(N * 2);
+      } else if (currentIndex <= N) {
+        controls.set({ x: `-${N * 2 * (100 / itemsPerView)}%` });
+        setCurrentIndex(N * 2);
+      }
+    };
+    slide();
+  }, [currentIndex, N, itemsPerView, controls]);
+
+  const extendedProducts = N > 0 
+    ? [...filteredProducts, ...filteredProducts, ...filteredProducts, ...filteredProducts, ...filteredProducts]
+    : [];
 
   const toggleWishlist = (id: string) => {
     setWishlist(prev =>
@@ -82,8 +137,12 @@ export function CategoryCarousel() {
         ))}
       </div>
 
-      {/* Product Grid */}
-      <div className="relative">
+      {/* Product Carousel */}
+      <div 
+        className="relative group/carousel"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
         {isLoading ? (
           <div className="flex flex-col justify-center items-center h-64 text-[var(--color-primary)]">
             <Loader2 className="w-8 h-8 animate-spin mb-4" />
@@ -94,13 +153,39 @@ export function CategoryCarousel() {
             No masterpieces found in this category yet.
           </div>
         ) : (
-          <div className="px-2">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-8">
-              {filteredProducts.map((product) => (
+          <div className="overflow-hidden py-4 -mx-2 sm:-mx-3">
+            <motion.div
+              className="flex w-full cursor-grab active:cursor-grabbing"
+              animate={controls}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={1}
+              onDragStart={() => setIsDragging(true)}
+              onDragEnd={(e, { offset }) => {
+                setIsDragging(false);
+                const swipeThreshold = 50;
+                if (offset.x < -swipeThreshold) {
+                  setCurrentIndex(prev => prev + 1);
+                } else if (offset.x > swipeThreshold) {
+                  setCurrentIndex(prev => prev - 1);
+                } else {
+                  controls.start({
+                    x: `-${currentIndex * (100 / itemsPerView)}%`,
+                    transition: { type: "tween", ease: "easeInOut", duration: 0.3 }
+                  });
+                }
+              }}
+            >
+              {extendedProducts.map((product, idx) => (
                 <div
-                  key={product.id}
-                  className="group cursor-pointer"
-                  onClick={() => window.location.hash = `#product-${product.id}`}
+                  key={`${product.id}-${idx}`}
+                  className="shrink-0 px-2 sm:px-3"
+                  style={{ width: `${100 / itemsPerView}%` }}
+                  onClick={() => {
+                    if (!isDragging) {
+                      window.location.hash = `#product-${product.id}`;
+                    }
+                  }}
                 >
                   <div className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-[var(--color-primary)]/10 transition-all duration-700 relative aspect-[4/5] mb-5">
                     <img
@@ -111,15 +196,7 @@ export function CategoryCarousel() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                     {/* Floating Badges */}
-                    <div className="absolute top-4 left-4 flex flex-col gap-2 items-start z-10">
-                      {/*
-                      // NOTE: To re-add the product tag (e.g. "Deep Purifying" or "Bestseller") in the future, uncomment this block:
-                      {product.tag && (
-                        <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-[0.6rem] font-bold uppercase tracking-wider text-[var(--color-primary)] shadow-sm">
-                          {product.tag}
-                        </div>
-                      )}
-                      */}
+                    <div className="absolute top-4 left-4 flex flex-col gap-2 items-start z-10 pointer-events-none">
                       {(() => {
                         const dp = typeof product.discountPercent === 'number' ? product.discountPercent : 0;
                         const sp = typeof product.sellPrice === 'number' ? product.sellPrice : product.price;
@@ -155,7 +232,7 @@ export function CategoryCarousel() {
                         e.stopPropagation();
                         addToCart(product, 1, product.category === 'mukhwas' ? 'Pouch' : undefined);
                       }}
-                      className="absolute bottom-5 right-5 bg-white/95 backdrop-blur-md p-3.5 rounded-full shadow-xl opacity-0 group-hover:opacity-100 translate-y-6 group-hover:translate-y-0 transition-all duration-500 hover:bg-[var(--color-primary)] hover:text-white text-[var(--color-dark-text)]"
+                      className="absolute bottom-5 right-5 z-20 bg-white/95 backdrop-blur-md p-3.5 rounded-full shadow-xl opacity-0 group-hover:opacity-100 translate-y-6 group-hover:translate-y-0 transition-all duration-500 hover:bg-[var(--color-primary)] hover:text-white text-[var(--color-dark-text)]"
                     >
                       <ShoppingBag className="w-5 h-5" />
                     </button>
@@ -177,8 +254,26 @@ export function CategoryCarousel() {
                   </div>
                 </div>
               ))}
-            </div>
+            </motion.div>
           </div>
+        )}
+
+        {/* Navigation Arrows */}
+        {!isLoading && filteredProducts.length > 0 && (
+          <>
+            <button
+              onClick={() => setCurrentIndex(prev => prev - 1)}
+              className="absolute -left-2 md:-left-6 top-[40%] -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-white/90 backdrop-blur-md rounded-full shadow-xl flex items-center justify-center text-[var(--color-dark-text)] hover:text-white hover:bg-[var(--color-primary)] hover:scale-110 transition-all z-30 opacity-0 group-hover/carousel:opacity-100 -translate-x-4 group-hover/carousel:translate-x-0"
+            >
+              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+            </button>
+            <button
+              onClick={() => setCurrentIndex(prev => prev + 1)}
+              className="absolute -right-2 md:-right-6 top-[40%] -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-white/90 backdrop-blur-md rounded-full shadow-xl flex items-center justify-center text-[var(--color-dark-text)] hover:text-white hover:bg-[var(--color-primary)] hover:scale-110 transition-all z-30 opacity-0 group-hover/carousel:opacity-100 translate-x-4 group-hover/carousel:translate-x-0"
+            >
+              <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+            </button>
+          </>
         )}
       </div>
     </section>

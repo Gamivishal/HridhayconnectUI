@@ -1,4 +1,4 @@
-- [x] Update `productService.ts` with `fetchHomepageSectionsFromApi` to parse the new 3-table format.
-- [x] Create `DynamicHomeSections.tsx` to render the grouped sections from `table2` and `table3`.
-- [x] Implement a reusable carousel for the dynamic sections (handling both categories and products).
-- [x] Inject `<DynamicHomeSections />` into `App.tsx` below `<CategoryCarousel />`.
+- [x] Modify `SectionCarousel.tsx` to add framer-motion infinite autoplay carousel logic
+- [x] Support both Category cards and Product cards in the carousel structure
+- [x] Verify there are no typescript or build errors
+- [x] Manually verify responsiveness and autoplay behavior on localhost
