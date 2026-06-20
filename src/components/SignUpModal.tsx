@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { X, Eye, EyeOff, User, Mail, Phone, Lock, ArrowRight, Check, Sparkles, Chrome, ShieldCheck } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { getCaseInsensitiveProperty } from "../api/productService";
+import { showApiResponseToast, showToast } from "../utils/toastService";
 
 // Particle positions for left branding panel
 const LEFT_PARTICLES = [
@@ -215,12 +216,30 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
           body: JSON.stringify(payload)
         });
 
-        if (!response.ok) {
+        let result;
+        try {
+          result = await response.json();
+        } catch (e) {
           throw new Error(`Login failed with status ${response.status}`);
         }
 
-        const result = await response.json();
         console.log("[Login API Response] Raw response:", result);
+
+        // Prepare object for toaster
+        const toastResult = {
+          statusCode: result.statusCode ?? result.StatusCode,
+          message: result.message || result.Message || "",
+          isSuccess: result.isSuccess ?? result.IsSuccess,
+          isConfirm: result.isConfirm ?? result.IsConfirm
+        };
+
+        // If message contains "|", show only the part before it
+        if (toastResult.message && toastResult.message.includes("|")) {
+          toastResult.message = toastResult.message.split("|")[0];
+        }
+
+        // Show toast
+        showApiResponseToast(toastResult);
 
         const isSuccessVal = result.isSuccess || result.IsSuccess;
         const messageVal = result.message || result.Message || "";
@@ -264,6 +283,7 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
       } catch (error: any) {
         console.error("[Login API Error] Exception occurred:", error);
         setErrors({ email: "Network error. Unable to reach authentication server." });
+        showToast("error", "Network error. Unable to reach authentication server.");
         setIsLoading(false);
       }
     } else {

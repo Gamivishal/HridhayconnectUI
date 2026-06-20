@@ -233,9 +233,9 @@ export function InnerPageBanner({
                 transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
                 className="relative w-28 h-36 lg:w-36 lg:h-44 rounded-2xl overflow-hidden border border-white shadow-xl shadow-[var(--color-primary)]/10"
               >
-                <img 
-                  src={imageUrl} 
-                  alt={title} 
+                <img
+                  src={imageUrl}
+                  alt={title}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-dark-text)]/20 to-transparent pointer-events-none" />

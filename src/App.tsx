@@ -36,6 +36,7 @@ import { SignUpModal } from "./components/SignUpModal";
 import { useSignUp } from "./context/SignUpContext";
 import { products } from "./data/products";
 import { FloatingWhatsApp } from "./components/FloatingWhatsApp";
+import { GlobalToastProvider } from "./components/GlobalToastProvider";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<'home' | 'about' | 'soap' | 'hair-oil' | 'mukhwas' | 'tea-masala' | 'hridhay-special' | 'product' | 'cart' | 'checkout'>('home');
@@ -241,6 +242,7 @@ export default function App() {
       <SignUpModal isOpen={isSignUpOpen} onClose={closeSignUp} />
 
       <FloatingWhatsApp />
+      <GlobalToastProvider />
     </div>
   );
 }
