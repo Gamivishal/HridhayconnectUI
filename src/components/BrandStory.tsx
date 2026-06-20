@@ -37,9 +37,9 @@ export function BrandStory() {
             Every ingredient is ethically harvested, ensuring we give back to the earth as much as we receive. This is more than skincare—it's a daily ritual of reverence.
           </p>
           <div className="flex items-center gap-6">
-            <img src="https://images.unsplash.com/photo-1544367567-0f2fcb046eb9?q=80&w=200&auto=format&fit=crop" className="w-20 h-20 rounded-full object-cover grayscale opacity-90 border-[3px] border-[var(--color-beige)]" alt="Founder Portrait" />
+            <img src="/Image/CEO.jpg" className="w-20 h-20 rounded-full object-cover grayscale opacity-90 border-[3px] border-[var(--color-beige)]" alt="Founder Portrait" />
             <div>
-              <p className="font-serif text-2xl text-[var(--color-dark-text)]">Elena Rose</p>
+              <p className="font-serif text-2xl text-[var(--color-dark-text)]">Ashish Shah</p>
               <p className="text-xs font-medium tracking-[0.2em] uppercase text-[var(--color-primary)] mt-1">Founding Director</p>
             </div>
           </div>
@@ -56,7 +56,7 @@ export function BrandStory() {
           >
             <motion.img
               style={{ y: imgY, scale: 1.2 }}
-              src="https://images.unsplash.com/photo-1611077544665-27aabdc63cd4?q=80&w=1000&auto=format&fit=crop"
+              src="/HomePageimage/Ayurvedic.png"
               alt="Botanical setup"
               className="absolute inset-0 w-full h-full object-cover"
             />
@@ -72,7 +72,7 @@ export function BrandStory() {
             className="absolute bottom-[10%] left-[-5%] w-[45%] md:w-[50%] aspect-[4/3] rounded-3xl overflow-hidden border-8 border-[var(--color-background)] shadow-2xl"
           >
             <img
-              src="https://images.unsplash.com/photo-1615397323289-4081387d8eb9?q=80&w=800&auto=format&fit=crop"
+              src="/Instagram/MangoSlice.webp"
               alt="Lavender field texture"
               className="w-full h-full object-cover mix-blend-luminosity brightness-90 saturate-50 hover:mix-blend-normal transition-all duration-700"
             />

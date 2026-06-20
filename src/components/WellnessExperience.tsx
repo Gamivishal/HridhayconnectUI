@@ -19,7 +19,7 @@ export function WellnessExperience() {
         <div className="relative h-[50vh] md:h-[65vh] w-full flex items-center justify-center">
           <motion.div style={{ y: y1 }} className="absolute z-20 left-[5%] w-[60%] aspect-[3/4] rounded-t-[15rem] rounded-b-[4rem] overflow-hidden border border-white/50 shadow-2xl shadow-[var(--color-primary)]/10">
             <img 
-              src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=1000&auto=format&fit=crop" 
+              src="/HomePageimage/OilUsing.jpg" 
               alt="Wellness relaxation" 
               className="w-full h-full object-cover scale-105"
             />
@@ -27,7 +27,7 @@ export function WellnessExperience() {
           
           <motion.div style={{ y: y2 }} className="absolute z-10 right-[5%] bottom-[10%] w-[55%] aspect-square rounded-full overflow-hidden border-[12px] border-[var(--color-background)] shadow-2xl opacity-90 mix-blend-multiply flex items-center justify-center bg-[var(--color-beige)]">
             <img 
-              src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=800&auto=format&fit=crop" 
+              src="/HomePageimage/IngredientsMIx.jpg" 
               alt="Texture" 
               className="w-full h-full object-cover opacity-60 mix-blend-overlay"
             />

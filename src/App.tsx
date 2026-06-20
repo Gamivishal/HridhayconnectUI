@@ -197,7 +197,7 @@ export default function App() {
 
           <BrandStory />
           <Ingredients />
-          <FeaturedCollection />
+          {/* <FeaturedCollection /> */}
           <InteractiveScroll />
           <WellnessExperience />
           <Testimonials />
