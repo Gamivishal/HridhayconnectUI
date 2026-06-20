@@ -35,6 +35,7 @@ import { LoadingScreen } from "./components/LoadingScreen";
 import { SignUpModal } from "./components/SignUpModal";
 import { useSignUp } from "./context/SignUpContext";
 import { products } from "./data/products";
+import { FloatingWhatsApp } from "./components/FloatingWhatsApp";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<'home' | 'about' | 'soap' | 'hair-oil' | 'mukhwas' | 'tea-masala' | 'hridhay-special' | 'product' | 'cart' | 'checkout'>('home');
@@ -238,6 +239,8 @@ export default function App() {
 
       {/* Premium Sign Up Modal */}
       <SignUpModal isOpen={isSignUpOpen} onClose={closeSignUp} />
+
+      <FloatingWhatsApp />
     </div>
   );
 }
