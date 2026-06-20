@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { API_BASE_URL } from "../api/config";
+import { get } from "../api/BaseService";
 import { Loader2, Award, Leaf, Heart } from "lucide-react";
 
 export function HomepageImageShowcase() {
@@ -10,8 +10,7 @@ export function HomepageImageShowcase() {
     let isMounted = true;
     async function loadImages() {
       try {
-        const response = await fetch(`${API_BASE_URL}/HomepageImage/GetAll`);
-        const json = await response.json();
+        const json: any = await get("/HomepageImage/GetAll");
         if (json.isSuccess && json.data) {
           if (isMounted) {
             setImages(json.data);

@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from "motion/react";
-import { useState, useEffect } from "react";
-import { X, Eye, EyeOff, User, Mail, Phone, Lock, ArrowRight, Check, Sparkles, Chrome, ShieldCheck, Calendar } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { UserPlus, LogIn, Mail, Lock, CheckCircle2, AlertCircle, ArrowRight, X, Phone, User, Sparkle, Calendar, Users, Eye, EyeOff, Check, Sparkles, Chrome, ShieldCheck } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { getLovDropdownList, post } from "../api/BaseService";
 import { getCaseInsensitiveProperty } from "../api/productService";
 import { showApiResponseToast, showToast } from "../utils/toastService";
 
@@ -228,12 +229,11 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
 
   // Fetch genders
   useEffect(() => {
-    fetch("https://localhost:7103/api/Dropdown/LovMaster?Lov_column=Gender")
-      .then(res => res.json())
-      .then(json => {
+    getLovDropdownList("Gender")
+      .then((json: any) => {
         if (json && json.data) setGenders(json.data);
       })
-      .catch(err => console.error("Failed to fetch genders", err));
+      .catch((err: any) => console.error("Failed to fetch genders", err));
   }, []);
 
   // ESC to close
@@ -306,27 +306,21 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
 
     if (authMode === 'signin') {
       try {
-        const url = "https://localhost:7103/api/CustomerAuth/Login";
         const payload = {
           username: form.email,
           password: form.password
         };
 
-        console.log("[Login API Request] Sending payload to:", url, payload);
+        console.log("[Login API Request] Sending payload to /CustomerAuth/Login", payload);
 
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload)
-        });
-
-        let result;
+        let result: any;
         try {
-          result = await response.json();
-        } catch (e) {
-          throw new Error(`Login failed with status ${response.status}`);
+          result = await post("/CustomerAuth/Login", payload);
+        } catch (e: any) {
+          result = e.response?.data || {};
+          if (!result.message && !result.Message) {
+             throw new Error(`Login failed`);
+          }
         }
 
         console.log("[Login API Response] Raw response:", result);
@@ -394,7 +388,6 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
       }
     } else {
       try {
-        const url = "https://localhost:7103/api/CustomerAuth/Register";
         const payload = {
           customerId: 0,
           firstName: form.firstName,
@@ -407,21 +400,16 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
           gender: form.gender
         };
 
-        console.log("[Register API Request] Sending payload to:", url, payload);
+        console.log("[Register API Request] Sending payload to /CustomerAuth/Register", payload);
 
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload)
-        });
-
-        let result;
+        let result: any;
         try {
-          result = await response.json();
-        } catch (e) {
-          throw new Error(`Register failed with status ${response.status}`);
+          result = await post("/CustomerAuth/Register", payload);
+        } catch (e: any) {
+          result = e.response?.data || {};
+          if (!result.message && !result.Message) {
+            throw new Error(`Register failed`);
+          }
         }
 
         console.log("[Register API Response] Raw response:", result);

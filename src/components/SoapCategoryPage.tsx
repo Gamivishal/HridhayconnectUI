@@ -5,6 +5,7 @@ import { useCart } from "../context/CartContext";
 import { products, syncProducts } from "../data/products";
 import { InnerPageBanner } from "./InnerPageBanner";
 import { getCaseInsensitiveProperty, getApiProducts, resolveImageUrl } from "../api/productService";
+import { post } from "../api/BaseService";
 
 interface SoapCardProps {
   key?: any;
@@ -267,27 +268,8 @@ export function SoapCategoryPage() {
           search: ""
         };
 
-        console.log("[SoapPage API Request] Sending payload to:", url, body);
-
-        const token = localStorage.getItem("authToken");
-        const headers: Record<string, string> = {
-          "Content-Type": "application/json",
-        };
-        if (token) {
-          headers["Authorization"] = `Bearer ${token}`;
-        }
-
-        const response = await fetch(url, {
-          method: "POST",
-          headers: headers,
-          body: JSON.stringify(body)
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status} (${response.statusText})`);
-        }
-
-        const result = await response.json();
+        console.log("[SoapPage API Request] Sending payload to /Product/GetAll", body);
+        const result: any = await post("/Product/GetAll", body);
         console.log("[SoapPage API Response] Raw JSON Response:", result);
 
         const apiProducts = getApiProducts(result);

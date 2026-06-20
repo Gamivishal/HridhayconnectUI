@@ -36,7 +36,8 @@ export const GlobalToastProvider: React.FC = () => {
       style={{ zIndex: 99999 }}
       // Basic container styling to ensure the toast classes sit well
       toastClassName="!p-0 !m-4 bg-transparent shadow-none"
-      bodyClassName="!p-4 !m-0"
+      className="!p-4 !m-0"
+      aria-label="Notifications"
     />
   );
 };

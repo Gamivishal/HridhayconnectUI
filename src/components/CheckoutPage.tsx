@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { useCart, CartItem } from "../context/CartContext";
 import { StarButton } from "./ui/StarButton";
+import { get, post } from "../api/BaseService";
 
 interface AddressInfo {
   id: number;
@@ -57,20 +58,12 @@ export function CheckoutPage() {
         return;
       }
       try {
-        const token = localStorage.getItem("authToken");
-        const res = await fetch(`https://localhost:7103/api/Dropdown/CustomerAdress?customerId=${customerId}`, {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
-        if (res.ok) {
-          const json = await res.json();
-          if (json && json.data) {
-            const data: AddressInfo[] = json.data;
-            setAddresses(data);
-            const defaultAddr = data.find(a => a.isDefault) || data[0] || null;
-            setSelectedAddress(defaultAddr);
-          }
+        const json: any = await get(`/Dropdown/CustomerAdress?customerId=${customerId}`);
+        if (json && json.data) {
+          const data: AddressInfo[] = json.data;
+          setAddresses(data);
+          const defaultAddr = data.find((a: AddressInfo) => a.isDefault) || data[0] || null;
+          setSelectedAddress(defaultAddr);
         }
       } catch (err) {
         console.error("Error fetching addresses", err);
@@ -146,39 +139,25 @@ export function CheckoutPage() {
     
     try {
       const customerId = localStorage.getItem("customerId");
-      const token = localStorage.getItem("authToken");
       
-      const res = await fetch(`https://localhost:7103/api/Cart/CheckOut?customerId=${customerId}&CustomerAddressId=${selectedAddress?.id}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const json: any = await post(`/Cart/CheckOut?customerId=${customerId}&CustomerAddressId=${selectedAddress?.id}`, {});
       
-      if (res.ok) {
-        const json = await res.json();
-        // Checking common success indicators from the .NET backend API format
-        if (json.isSuccess || json.statusCode === 1 || json.statusCode === 200) {
-          const orderId = "HC-" + Math.floor(100000 + Math.random() * 900000);
-          setGeneratedOrderId(orderId);
-          setIsProcessing(false);
-          setOrderCompleted(true);
-          
-          // Clear cart items if they checked out their shopping cart
-          clearCart();
-          // Clear checkout data
-          clearCheckout();
-          
-          // Scroll to top for success experience
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        } else {
-          setAddressError(json.message || "Failed to place order.");
-          setIsProcessing(false);
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }
+      // Checking common success indicators from the .NET backend API format
+      if (json.isSuccess || json.statusCode === 1 || json.statusCode === 200) {
+        const orderId = "HC-" + Math.floor(100000 + Math.random() * 900000);
+        setGeneratedOrderId(orderId);
+        setIsProcessing(false);
+        setOrderCompleted(true);
+        
+        // Clear cart items if they checked out their shopping cart
+        clearCart();
+        // Clear checkout data
+        clearCheckout();
+        
+        // Scroll to top for success experience
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
-        setAddressError("Failed to connect to the server.");
+        setAddressError(json.message || "Failed to place order.");
         setIsProcessing(false);
         window.scrollTo({ top: 0, behavior: "smooth" });
       }

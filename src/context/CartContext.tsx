@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Product, products } from "../data/products";
 import { getCaseInsensitiveProperty, normalizeSlug, resolveImageUrl } from "../api/productService";
-import { API_BASE_URL } from "../api/config";
+import { post, del } from "../api/BaseService";
 
 export interface CartItem {
   product: Product;
@@ -239,30 +239,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       isSyncingRef.current = true;
       setIsCartLoading(true);
 
-      const url = `${API_BASE_URL}/Customer/GetAll`;
-      const headers = {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      };
-
       const bodyObj = {
         "Id": customerId ? Number(customerId) : 0,
         "Search": ""
       };
 
-      console.log(`[Cart API Request] POST url: ${url}, body:`, bodyObj);
+      console.log(`[Cart API Request] POST /Customer/GetAll, body:`, bodyObj);
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify(bodyObj)
-      });
-
-      if (!response.ok) {
-        throw new Error(`Customer API returned status ${response.status} (${response.statusText})`);
-      }
-
-      const result = await response.json();
+      const result: any = await post("/Customer/GetAll", bodyObj);
       console.log("[Cart API Response] Raw customer payload:", result);
 
       const dataObj = getCaseInsensitiveProperty(result, "data") || result;
@@ -368,18 +352,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       try {
         console.log(`[mergeGuestCartToApi] Saving guest item: ${item.product.name} (qty: ${item.quantity})`, payload);
-        const response = await fetch(`${API_BASE_URL}/Cart/SaveCart`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-          console.error(`[mergeGuestCartToApi] SaveCart failed for ${item.product.name}: status ${response.status}`);
-        } else {
-          const result = await response.json();
-          console.log(`[mergeGuestCartToApi] SaveCart success for ${item.product.name}:`, result);
-        }
+        const result: any = await post("/Cart/SaveCart", payload);
+        console.log(`[mergeGuestCartToApi] SaveCart success for ${item.product.name}:`, result);
       } catch (e) {
         console.error(`[mergeGuestCartToApi] Network error saving ${item.product.name}:`, e);
       }
@@ -468,12 +442,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       isSyncingRef.current = true;
       setIsCartLoading(true);
-      const url = `${API_BASE_URL}/Cart/SaveCart`;
-      const headers = {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      };
-
       const payload = {
         "customerId": Number(customerId),
         "productId": Number(productId),
@@ -484,17 +452,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       console.log("[saveCartItemToApi] Request payload:", payload);
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        throw new Error(`Cart API returned status ${response.status}`);
-      }
-
-      const result = await response.json();
+      const result: any = await post("/Cart/SaveCart", payload);
       console.log("[saveCartItemToApi] Response result:", result);
 
       const dataArray = getCaseInsensitiveProperty(result, "data") || result;
@@ -535,12 +493,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       isSyncingRef.current = true;
       setIsCartLoading(true);
-      const url = `${API_BASE_URL}/Cart/RemoveCart`;
-      const headers = {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      };
-
       const payload = {
         "customerId": Number(customerId),
         "productId": Number(productId),
@@ -551,17 +503,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       console.log("[removeCartItemFromApi] Request payload:", payload);
 
-      const response = await fetch(url, {
-        method: "DELETE",
-        headers: headers,
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        throw new Error(`Cart API returned status ${response.status}`);
-      }
-
-      const result = await response.json();
+      const result: any = await del("/Cart/RemoveCart", { body: JSON.stringify(payload) });
       console.log("[removeCartItemFromApi] Response result:", result);
 
       const dataArray = getCaseInsensitiveProperty(result, "data") || result;

@@ -1,5 +1,5 @@
 import { products, Product } from "../data/products";
-import { API_BASE_URL } from "./config";
+import { API_BASE_URL, post } from "./BaseService";
 
 export interface ApiProductImage {
   imagePath: string;
@@ -167,34 +167,15 @@ function extractImagesFromVariant(apiVar: any): string[] {
  * Maps and merges them with the local high-fidelity products metadata.
  */
 export async function fetchProductsFromApi(categoryId: number): Promise<Product[]> {
-  const url = `${API_BASE_URL}/Product/GetAll`;
   const body = {
     id: -2,
     categoryId: categoryId,
     search: ""
   };
-  console.log(`[API Request] Fetching from ${url}`, body);
+  console.log(`[API Request] Fetching from /Product/GetAll`, body);
 
   try {
-    const token = localStorage.getItem("authToken");
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: headers,
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      throw new Error(`API returned status ${response.status} (${response.statusText})`);
-    }
-
-    const result = await response.json();
+    const result: any = await post("/Product/GetAll", body);
     console.log(`[API Response] Successfully fetched categoryId ${categoryId} data:`, result);
     const apiProducts = getApiProducts(result);
 
@@ -372,18 +353,9 @@ export async function fetchHomepageSectionsFromApi(forceRefresh = false): Promis
   if (!forceRefresh && homeSectionsCache) return homeSectionsCache;
   if (!forceRefresh && homeSectionsPromise) return homeSectionsPromise;
 
-  const url = `${API_BASE_URL}/Home/GetHomeComponent`;
-
   homeSectionsPromise = (async () => {
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      });
-
-    if (!response.ok) return [];
-
-    const result = await response.json();
+      const result: any = await post("/Home/GetHomeComponent", {});
     const data = getCaseInsensitiveProperty(result, "data") || result;
 
     const table2 = getCaseInsensitiveProperty<any[]>(data, "table2") || [];
