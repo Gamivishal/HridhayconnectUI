@@ -137,20 +137,15 @@ export function SectionCarousel({ section }: { section: HomeSection }) {
                             alt={item.name}
                             className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/10 opacity-70 group-hover:opacity-90 transition-opacity duration-700 z-10" />
+                          <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700 z-10" />
 
                           {/* Inner border effect */}
-                          <div className="absolute inset-4 border border-white/20 rounded-[1.5rem] z-20 scale-95 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-700" />
-
-                          <div className="absolute inset-0 z-30 flex flex-col items-center justify-end p-8 text-center">
-                            <h3 className="text-white font-serif text-2xl md:text-3xl lg:text-4xl tracking-widest uppercase font-light drop-shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-700">
-                              {item.name}
-                            </h3>
-                            <div className="mt-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-700 delay-100">
-                              <span className="text-[var(--color-accent)] text-sm uppercase tracking-widest font-semibold">Explore Collection</span>
-                              <ChevronRight className="w-4 h-4 text-[var(--color-accent)]" />
-                            </div>
-                          </div>
+                          <div className="absolute inset-4 border border-white/40 rounded-[1.5rem] z-20 scale-95 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-700 pointer-events-none" />
+                        </div>
+                        <div className="px-2 text-center mt-2">
+                          <h3 className="font-serif text-xl md:text-2xl text-[var(--color-dark-text)] group-hover:text-[var(--color-primary)] transition-colors tracking-widest uppercase font-light">
+                            {item.name}
+                          </h3>
                         </div>
                       </div>
                     </div>

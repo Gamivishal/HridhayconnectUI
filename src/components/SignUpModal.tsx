@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect } from "react";
-import { X, Eye, EyeOff, User, Mail, Phone, Lock, ArrowRight, Check, Sparkles, Chrome, ShieldCheck } from "lucide-react";
+import { X, Eye, EyeOff, User, Mail, Phone, Lock, ArrowRight, Check, Sparkles, Chrome, ShieldCheck, Calendar } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { getCaseInsensitiveProperty } from "../api/productService";
 import { showApiResponseToast, showToast } from "../utils/toastService";
@@ -106,6 +106,89 @@ function FloatingInput({
   );
 }
 
+interface FloatingSelectProps {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  error?: string;
+  icon: React.ReactNode;
+  options: {code: string, name: string}[];
+  name: string;
+  focusedField: string | null;
+  onFocus: (name: string) => void;
+  onBlur: () => void;
+}
+
+function FloatingSelect({
+  label, value, onChange, error, icon, options,
+  name, focusedField, onFocus, onBlur,
+}: FloatingSelectProps) {
+  const isFocused = focusedField === name;
+  const hasValue = value.length > 0;
+  const isActive = isFocused || hasValue;
+
+  return (
+    <div className="relative w-full">
+      <div
+        className={`relative flex items-center rounded-2xl border transition-all duration-300 ${
+          error
+            ? "border-red-500/60 bg-red-50/10 shadow-sm"
+            : isFocused
+            ? "border-[var(--color-primary)] bg-white/95 shadow-md shadow-[var(--color-primary)]/5"
+            : "border-black/10 bg-white/70 hover:border-black/20"
+        }`}
+      >
+        <div className={`absolute left-4 transition-colors duration-300 ${isFocused ? "text-[var(--color-primary)]" : "text-black/30"}`}>
+          {icon}
+        </div>
+
+        <label
+          className={`absolute left-11 transition-all duration-300 pointer-events-none select-none ${
+            isActive
+              ? "top-2 text-[9px] text-[var(--color-primary)] font-bold uppercase tracking-wider"
+              : "top-[17px] text-sm text-black/40 font-light"
+          }`}
+        >
+          {label}
+        </label>
+
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={() => onFocus(name)}
+          onBlur={onBlur}
+          className={`w-full bg-transparent border-none outline-none text-sm text-[var(--color-dark-text)] pl-11 pr-11 transition-all duration-300 appearance-none cursor-pointer ${
+            isActive ? "pt-[21px] pb-[7px]" : "py-4 opacity-0 focus:opacity-100"
+          }`}
+        >
+          <option value="" disabled hidden></option>
+          {options.map((opt) => (
+            <option key={opt.code} value={opt.code}>{opt.name}</option>
+          ))}
+        </select>
+        
+        <div className="absolute right-4 pointer-events-none text-black/30">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.2 }}
+            className="text-[10px] text-red-500 font-medium pl-4 mt-1"
+          >
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 interface SignUpModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -115,13 +198,17 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
   const { syncCartWithApi, mergeGuestCartToApi } = useCart();
   const [authMode, setAuthMode] = useState<'signup' | 'signin'>('signup');
   const [form, setForm] = useState({
-    fullName: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
     password: "",
     confirmPassword: "",
+    gender: "",
+    dateOfBirth: "",
     rememberMe: false,
   });
+  const [genders, setGenders] = useState<{code: string, name: string}[]>([]);
   const [errors, setErrors] = useState<Partial<typeof form>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -139,6 +226,16 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
     return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
+  // Fetch genders
+  useEffect(() => {
+    fetch("https://localhost:7103/api/Dropdown/LovMaster?Lov_column=Gender")
+      .then(res => res.json())
+      .then(json => {
+        if (json && json.data) setGenders(json.data);
+      })
+      .catch(err => console.error("Failed to fetch genders", err));
+  }, []);
+
   // ESC to close
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -150,7 +247,7 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
   useEffect(() => {
     if (!isOpen) {
       const t = setTimeout(() => {
-        setForm({ fullName: "", email: "", phone: "", password: "", confirmPassword: "", rememberMe: false });
+        setForm({ firstName: "", lastName: "", email: "", phone: "", password: "", confirmPassword: "", gender: "", dateOfBirth: "", rememberMe: false });
         setErrors({});
         setIsSuccess(false);
         setIsLoading(false);
@@ -171,8 +268,17 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
 
   const validate = (): boolean => {
     const e: Partial<typeof form> = {};
-    if (authMode === 'signup' && !form.fullName.trim()) {
-      e.fullName = "Full name is required";
+    if (authMode === 'signup' && !form.firstName.trim()) {
+      e.firstName = "First name is required";
+    }
+    if (authMode === 'signup' && !form.lastName.trim()) {
+      e.lastName = "Last name is required";
+    }
+    if (authMode === 'signup' && !form.gender) {
+      e.gender = "Gender is required";
+    }
+    if (authMode === 'signup' && !form.dateOfBirth) {
+      e.dateOfBirth = "Date of birth is required";
     }
     if (!form.email.trim()) {
       e.email = authMode === 'signup' ? "Email address is required" : "Username/Email is required";
@@ -287,11 +393,66 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
         setIsLoading(false);
       }
     } else {
-      // Mock signup success
-      await new Promise((r) => setTimeout(r, 1800));
-      setIsLoading(false);
-      setIsSuccess(true);
-      setTimeout(() => onClose(), 2500);
+      try {
+        const url = "https://localhost:7103/api/CustomerAuth/Register";
+        const payload = {
+          customerId: 0,
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          mobileNo: form.phone,
+          password: form.password,
+          conformpasswordPassword: form.confirmPassword,
+          dateOfBirth: form.dateOfBirth ? `${form.dateOfBirth}T00:00:00.000Z` : null,
+          gender: form.gender
+        };
+
+        console.log("[Register API Request] Sending payload to:", url, payload);
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        let result;
+        try {
+          result = await response.json();
+        } catch (e) {
+          throw new Error(`Register failed with status ${response.status}`);
+        }
+
+        console.log("[Register API Response] Raw response:", result);
+
+        // Prepare object for toaster
+        const toastResult = {
+          statusCode: result.statusCode ?? result.StatusCode,
+          message: result.message || result.Message || "",
+          isSuccess: result.isSuccess ?? result.IsSuccess,
+          isConfirm: result.isConfirm ?? result.IsConfirm
+        };
+
+        // Show toast
+        showApiResponseToast(toastResult);
+
+        const isSuccessVal = result.isSuccess || result.IsSuccess;
+
+        if (isSuccessVal) {
+          setIsSuccess(true);
+          setTimeout(() => {
+            onClose();
+          }, 2500);
+        } else {
+          setIsLoading(false);
+        }
+      } catch (error: any) {
+        console.error("[Register API Error] Exception occurred:", error);
+        setErrors({ email: "Network error. Unable to reach authentication server." });
+        showToast("error", "Network error. Unable to reach authentication server.");
+        setIsLoading(false);
+      }
     }
   };
 
@@ -506,19 +667,34 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
                           transition={{ duration: 0.3 }}
                           className="space-y-4"
                         >
-                          <FloatingInput
-                            label="Full Name"
-                            type="text"
-                            value={form.fullName}
-                            onChange={(v) => setField("fullName")(v)}
-                            error={errors.fullName}
-                            icon={<User className="w-4 h-4" />}
-                            name="fullName"
-                            focusedField={focusedField}
-                            onFocus={setFocusedField}
-                            onBlur={() => setFocusedField(null)}
-                            autoComplete="name"
-                          />
+                          <div className="flex flex-col sm:flex-row gap-4">
+                            <FloatingInput
+                              label="First Name"
+                              type="text"
+                              value={form.firstName}
+                              onChange={(v) => setField("firstName")(v)}
+                              error={errors.firstName}
+                              icon={<User className="w-4 h-4" />}
+                              name="firstName"
+                              focusedField={focusedField}
+                              onFocus={setFocusedField}
+                              onBlur={() => setFocusedField(null)}
+                              autoComplete="given-name"
+                            />
+                            <FloatingInput
+                              label="Last Name"
+                              type="text"
+                              value={form.lastName}
+                              onChange={(v) => setField("lastName")(v)}
+                              error={errors.lastName}
+                              icon={<User className="w-4 h-4" />}
+                              name="lastName"
+                              focusedField={focusedField}
+                              onFocus={setFocusedField}
+                              onBlur={() => setFocusedField(null)}
+                              autoComplete="family-name"
+                            />
+                          </div>
 
                           <FloatingInput
                             label="Email Address"
@@ -546,6 +722,33 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
                             onBlur={() => setFocusedField(null)}
                             autoComplete="tel"
                           />
+
+                          <div className="flex flex-col sm:flex-row gap-4">
+                            <FloatingSelect
+                              label="Gender"
+                              value={form.gender}
+                              onChange={(v) => setField("gender")(v)}
+                              error={errors.gender}
+                              icon={<User className="w-4 h-4" />}
+                              name="gender"
+                              focusedField={focusedField}
+                              onFocus={setFocusedField}
+                              onBlur={() => setFocusedField(null)}
+                              options={genders}
+                            />
+                            <FloatingInput
+                              label="Date of Birth"
+                              type="date"
+                              value={form.dateOfBirth}
+                              onChange={(v) => setField("dateOfBirth")(v)}
+                              error={errors.dateOfBirth}
+                              icon={<Calendar className="w-4 h-4" />}
+                              name="dateOfBirth"
+                              focusedField={focusedField}
+                              onFocus={setFocusedField}
+                              onBlur={() => setFocusedField(null)}
+                            />
+                          </div>
 
                           <FloatingInput
                             label="Password"

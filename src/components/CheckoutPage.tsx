@@ -2,53 +2,35 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   ArrowLeft, CreditCard, ShieldCheck, Check, Trash2, Plus, Minus,
-  Sparkles, Gift, Shield, CheckCircle2, ShoppingBag, Truck, Calendar, Sparkle
+  Sparkles, Gift, Shield, CheckCircle2, ShoppingBag, Truck, Calendar, Sparkle, X, MapPin
 } from "lucide-react";
 import { useCart, CartItem } from "../context/CartContext";
 import { StarButton } from "./ui/StarButton";
 
-interface FormState {
-  fullName: string;
-  email: string;
-  phone: string;
-  address: string;
+interface AddressInfo {
+  id: number;
+  customerId: number;
+  customerName: string;
+  mobileNo: string;
+  alternativeMobileNo: string;
+  addressLine1: string;
+  addressLine2: string;
   city: string;
-  state: string;
-  zip: string;
-  country: string;
-}
-
-const initialFormState: FormState = {
-  fullName: "",
-  email: "",
-  phone: "",
-  address: "",
-  city: "",
-  state: "",
-  zip: "",
-  country: "India",
-};
-
-interface FormErrors {
-  fullName?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
+  postalCode: string;
+  stateName: string;
+  countryName: string;
+  isDefault: boolean;
 }
 
 export function CheckoutPage() {
   const { checkoutItems, clearCheckout, clearCart } = useCart();
   
   // Local states
-  const [form, setForm] = useState<FormState>(() => {
-    const saved = localStorage.getItem("hridhay_checkout_form");
-    return saved ? JSON.parse(saved) : initialFormState;
-  });
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [addresses, setAddresses] = useState<AddressInfo[]>([]);
+  const [selectedAddress, setSelectedAddress] = useState<AddressInfo | null>(null);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [addressError, setAddressError] = useState("");
   
   // Coupon
   const [couponCode, setCouponCode] = useState("");
@@ -66,10 +48,38 @@ export function CheckoutPage() {
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [generatedOrderId, setGeneratedOrderId] = useState("");
   
-  // Save form to localStorage
+  // Fetch Addresses
   useEffect(() => {
-    localStorage.setItem("hridhay_checkout_form", JSON.stringify(form));
-  }, [form]);
+    const fetchAddresses = async () => {
+      const customerId = localStorage.getItem("customerId");
+      if (!customerId) {
+        setIsLoadingAddresses(false);
+        return;
+      }
+      try {
+        const token = localStorage.getItem("authToken");
+        const res = await fetch(`https://localhost:7103/api/Dropdown/CustomerAdress?customerId=${customerId}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.data) {
+            const data: AddressInfo[] = json.data;
+            setAddresses(data);
+            const defaultAddr = data.find(a => a.isDefault) || data[0] || null;
+            setSelectedAddress(defaultAddr);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching addresses", err);
+      } finally {
+        setIsLoadingAddresses(false);
+      }
+    };
+    fetchAddresses();
+  }, []);
   
   // Redirect back if checkout items are empty and not completed
   useEffect(() => {
@@ -95,41 +105,13 @@ export function CheckoutPage() {
     return d.toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric' });
   };
   
-  const handleInputChange = (field: keyof FormState, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-    if (errors[field as keyof FormErrors]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
-  
   const validateForm = (): boolean => {
-    const tempErrors: FormErrors = {};
-    if (!form.fullName.trim()) tempErrors.fullName = "Full name is required";
-    
-    if (!form.email.trim()) {
-      tempErrors.email = "Email address is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      tempErrors.email = "Please enter a valid email address";
+    if (!selectedAddress) {
+      setAddressError("Please select a delivery address.");
+      return false;
     }
-    
-    if (!form.phone.trim()) {
-      tempErrors.phone = "Phone number is required";
-    } else if (!/^\+?[0-9\s-]{10,14}$/.test(form.phone.replace(/\s+/g, ""))) {
-      tempErrors.phone = "Please enter a valid phone number";
-    }
-    
-    if (!form.address.trim()) tempErrors.address = "Shipping address is required";
-    if (!form.city.trim()) tempErrors.city = "City is required";
-    if (!form.state.trim()) tempErrors.state = "State is required";
-    
-    if (!form.zip.trim()) {
-      tempErrors.zip = "ZIP/Postal code is required";
-    } else if (!/^\d{5,6}$/.test(form.zip)) {
-      tempErrors.zip = "Please enter a valid ZIP code (5-6 digits)";
-    }
-    
-    setErrors(tempErrors);
-    return Object.keys(tempErrors).length === 0;
+    setAddressError("");
+    return true;
   };
   
   const handleApplyCoupon = (e: React.FormEvent) => {
@@ -151,35 +133,61 @@ export function CheckoutPage() {
     }
   };
   
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
-      // Scroll to first error
-      const firstErrorKey = Object.keys(errors)[0];
-      const element = document.getElementsByName(firstErrorKey)[0];
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
+      setAddressError("Please select a delivery address to place your order.");
+      // Scroll to top or show toast
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
     
     setIsProcessing(true);
     
-    // Simulate secure network transaction
-    setTimeout(() => {
-      const orderId = "HC-" + Math.floor(100000 + Math.random() * 900000);
-      setGeneratedOrderId(orderId);
+    try {
+      const customerId = localStorage.getItem("customerId");
+      const token = localStorage.getItem("authToken");
+      
+      const res = await fetch(`https://localhost:7103/api/Cart/CheckOut?customerId=${customerId}&CustomerAddressId=${selectedAddress?.id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (res.ok) {
+        const json = await res.json();
+        // Checking common success indicators from the .NET backend API format
+        if (json.isSuccess || json.statusCode === 1 || json.statusCode === 200) {
+          const orderId = "HC-" + Math.floor(100000 + Math.random() * 900000);
+          setGeneratedOrderId(orderId);
+          setIsProcessing(false);
+          setOrderCompleted(true);
+          
+          // Clear cart items if they checked out their shopping cart
+          clearCart();
+          // Clear checkout data
+          clearCheckout();
+          
+          // Scroll to top for success experience
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          setAddressError(json.message || "Failed to place order.");
+          setIsProcessing(false);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      } else {
+        setAddressError("Failed to connect to the server.");
+        setIsProcessing(false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    } catch (err) {
+      console.error("Checkout error:", err);
+      setAddressError("A network error occurred. Please try again.");
       setIsProcessing(false);
-      setOrderCompleted(true);
-      
-      // Clear cart items if they checked out their shopping cart
-      clearCart();
-      // Clear checkout data
-      clearCheckout();
-      
-      // Scroll to top for success experience
       window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 2500);
+    }
   };
   
   if (orderCompleted) {
@@ -217,7 +225,7 @@ export function CheckoutPage() {
             </h1>
             
             <p className="text-sm font-light font-satoshi text-[var(--color-dark-text)]/70 max-w-lg mx-auto mb-8 leading-relaxed">
-              Your organic wellness ritual is prepared. We have sent a confirmation email to <span className="font-semibold text-[var(--color-dark-text)]">{form.email}</span> with invoice details and live tracking information.
+              Your organic wellness ritual is prepared. We have sent a confirmation to your registered email with invoice details and live tracking information.
             </p>
             
             {/* Order Ref & Details Grid */}
@@ -295,230 +303,74 @@ export function CheckoutPage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="bg-white/40 backdrop-blur-md border border-white/60 p-4 sm:p-6 md:p-10 rounded-[1.8rem] sm:rounded-[2.5rem] shadow-sm shadow-[var(--color-dark-text)]/5 space-y-8"
+              className="bg-white/40 backdrop-blur-md border border-white/60 p-4 sm:p-6 md:p-10 rounded-[1.8rem] sm:rounded-[2.5rem] shadow-sm shadow-[var(--color-dark-text)]/5 space-y-6"
             >
               <div>
                 <span className="text-[var(--color-primary)] font-semibold tracking-widest uppercase text-[10px] mb-2 block">
-                  01. Customer Details
+                  01. Destination
                 </span>
-                <h2 className="text-2xl md:text-3xl font-serif text-[var(--color-dark-text)]">
-                  Contact Information
+                <h2 className="text-2xl md:text-3xl font-serif text-[var(--color-dark-text)] flex justify-between items-end">
+                  Delivery Address
+                  {addresses.length > 0 && (
+                    <button 
+                      onClick={() => setIsAddressModalOpen(true)} 
+                      className="text-xs font-sans text-[var(--color-primary)] hover:underline tracking-widest uppercase font-semibold mb-1"
+                    >
+                      Change Address
+                    </button>
+                  )}
                 </h2>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {/* Full Name */}
-                <div className="relative w-full">
-                  <label 
-                    className={`absolute left-4 transition-all duration-300 pointer-events-none ${
-                      focusedField === "fullName" || form.fullName 
-                        ? "top-1.5 text-[9px] text-[var(--color-primary)] font-bold tracking-wider uppercase" 
-                        : "top-4 text-sm text-[var(--color-dark-text)]/40 font-light"
-                    }`}
-                  >
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={form.fullName}
-                    onChange={(e) => handleInputChange("fullName", e.target.value)}
-                    onFocus={() => setFocusedField("fullName")}
-                    onBlur={() => setFocusedField(null)}
-                    className={`w-full bg-white/40 border ${errors.fullName ? "border-red-500" : form.fullName ? "border-[var(--color-primary)]/40" : "border-black/10"} focus:border-[var(--color-primary)] rounded-2xl pt-[22px] pb-[10px] px-4 text-base text-[var(--color-dark-text)] focus:outline-none transition-all duration-300 shadow-sm focus:shadow-[var(--color-primary)]/10`}
-                  />
-                  {errors.fullName && (
-                    <span className="text-[10px] text-red-500 font-medium pl-1 mt-1 block">{errors.fullName}</span>
+              {isLoadingAddresses ? (
+                <div className="animate-pulse flex flex-col gap-3 mt-6">
+                  <div className="h-5 bg-black/5 rounded w-1/3"></div>
+                  <div className="h-4 bg-black/5 rounded w-1/4 mb-2"></div>
+                  <div className="h-16 bg-black/5 rounded w-full"></div>
+                </div>
+              ) : selectedAddress ? (
+                <div className="mt-4 bg-white/60 border border-[var(--color-primary)]/20 p-5 sm:p-6 rounded-3xl relative shadow-sm">
+                  {selectedAddress.isDefault && (
+                    <span className="absolute top-4 right-4 text-[9px] bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-2.5 py-1 rounded-full uppercase tracking-wider font-bold">
+                      Default
+                    </span>
                   )}
+                  <h4 className="font-bold text-[var(--color-dark-text)] text-lg mb-1">{selectedAddress.customerName}</h4>
+                  <p className="text-sm text-[var(--color-dark-text)]/70 mb-3 font-semibold">{selectedAddress.mobileNo}</p>
+                  <p className="text-sm text-[var(--color-dark-text)]/80 leading-relaxed max-w-sm">
+                    {selectedAddress.addressLine1}
+                    {selectedAddress.addressLine2 ? `, ${selectedAddress.addressLine2}` : ""}
+                    <br />
+                    {selectedAddress.city} - {selectedAddress.postalCode}
+                    <br />
+                    {selectedAddress.stateName}, {selectedAddress.countryName}
+                  </p>
                 </div>
-                
-                {/* Email Address */}
-                <div className="relative w-full">
-                  <label 
-                    className={`absolute left-4 transition-all duration-300 pointer-events-none ${
-                      focusedField === "email" || form.email 
-                        ? "top-1.5 text-[9px] text-[var(--color-primary)] font-bold tracking-wider uppercase" 
-                        : "top-4 text-sm text-[var(--color-dark-text)]/40 font-light"
-                    }`}
+              ) : (
+                <div className="mt-4 bg-white/40 border border-dashed border-[var(--color-primary)]/30 p-8 rounded-3xl flex flex-col items-center justify-center text-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center">
+                    <MapPin className="w-5 h-5 text-[var(--color-primary)]" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-[var(--color-dark-text)] mb-1">No Address Found</h4>
+                    <p className="text-xs text-[var(--color-dark-text)]/60 max-w-xs mx-auto">Please add a delivery address to proceed with your checkout.</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      window.location.hash = "#profile";
+                    }} 
+                    className="text-[10px] bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] transition-colors text-white px-5 py-2.5 rounded-full uppercase tracking-widest font-semibold mt-2 shadow-sm"
                   >
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    onFocus={() => setFocusedField("email")}
-                    onBlur={() => setFocusedField(null)}
-                    className={`w-full bg-white/40 border ${errors.email ? "border-red-500" : form.email ? "border-[var(--color-primary)]/40" : "border-black/10"} focus:border-[var(--color-primary)] rounded-2xl pt-[22px] pb-[10px] px-4 text-base text-[var(--color-dark-text)] focus:outline-none transition-all duration-300 shadow-sm focus:shadow-[var(--color-primary)]/10`}
-                  />
-                  {errors.email && (
-                    <span className="text-[10px] text-red-500 font-medium pl-1 mt-1 block">{errors.email}</span>
-                  )}
+                    Add New Address
+                  </button>
                 </div>
-                
-                {/* Phone Number */}
-                <div className="relative w-full sm:col-span-2">
-                  <label 
-                    className={`absolute left-4 transition-all duration-300 pointer-events-none ${
-                      focusedField === "phone" || form.phone 
-                        ? "top-1.5 text-[9px] text-[var(--color-primary)] font-bold tracking-wider uppercase" 
-                        : "top-4 text-sm text-[var(--color-dark-text)]/40 font-light"
-                    }`}
-                  >
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={form.phone}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
-                    onFocus={() => setFocusedField("phone")}
-                    onBlur={() => setFocusedField(null)}
-                    placeholder="e.g. +91 98765 43210"
-                    className={`w-full bg-white/40 border ${errors.phone ? "border-red-500" : form.phone ? "border-[var(--color-primary)]/40" : "border-black/10"} focus:border-[var(--color-primary)] rounded-2xl pt-[22px] pb-[10px] px-4 text-base text-[var(--color-dark-text)] focus:outline-none transition-all duration-300 shadow-sm focus:shadow-[var(--color-primary)]/10`}
-                  />
-                  {errors.phone && (
-                    <span className="text-[10px] text-red-500 font-medium pl-1 mt-1 block">{errors.phone}</span>
-                  )}
+              )}
+
+              {addressError && (
+                <div className="text-[10px] text-red-500 font-medium pl-1 mt-2">
+                  {addressError}
                 </div>
-              </div>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.15 }}
-              className="bg-white/40 backdrop-blur-md border border-white/60 p-4 sm:p-6 md:p-10 rounded-[1.8rem] sm:rounded-[2.5rem] shadow-sm shadow-[var(--color-dark-text)]/5 space-y-8"
-            >
-              <div>
-                <span className="text-[var(--color-primary)] font-semibold tracking-widest uppercase text-[10px] mb-2 block">
-                  02. Destination
-                </span>
-                <h2 className="text-2xl md:text-3xl font-serif text-[var(--color-dark-text)]">
-                  Shipping Address
-                </h2>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-6 gap-6">
-                {/* Street Address */}
-                <div className="relative w-full sm:col-span-6">
-                  <label 
-                    className={`absolute left-4 transition-all duration-300 pointer-events-none ${
-                      focusedField === "address" || form.address 
-                        ? "top-1.5 text-[9px] text-[var(--color-primary)] font-bold tracking-wider uppercase" 
-                        : "top-4 text-sm text-[var(--color-dark-text)]/40 font-light"
-                    }`}
-                  >
-                    Street Address
-                  </label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={form.address}
-                    onChange={(e) => handleInputChange("address", e.target.value)}
-                    onFocus={() => setFocusedField("address")}
-                    onBlur={() => setFocusedField(null)}
-                    className={`w-full bg-white/40 border ${errors.address ? "border-red-500" : form.address ? "border-[var(--color-primary)]/40" : "border-black/10"} focus:border-[var(--color-primary)] rounded-2xl pt-[22px] pb-[10px] px-4 text-base text-[var(--color-dark-text)] focus:outline-none transition-all duration-300 shadow-sm focus:shadow-[var(--color-primary)]/10`}
-                  />
-                  {errors.address && (
-                    <span className="text-[10px] text-red-500 font-medium pl-1 mt-1 block">{errors.address}</span>
-                  )}
-                </div>
-                
-                {/* City */}
-                <div className="relative w-full sm:col-span-2">
-                  <label 
-                    className={`absolute left-4 transition-all duration-300 pointer-events-none ${
-                      focusedField === "city" || form.city 
-                        ? "top-1.5 text-[9px] text-[var(--color-primary)] font-bold tracking-wider uppercase" 
-                        : "top-4 text-sm text-[var(--color-dark-text)]/40 font-light"
-                    }`}
-                  >
-                    City
-                  </label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={form.city}
-                    onChange={(e) => handleInputChange("city", e.target.value)}
-                    onFocus={() => setFocusedField("city")}
-                    onBlur={() => setFocusedField(null)}
-                    className={`w-full bg-white/40 border ${errors.city ? "border-red-500" : form.city ? "border-[var(--color-primary)]/40" : "border-black/10"} focus:border-[var(--color-primary)] rounded-2xl pt-[22px] pb-[10px] px-4 text-base text-[var(--color-dark-text)] focus:outline-none transition-all duration-300 shadow-sm focus:shadow-[var(--color-primary)]/10`}
-                  />
-                  {errors.city && (
-                    <span className="text-[10px] text-red-500 font-medium pl-1 mt-1 block">{errors.city}</span>
-                  )}
-                </div>
-                
-                {/* State */}
-                <div className="relative w-full sm:col-span-2">
-                  <label 
-                    className={`absolute left-4 transition-all duration-300 pointer-events-none ${
-                      focusedField === "state" || form.state 
-                        ? "top-1.5 text-[9px] text-[var(--color-primary)] font-bold tracking-wider uppercase" 
-                        : "top-4 text-sm text-[var(--color-dark-text)]/40 font-light"
-                    }`}
-                  >
-                    State
-                  </label>
-                  <input
-                    type="text"
-                    name="state"
-                    value={form.state}
-                    onChange={(e) => handleInputChange("state", e.target.value)}
-                    onFocus={() => setFocusedField("state")}
-                    onBlur={() => setFocusedField(null)}
-                    className={`w-full bg-white/40 border ${errors.state ? "border-red-500" : form.state ? "border-[var(--color-primary)]/40" : "border-black/10"} focus:border-[var(--color-primary)] rounded-2xl pt-[22px] pb-[10px] px-4 text-base text-[var(--color-dark-text)] focus:outline-none transition-all duration-300 shadow-sm focus:shadow-[var(--color-primary)]/10`}
-                  />
-                  {errors.state && (
-                    <span className="text-[10px] text-red-500 font-medium pl-1 mt-1 block">{errors.state}</span>
-                  )}
-                </div>
-                
-                {/* ZIP Code */}
-                <div className="relative w-full sm:col-span-2">
-                  <label 
-                    className={`absolute left-4 transition-all duration-300 pointer-events-none ${
-                      focusedField === "zip" || form.zip 
-                        ? "top-1.5 text-[9px] text-[var(--color-primary)] font-bold tracking-wider uppercase" 
-                        : "top-4 text-sm text-[var(--color-dark-text)]/40 font-light"
-                    }`}
-                  >
-                    ZIP Code
-                  </label>
-                  <input
-                    type="text"
-                    name="zip"
-                    value={form.zip}
-                    onChange={(e) => handleInputChange("zip", e.target.value)}
-                    onFocus={() => setFocusedField("zip")}
-                    onBlur={() => setFocusedField(null)}
-                    className={`w-full bg-white/40 border ${errors.zip ? "border-red-500" : form.zip ? "border-[var(--color-primary)]/40" : "border-black/10"} focus:border-[var(--color-primary)] rounded-2xl pt-[22px] pb-[10px] px-4 text-base text-[var(--color-dark-text)] focus:outline-none transition-all duration-300 shadow-sm focus:shadow-[var(--color-primary)]/10`}
-                  />
-                  {errors.zip && (
-                    <span className="text-[10px] text-red-500 font-medium pl-1 mt-1 block">{errors.zip}</span>
-                  )}
-                </div>
-                
-                {/* Country */}
-                <div className="relative w-full sm:col-span-6">
-                  <label className="absolute top-1.5 left-4 text-[9px] text-[var(--color-primary)] font-bold tracking-wider uppercase pointer-events-none">
-                    Country
-                  </label>
-                  <select
-                    value={form.country}
-                    onChange={(e) => handleInputChange("country", e.target.value)}
-                    className="w-full bg-white/40 border border-black/10 rounded-2xl pt-[22px] pb-[10px] px-4 text-base text-[var(--color-dark-text)] focus:border-[var(--color-primary)] focus:outline-none transition-all duration-300 shadow-sm appearance-none cursor-pointer"
-                  >
-                    <option value="India">India</option>
-                    <option value="United States">United States</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    <option value="Australia">Australia</option>
-                    <option value="France">France</option>
-                  </select>
-                </div>
-              </div>
+              )}
             </motion.div>
             
             {/* Delivery Curation */}
@@ -856,6 +708,116 @@ export function CheckoutPage() {
           
         </div>
       </div>
+
+      <AnimatePresence>
+        {isAddressModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-6 bg-black/40 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-[var(--color-cream)] w-full max-w-xl max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden relative"
+            >
+              {/* Header */}
+              <div className="flex justify-between items-center p-6 border-b border-black/5 bg-white/40">
+                <h3 className="font-serif text-xl md:text-2xl text-[var(--color-dark-text)]">Select Delivery Address</h3>
+                <button 
+                  onClick={() => setIsAddressModalOpen(false)} 
+                  className="p-2 bg-black/5 hover:bg-black/10 rounded-full transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5 text-[var(--color-dark-text)]" />
+                </button>
+              </div>
+              
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                {addresses.length === 0 ? (
+                  <div className="text-center py-10 text-[var(--color-dark-text)]/50">
+                    <MapPin className="w-8 h-8 mx-auto mb-3 text-[var(--color-dark-text)]/30" />
+                    No addresses found.
+                  </div>
+                ) : (
+                  addresses.map((addr) => (
+                    <label 
+                      key={addr.id}
+                      className={`flex gap-4 p-5 rounded-3xl border cursor-pointer transition-all duration-300 ${
+                        selectedAddress?.id === addr.id 
+                          ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5 shadow-sm"
+                          : "border-black/10 bg-white/50 hover:border-black/20"
+                      }`}
+                    >
+                      <div className="flex-shrink-0 mt-1">
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors bg-white ${
+                          selectedAddress?.id === addr.id ? "border-[var(--color-primary)]" : "border-black/20"
+                        }`}>
+                          {selectedAddress?.id === addr.id && <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]" />}
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0 relative">
+                        {addr.isDefault && (
+                          <span className="absolute top-0 right-0 text-[9px] bg-black/5 text-[var(--color-dark-text)] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
+                            Default Address
+                          </span>
+                        )}
+                        <h4 className="font-bold text-[var(--color-dark-text)] text-sm mb-0.5">{addr.customerName}</h4>
+                        <p className="text-xs font-semibold text-[var(--color-dark-text)]/70 mb-2">{addr.mobileNo}</p>
+                        <p className="text-xs text-[var(--color-dark-text)]/80 leading-relaxed pr-20">
+                          {addr.addressLine1}
+                          {addr.addressLine2 ? `, ${addr.addressLine2}` : ""}
+                          <br />
+                          {addr.city} - {addr.postalCode}
+                          <br />
+                          {addr.stateName}, {addr.countryName}
+                        </p>
+                        
+                        {selectedAddress?.id === addr.id && (
+                          <div className="mt-3 flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[var(--color-primary)] font-bold bg-[var(--color-primary)]/10 w-fit px-2 py-1 rounded-md">
+                            <Check className="w-3.5 h-3.5" />
+                            Selected Address
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Hidden radio input for accessibility */}
+                      <input 
+                        type="radio" 
+                        name="delivery_address" 
+                        className="sr-only" 
+                        checked={selectedAddress?.id === addr.id}
+                        onChange={() => setSelectedAddress(addr)}
+                      />
+                    </label>
+                  ))
+                )}
+              </div>
+              
+              {/* Footer */}
+              <div className="p-6 border-t border-black/5 bg-white/50 flex flex-col sm:flex-row gap-3">
+                <button 
+                  onClick={() => {
+                    setIsAddressModalOpen(false);
+                    window.location.hash = "#profile";
+                  }} 
+                  className="flex-1 py-4 rounded-full border border-black/10 text-[var(--color-dark-text)] text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-colors text-center cursor-pointer shadow-sm"
+                >
+                  Add New Address
+                </button>
+                <button 
+                  onClick={() => setIsAddressModalOpen(false)} 
+                  className="flex-1 py-4 rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white text-[10px] font-bold uppercase tracking-widest transition-colors shadow-md text-center cursor-pointer"
+                >
+                  Confirm Selection
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
