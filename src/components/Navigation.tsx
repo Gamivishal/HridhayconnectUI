@@ -71,7 +71,7 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
       items: [
         { name: "Home Made Soap", desc: "Cold-pressed organic oils for gentle hydration", path: "#soap", icon: "✨" },
         { name: "Home Made Hair Oil", desc: "Nourishing herbal infusion for root-to-tip vitality", path: "#hair-oil", icon: "🌿" },
-        { name: "Hridhay Special", desc: "Premium handcrafted skincare & healing elixirs", path: "#hridhay-special", icon: "💎" },
+        // { name: "Hridhay Special", desc: "Premium handcrafted skincare & healing elixirs", path: "#hridhay-special", icon: "💎" },
       ]
     },
     {
@@ -86,11 +86,10 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
             ? 'bg-white/75 backdrop-blur-2xl border-b border-[#5B2A86]/8 shadow-[0_4px_24px_rgba(91,42,134,0.07)]'
             : 'bg-transparent'
-        }`}
+          }`}
       >
         {/* Subtle gradient glow at top */}
         {!scrolled && (
@@ -145,11 +144,10 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
               onMouseLeave={() => setIsOpen(false)}
             >
               <button
-                className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${
-                  isOpen || ['soap','hair-oil','mukhwas','tea-masala','hridhay-special'].includes(currentPage)
+                className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${isOpen || ['soap', 'hair-oil', 'mukhwas', 'tea-masala', 'hridhay-special'].includes(currentPage)
                     ? 'text-[#5B2A86] font-bold'
                     : 'text-[#1B1720] hover:text-[#7A49A5]'
-                }`}
+                  }`}
               >
                 <span>Shop By Category</span>
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#5B2A86]' : 'rotate-0'}`} />
@@ -282,7 +280,7 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                       <div className="px-4 py-3 border-b border-[#5B2A86]/10 mb-2">
                         <p className="text-[10px] uppercase tracking-widest font-semibold text-[#5B2A86]">My Account</p>
                       </div>
-                      
+
                       {/* Placeholders for future pages */}
                       <a href="#profile" onClick={() => setIsProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
                         <User className="w-3.5 h-3.5" />
@@ -445,11 +443,10 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                     whileTap={{ x: 4 }}
                   >
                     <span
-                      className={`font-serif text-base tracking-wide ${
-                        currentPage === link.page
+                      className={`font-serif text-base tracking-wide ${currentPage === link.page
                           ? "text-[#5B2A86] font-semibold"
                           : "text-[#1B1720] font-medium"
-                      }`}
+                        }`}
                     >
                       {link.label}
                     </span>
@@ -615,8 +612,8 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                       }}
                     >
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
                       </svg>
                     </span>
                   </motion.button>

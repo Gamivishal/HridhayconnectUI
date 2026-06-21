@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { Phone, Mail, MapPin } from "lucide-react";
 
 export function Footer() {
   return (
@@ -42,30 +43,45 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="text-xs uppercase tracking-[0.2em] mb-6 text-[var(--color-accent)]">Shop</h4>
+            <h4 className="text-xs uppercase tracking-[0.2em] mb-6 text-[var(--color-accent)]">Quick Links</h4>
             <ul className="space-y-4">
-              {['All Products', 'Bestsellers', 'Skincare', 'Body & Bath'].map(l => (
-                <li key={l}><a href="#" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">{l}</a></li>
-              ))}
+              <li><a href="#home" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Home</a></li>
+              <li><a href="#about" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">About</a></li>
+              <li><a href="#hridhay-special" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Hridhay Special</a></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-xs uppercase tracking-[0.2em] mb-6 text-[var(--color-accent)]">About</h4>
+            <h4 className="text-xs uppercase tracking-[0.2em] mb-6 text-[var(--color-accent)]">Category</h4>
             <ul className="space-y-4">
-              <li><a href="#about" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Our Story</a></li>
-              <li><a href="#" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Ingredients</a></li>
-              <li><a href="#" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Sustainability</a></li>
-              <li><a href="#" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Journal</a></li>
+              <li><a href="#soap" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Soaps</a></li>
+              <li><a href="#hair-oil" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Hair Oil</a></li>
+              <li><a href="#mukhwas" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Mukhwas</a></li>
+              <li><a href="#tea-masala" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Tea Masala</a></li>
             </ul>
           </div>
 
           <div>
             <h4 className="text-xs uppercase tracking-[0.2em] mb-6 text-[var(--color-accent)]">Connect</h4>
             <ul className="space-y-4">
-              {['Instagram', 'Pinterest', 'Contact Us', 'FAQ'].map(l => (
-                <li key={l}><a href="#" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">{l}</a></li>
-              ))}
+              <li className="flex items-start gap-3">
+                <Phone className="w-5 h-5 text-[var(--color-accent)] shrink-0 mt-0.5" />
+                <a href="tel:+91927444617" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">
+                  +91 927444617
+                </a>
+              </li>
+              <li className="flex items-start gap-3">
+                <Mail className="w-5 h-5 text-[var(--color-accent)] shrink-0 mt-0.5" />
+                <a href="mailto:hridhayconnect1@gmail.com" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light break-all">
+                  hridhayconnect1@gmail.com
+                </a>
+              </li>
+              <li className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-[var(--color-accent)] shrink-0 mt-0.5" />
+                <span className="text-[var(--color-cream)]/70 text-sm font-light leading-relaxed">
+                  303, APM Mall Complex, Near Bharat Petrol Pump, Sattadhar Cross Road, Ghatlodiya Ahmedabad 380061, Gujarat, India
+                </span>
+              </li>
             </ul>
           </div>
         </div>

@@ -115,7 +115,7 @@ export function MiniCartDrawer() {
                   >
                     {/* Product Image */}
                     <div className="w-20 aspect-square rounded-2xl overflow-hidden bg-[var(--color-beige)]/20 flex-shrink-0">
-                      <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover" />
+                      <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-contain" />
                     </div>
 
                     {/* Product Details */}

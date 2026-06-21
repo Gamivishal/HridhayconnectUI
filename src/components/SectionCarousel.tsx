@@ -135,7 +135,7 @@ export function SectionCarousel({ section }: { section: HomeSection }) {
                           <img
                             src={item.image}
                             alt={item.name}
-                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
+                            className="absolute inset-0 w-full h-full object-contain group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
                           />
                           <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700 z-10" />
 
@@ -168,7 +168,7 @@ export function SectionCarousel({ section }: { section: HomeSection }) {
                           <img
                             src={product.images[0]}
                             alt={product.name}
-                            className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                            className="w-full h-full object-contain transition-transform duration-[1.5s] group-hover:scale-110"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 

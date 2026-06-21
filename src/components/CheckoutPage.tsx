@@ -562,7 +562,7 @@ export function CheckoutPage() {
                 {checkoutItems.map((item, idx) => (
                   <div key={idx} className="flex gap-4 items-center bg-white/40 border border-white/50 p-3.5 rounded-2xl">
                     <div className="w-14 h-16 rounded-xl overflow-hidden bg-[var(--color-beige)]/30 border border-black/5 flex-shrink-0">
-                      <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover" />
+                      <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-contain" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="text-xs font-semibold text-[var(--color-dark-text)] truncate">{item.product.name}</h4>

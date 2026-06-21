@@ -324,7 +324,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                 <img
                   src={currentProduct.images[activeImageIdx]}
                   alt={currentProduct.name}
-                  className="w-full h-full object-cover object-center transition-transform duration-300"
+                  className="w-full h-full object-contain object-center transition-transform duration-300"
                 />
 
                 {/* Immersive Zoom View Layer */}
@@ -364,7 +364,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                     onClick={() => setActiveImageIdx(idx)}
                     className={`w-16 h-16 sm:w-20 sm:h-20 lg:w-full lg:h-auto lg:aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300 flex-shrink-0 ${activeImageIdx === idx ? 'border-[var(--color-primary)] scale-[1.02] shadow-sm' : 'border-black/5 hover:border-black/20 opacity-80 hover:opacity-100'}`}
                   >
-                    <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
+                    <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-contain" />
                   </button>
                 ))}
               </div>
@@ -447,7 +447,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                 }));
 
                 // Find all unique attribute keys (e.g., ["Weight", "Packaging"])
-                const attributeKeys = Array.from(
+                const attributeKeys: string[] = Array.from(
                   new Set(parsedVariants.flatMap(pv => Object.keys(pv.attrs)))
                 );
 
@@ -940,7 +940,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                 >
                   <div>
                     <div className="w-full aspect-[4/5] bg-[var(--color-beige)]/20 rounded-2xl overflow-hidden mb-5">
-                      <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-[1.5s]" />
+                      <img src={p.images[0]} alt={p.name} className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-[1.5s]" />
                     </div>
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-serif text-base font-semibold text-black group-hover:text-[var(--color-primary)] transition-colors line-clamp-1">{p.name}</h4>
@@ -974,7 +974,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
             <div className="max-w-7xl mx-auto px-8 flex justify-between items-center w-full">
 
               <div className="flex items-center gap-3">
-                <img src={selectedVariant ? selectedVariant.imagePath : currentProduct.images[0]} alt={currentProduct.name} className="w-10 h-10 rounded-lg object-cover" />
+                <img src={selectedVariant ? selectedVariant.imagePath : currentProduct.images[0]} alt={currentProduct.name} className="w-10 h-10 rounded-lg object-contain" />
                 <div>
                   <h4 className="text-xs font-serif font-bold text-black">
                     {selectedVariant ? `${currentProduct.name} (${selectedVariant.variantAttributeValues_Only})` : currentProduct.name}

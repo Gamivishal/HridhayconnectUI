@@ -192,7 +192,7 @@ export function CartPage() {
                   >
                     {/* Product Image */}
                     <div className="w-24 sm:w-28 aspect-square rounded-[1.8rem] overflow-hidden bg-[var(--color-beige)]/20 flex-shrink-0 relative">
-                      <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                      <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" />
                     </div>
 
                     {/* Product Details & Meta */}
