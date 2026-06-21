@@ -3,14 +3,14 @@ import { motion } from "motion/react";
 export function Footer() {
   return (
     <footer className="bg-[var(--color-dark-text)] text-[var(--color-cream)] pt-24 pb-12 relative overflow-hidden rounded-t-[3rem] mt-[-2rem] z-20">
-      
+
       {/* Footer Ambient Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[800px] h-[300px] bg-[var(--color-primary)] opacity-20 blur-[150px] pointer-events-none"></div>
 
       <div className="max-w-[1600px] mx-auto px-6 md:px-12 relative z-10">
-        
+
         {/* Newsletter Section */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-12 mb-24 pb-20 border-b border-white/10">
+        {/* <div className="flex flex-col md:flex-row items-center justify-between gap-12 mb-24 pb-20 border-b border-white/10">
           <div className="max-w-xl">
             <h3 className="text-3xl md:text-5xl font-serif mb-4">Join the Ritual</h3>
             <p className="text-[var(--color-cream)]/70 font-light">Subscribe to receive gentle reminders, exclusive preview access, and wellness insights from our founders.</p>
@@ -25,19 +25,22 @@ export function Footer() {
               Subscribe
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* Footer Links */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20">
           <div className="md:col-span-1">
-             <a href="#" className="text-2xl font-serif font-medium tracking-tight mb-6 block hover:opacity-80 transition-opacity">
+             {/* <a href="#" className="text-2xl font-serif font-medium tracking-tight mb-6 block hover:opacity-80 transition-opacity">
                Hridhay<span className="italic text-[var(--color-accent)]">Connect</span>
+             </a> */}
+             <a href="#" className="block hover:opacity-80 transition-opacity mb-6">
+               <img src="/logo.webp" alt="HridhayConnect Logo" className="h-12 w-auto" />
              </a>
-             <p className="text-sm text-[var(--color-cream)]/50 font-light">
-               Elevating the everyday through pure, nature-driven wellness.
-             </p>
+            <p className="text-sm text-[var(--color-cream)]/50 font-light">
+              Elevating the everyday through pure, nature-driven wellness.
+            </p>
           </div>
-          
+
           <div>
             <h4 className="text-xs uppercase tracking-[0.2em] mb-6 text-[var(--color-accent)]">Shop</h4>
             <ul className="space-y-4">
@@ -46,7 +49,7 @@ export function Footer() {
               ))}
             </ul>
           </div>
-          
+
           <div>
             <h4 className="text-xs uppercase tracking-[0.2em] mb-6 text-[var(--color-accent)]">About</h4>
             <ul className="space-y-4">

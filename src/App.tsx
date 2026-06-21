@@ -12,6 +12,7 @@ import {
 } from "./components/DynamicHomeSections";
 import { Marquee } from "./components/Marquee";
 import { BrandStory } from "./components/BrandStory";
+import { BrandStatistics } from "./components/BrandStatistics";
 import { Ingredients } from "./components/Ingredients";
 import { FeaturedCollection } from "./components/FeaturedCollection";
 import { WellnessExperience } from "./components/WellnessExperience";
@@ -191,13 +192,16 @@ export default function App() {
           <Marquee />
           <CategoryCarousel />
           <TopCategories />
+          <BrandStory />
           <TrendingProducts />
           <NewArrivals />
+          <BrandStatistics />
           <FeaturedProducts />
           <BestSellers />
           <OnSaleProducts />
 
-          <BrandStory />
+
+
           <Ingredients />
           {/* <FeaturedCollection /> */}
           <InteractiveScroll />

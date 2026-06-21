@@ -20,26 +20,37 @@ const LEFT_PARTICLES = [
 
 interface FloatingInputProps {
   label: string;
-  type: string;
+  type?: string;
   value: string;
   onChange: (v: string) => void;
   error?: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   rightElement?: React.ReactNode;
   name: string;
   focusedField: string | null;
   onFocus: (name: string) => void;
   onBlur: () => void;
   autoComplete?: string;
+  max?: string;
 }
 
 function FloatingInput({
-  label, type, value, onChange, error, icon, rightElement,
-  name, focusedField, onFocus, onBlur, autoComplete,
+  label, type = "text", value, onChange, error, icon, rightElement,
+  name, focusedField, onFocus, onBlur, autoComplete, max
 }: FloatingInputProps) {
   const isFocused = focusedField === name;
   const hasValue = value.length > 0;
   const isActive = isFocused || hasValue;
+
+  const formatDate = (d: string) => {
+    if (!d) return "";
+    const parts = d.split('-');
+    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    return d;
+  };
+
+  const isDate = type === "date";
+  const displayValue = isDate && value ? formatDate(value) : value;
 
   return (
     <div className="relative w-full">
@@ -53,13 +64,15 @@ function FloatingInput({
         }`}
       >
         {/* Left Icon */}
-        <div className={`absolute left-4 transition-colors duration-300 ${isFocused ? "text-[var(--color-primary)]" : "text-black/30"}`}>
-          {icon}
-        </div>
+        {icon && (
+          <div className={`absolute left-4 transition-colors duration-300 z-10 pointer-events-none ${isFocused ? "text-[var(--color-primary)]" : "text-black/30"}`}>
+            {icon}
+          </div>
+        )}
 
         {/* Floating Label */}
         <label
-          className={`absolute left-11 transition-all duration-300 pointer-events-none select-none ${
+          className={`absolute ${icon ? "left-11" : "left-4"} transition-all duration-300 pointer-events-none select-none z-10 ${
             isActive
               ? "top-2 text-[9px] text-[var(--color-primary)] font-bold uppercase tracking-wider"
               : "top-[17px] text-sm text-black/40 font-light"
@@ -70,20 +83,34 @@ function FloatingInput({
 
         {/* Input */}
         <input
-          type={type}
-          value={value}
+          type={isDate ? "text" : type}
+          value={displayValue}
           autoComplete={autoComplete}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={isDate ? undefined : (e) => onChange(e.target.value)}
           onFocus={() => onFocus(name)}
           onBlur={onBlur}
-          className={`w-full bg-transparent border-none outline-none text-sm text-[var(--color-dark-text)] pl-11 pr-11 transition-all duration-300 ${
+          readOnly={isDate}
+          className={`w-full bg-transparent border-none outline-none text-sm text-[var(--color-dark-text)] ${icon ? "pl-11" : "pl-4"} pr-11 transition-all duration-300 relative z-10 ${
             isActive ? "pt-[21px] pb-[7px]" : "py-4"
-          }`}
+          } ${isDate ? "cursor-pointer pointer-events-none" : ""}`}
         />
+
+        {/* Invisible native date picker over the entire area */}
+        {isDate && (
+          <input
+            type="date"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onFocus={() => onFocus(name)}
+            onBlur={onBlur}
+            max={max || new Date().toISOString().split("T")[0]}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
+          />
+        )}
 
         {/* Right Element (Password visibility toggle) */}
         {rightElement && (
-          <div className="absolute right-4 cursor-pointer text-black/30 hover:text-[var(--color-primary)] transition-colors">
+          <div className={`absolute right-4 transition-colors duration-300 z-10 ${isDate ? 'pointer-events-none' : 'cursor-pointer'} ${isFocused ? "text-[var(--color-primary)]" : "text-black/30"} hover:text-[var(--color-primary)]`}>
             {rightElement}
           </div>
         )}
@@ -112,7 +139,7 @@ interface FloatingSelectProps {
   value: string;
   onChange: (v: string) => void;
   error?: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   options: {code: string, name: string}[];
   name: string;
   focusedField: string | null;
@@ -139,12 +166,14 @@ function FloatingSelect({
             : "border-black/10 bg-white/70 hover:border-black/20"
         }`}
       >
-        <div className={`absolute left-4 transition-colors duration-300 ${isFocused ? "text-[var(--color-primary)]" : "text-black/30"}`}>
-          {icon}
-        </div>
+        {icon && (
+          <div className={`absolute left-4 transition-colors duration-300 z-10 pointer-events-none ${isFocused ? "text-[var(--color-primary)]" : "text-black/30"}`}>
+            {icon}
+          </div>
+        )}
 
         <label
-          className={`absolute left-11 transition-all duration-300 pointer-events-none select-none ${
+          className={`absolute ${icon ? "left-11" : "left-4"} transition-all duration-300 pointer-events-none select-none z-10 ${
             isActive
               ? "top-2 text-[9px] text-[var(--color-primary)] font-bold uppercase tracking-wider"
               : "top-[17px] text-sm text-black/40 font-light"
@@ -158,9 +187,9 @@ function FloatingSelect({
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => onFocus(name)}
           onBlur={onBlur}
-          className={`w-full bg-transparent border-none outline-none text-sm text-[var(--color-dark-text)] pl-11 pr-11 transition-all duration-300 appearance-none cursor-pointer ${
-            isActive ? "pt-[21px] pb-[7px]" : "py-4 opacity-0 focus:opacity-100"
-          }`}
+          className={`w-full bg-transparent border-none outline-none text-sm text-[var(--color-dark-text)] ${icon ? "pl-11" : "pl-4"} pr-11 transition-all duration-300 appearance-none cursor-pointer relative z-20 ${
+            isActive ? "pt-[21px] pb-[7px]" : "py-4"
+          } ${!hasValue ? "text-transparent" : "text-black"}`}
         >
           <option value="" disabled hidden></option>
           {options.map((opt) => (
@@ -277,8 +306,23 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
     if (authMode === 'signup' && !form.gender) {
       e.gender = "Gender is required";
     }
-    if (authMode === 'signup' && !form.dateOfBirth) {
-      e.dateOfBirth = "Date of birth is required";
+    if (authMode === 'signup') {
+      if (!form.dateOfBirth) {
+        e.dateOfBirth = "Date of birth is required";
+      } else {
+        const birthDate = new Date(form.dateOfBirth);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        if (birthDate > today) {
+          e.dateOfBirth = "Date of birth cannot be in the future";
+        } else if (age < 18) {
+          e.dateOfBirth = "You must be at least 18 years old";
+        }
+      }
     }
     if (!form.email.trim()) {
       e.email = authMode === 'signup' ? "Email address is required" : "Username/Email is required";
@@ -730,11 +774,12 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
                               value={form.dateOfBirth}
                               onChange={(v) => setField("dateOfBirth")(v)}
                               error={errors.dateOfBirth}
-                              icon={<Calendar className="w-4 h-4" />}
+                              rightElement={<Calendar className="w-4 h-4" />}
                               name="dateOfBirth"
                               focusedField={focusedField}
                               onFocus={setFocusedField}
                               onBlur={() => setFocusedField(null)}
+                              max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split("T")[0]}
                             />
                           </div>
 

@@ -1,4 +1,4 @@
-import { ChevronDown, Sparkles, ArrowRight, ShoppingBag } from "lucide-react";
+import { ChevronDown, Sparkles, ArrowRight, ShoppingBag, User, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCart } from "../context/CartContext";
@@ -14,6 +14,7 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileCategoryOpen, setMobileCategoryOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const { cartCount, setIsCartOpen, clearCart } = useCart();
   const { openSignUp } = useSignUp();
@@ -254,23 +255,57 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
               </AnimatePresence>
             </motion.button>
 
-            {/* Desktop Sign Up CTA — desktop only, never shows on mobile */}
+            {/* Desktop Sign Up CTA or Profile Dropdown */}
             {isLoggedIn ? (
-              <StarButton
-                onClick={handleLogout}
-                style={{
-                  paddingLeft: "1.375rem",
-                  paddingRight: "1.375rem",
-                  paddingTop: "0.55rem",
-                  paddingBottom: "0.55rem",
-                  fontSize: "0.625rem",
-                  letterSpacing: "0.18em",
-                  display: typeof window !== 'undefined' && window.innerWidth < 768 ? 'none' : undefined,
-                }}
-                className="!hidden md:!inline-flex"
+              <div
+                className="relative hidden md:block"
+                onMouseEnter={() => setIsProfileOpen(true)}
+                onMouseLeave={() => setIsProfileOpen(false)}
               >
-                Logout
-              </StarButton>
+                <motion.button
+                  className="relative flex items-center justify-center w-10 h-10 rounded-full text-[#1B1720] cursor-pointer z-10 transition-colors hover:bg-[#5B2A86]/6"
+                  aria-label="User Profile"
+                  whileTap={{ scale: 0.92 }}
+                >
+                  <User className="w-[19px] h-[19px] stroke-[1.6]" />
+                </motion.button>
+
+                <AnimatePresence>
+                  {isProfileOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                      className="absolute right-0 top-full mt-2 w-48 bg-white/95 backdrop-blur-xl border border-white/50 rounded-2xl shadow-[0_20px_50px_rgba(91,42,134,0.12)] overflow-hidden z-50 py-2"
+                    >
+                      <div className="px-4 py-3 border-b border-[#5B2A86]/10 mb-2">
+                        <p className="text-[10px] uppercase tracking-widest font-semibold text-[#5B2A86]">My Account</p>
+                      </div>
+                      
+                      {/* Placeholders for future pages */}
+                      <a href="#profile" onClick={() => setIsProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
+                        <User className="w-3.5 h-3.5" />
+                        <span>Profile Details</span>
+                      </a>
+                      <a href="#orders" onClick={() => setIsProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
+                        <ShoppingBag className="w-3.5 h-3.5" />
+                        <span>Order History</span>
+                      </a>
+
+                      <div className="h-[1px] w-full bg-[#5B2A86]/10 my-2"></div>
+
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 transition-colors text-left font-medium"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Sign Out</span>
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             ) : (
               <StarButton
                 onClick={openSignUp}

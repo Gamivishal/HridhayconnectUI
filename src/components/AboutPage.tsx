@@ -4,26 +4,7 @@ import { ShieldCheck, Award, Heart, Leaf, Star, Sparkle, ArrowRight, CheckCircle
 import { InnerPageBanner } from "./InnerPageBanner";
 import { AboutImageCarousel } from "./AboutImageCarousel";
 
-// Custom hook/component for animated counters
-const AnimatedCounter = ({ from = 0, to, duration = 2, suffix = "", prefix = "" }: { from?: number, to: number, duration?: number, suffix?: string, prefix?: string }) => {
-  const [count, setCount] = useState(from);
-  const nodeRef = useRef<HTMLSpanElement>(null);
-  const inView = useInView(nodeRef, { once: true, margin: "-50px" });
 
-  useEffect(() => {
-    if (inView) {
-      const controls = animate(from, to, {
-        duration: duration,
-        onUpdate(value) {
-          setCount(Math.round(value));
-        }
-      });
-      return () => controls.stop();
-    }
-  }, [from, to, duration, inView]);
-
-  return <span ref={nodeRef}>{prefix}{count}{suffix}</span>;
-};
 
 export function AboutPage() {
   useEffect(() => {
@@ -230,30 +211,6 @@ export function AboutPage() {
         </div>
       </section>
 
-      {/* 7. Brand Statistics Section */}
-      <section className="relative py-24 md:py-32 bg-[var(--color-dark-text)] text-white overflow-hidden">
-        <div className="absolute inset-0 opacity-20 pointer-events-none">
-          <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] rounded-full bg-[var(--color-primary)]/40 blur-[120px] mix-blend-screen" />
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6">
-          <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-50px" }} variants={fadeUpContainer} className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 text-center">
-            {[
-              { to: 100, suffix: "%", label: "Handmade Products", icon: <Heart className="w-6 h-6 mx-auto mb-4 text-[var(--color-accent)]" /> },
-              { to: 100, suffix: "%", label: "Natural Ingredients", icon: <Leaf className="w-6 h-6 mx-auto mb-4 text-[var(--color-accent)]" /> },
-              { to: 50, suffix: "+", label: "Small Batches Crafted", icon: <Droplets className="w-6 h-6 mx-auto mb-4 text-[var(--color-accent)]" /> },
-              { to: 10, suffix: "k+", label: "Customer Community", icon: <Users className="w-6 h-6 mx-auto mb-4 text-[var(--color-accent)]" /> }
-            ].map((stat, idx) => (
-              <motion.div key={idx} variants={fadeUpItem} className="flex flex-col items-center p-6 border border-white/10 rounded-3xl bg-white/5 backdrop-blur-sm">
-                {stat.icon}
-                <div className="text-4xl md:text-5xl font-light font-serif mb-2">
-                  <AnimatedCounter to={stat.to} suffix={stat.suffix} />
-                </div>
-                <div className="text-xs uppercase tracking-widest text-white/60 font-general">{stat.label}</div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
 
       {/* 8. Daily Rituals Into Art Section */}
       <section className="relative py-28 md:py-48 bg-white/20">
@@ -282,97 +239,118 @@ export function AboutPage() {
 
 
       {/* 9. Timeline of Growth */}
-      <section className="relative py-32 md:py-48 bg-[var(--color-dark-text)] text-[var(--color-cream)]">
+      <section className="relative py-24 md:py-36 border-y border-[var(--color-primary)]/10">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-24">
+          <div className="text-center max-w-3xl mx-auto mb-20 md:mb-32">
             <span className="text-[var(--color-primary)] font-semibold tracking-[0.2em] uppercase text-xs mb-4 block">Our Path</span>
-            <h2 className="text-4xl md:text-6xl font-serif font-light text-white tracking-tight">Timeline of Growth</h2>
+            <h2 className="text-4xl md:text-6xl font-serif font-light text-[var(--color-dark-text)] tracking-tight">Timeline of Growth</h2>
           </div>
 
-          <div className="relative border-l border-white/10 max-w-4xl mx-auto pl-8 md:pl-16 space-y-16">
+          <div className="relative max-w-5xl mx-auto">
+            {/* Central Line for Desktop, Left Line for Mobile */}
+            <div className="absolute left-3.5 md:left-1/2 top-0 bottom-0 w-px bg-[var(--color-primary)]/20 md:-translate-x-1/2" />
 
-            {/* Milestone 1 */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.2 }}
-              className="relative"
-            >
-              {/* Dot */}
-              <div className="absolute -left-[41px] md:-left-[73px] top-1.5 w-6 h-6 rounded-full bg-[var(--color-primary)] border-4 border-[var(--color-dark-text)] shadow-lg" />
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)] font-general">2023 • The Conception</span>
-                <h4 className="text-2xl font-serif font-light text-white mt-2 mb-3">Honoring Ancient Wisdom</h4>
-                <p className="text-sm text-white/60 font-light leading-relaxed max-w-xl font-satoshi">
-                  Hridhay Connect was founded by botanical alchemists and dermatological scientists to discover pure skincare formulas using certified organic, wild-harvested raw extracts.
-                </p>
-              </div>
-            </motion.div>
+            <div className="space-y-16 md:space-y-24">
 
-            {/* Milestone 2 */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.2, delay: 0.1 }}
-              className="relative"
-            >
-              {/* Dot */}
-              <div className="absolute -left-[41px] md:-left-[73px] top-1.5 w-6 h-6 rounded-full bg-[var(--color-primary)] border-4 border-[var(--color-dark-text)] shadow-lg" />
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)] font-general">2024 • Organic Audits</span>
-                <h4 className="text-2xl font-serif font-light text-white mt-2 mb-3">Achieving Cruelty-Free Status</h4>
-                <p className="text-sm text-white/60 font-light leading-relaxed max-w-xl font-satoshi">
-                  We built our extraction lab and secured rigorous certifications, proving that zero synthetic fillers or chemical additives are ever present in our product list.
-                </p>
-              </div>
-            </motion.div>
+              {/* Milestone 1 */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 1 }}
+                className="relative flex flex-col md:flex-row items-start md:items-center justify-between group"
+              >
+                {/* Dot */}
+                <div className="absolute left-3.5 md:left-1/2 top-2 md:top-1/2 w-4 h-4 rounded-full bg-[var(--color-primary)] border-[3px] border-[var(--color-cream)] shadow-md md:-translate-x-1/2 md:-translate-y-1/2 z-10 transition-transform duration-500 group-hover:scale-125" />
+                
+                {/* Content - Left side */}
+                <div className="pl-12 md:pl-0 md:w-1/2 md:pr-16 md:text-right">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)] font-general">2023 • The Conception</span>
+                  <h4 className="text-2xl md:text-3xl font-serif font-light text-[var(--color-dark-text)] mt-2 mb-3">Honoring Ancient Wisdom</h4>
+                  <p className="text-sm md:text-base text-[var(--color-dark-text)]/70 font-light leading-relaxed font-satoshi md:ml-auto max-w-md">
+                    Hridhay Connect was founded by botanical alchemists and dermatological scientists to discover pure skincare formulas using certified organic, wild-harvested raw extracts.
+                  </p>
+                </div>
+                
+                <div className="hidden md:block md:w-1/2" />
+              </motion.div>
 
-            {/* Milestone 3 */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.2, delay: 0.2 }}
-              className="relative"
-            >
-              {/* Dot */}
-              <div className="absolute -left-[41px] md:-left-[73px] top-1.5 w-6 h-6 rounded-full bg-[var(--color-primary)] border-4 border-[var(--color-dark-text)] shadow-lg" />
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)] font-general">2025 • National Launch</span>
-                <h4 className="text-2xl font-serif font-light text-white mt-2 mb-3">Pioneering Organic Wellness</h4>
-                <p className="text-sm text-white/60 font-light leading-relaxed max-w-xl font-satoshi">
-                  Officially launched Hridhay Connect website, delivering our signature serums to thousands of customers looking to restore harmony and natural skin radiance.
-                </p>
-              </div>
-            </motion.div>
+              {/* Milestone 2 */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 1 }}
+                className="relative flex flex-col md:flex-row items-start md:items-center justify-between group md:flex-row-reverse"
+              >
+                {/* Dot */}
+                <div className="absolute left-3.5 md:left-1/2 top-2 md:top-1/2 w-4 h-4 rounded-full bg-[var(--color-primary)] border-[3px] border-[var(--color-cream)] shadow-md md:-translate-x-1/2 md:-translate-y-1/2 z-10 transition-transform duration-500 group-hover:scale-125" />
+                
+                {/* Content - Right side */}
+                <div className="pl-12 md:pl-0 md:w-1/2 md:pl-16 md:text-left">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)] font-general">2024 • Organic Audits</span>
+                  <h4 className="text-2xl md:text-3xl font-serif font-light text-[var(--color-dark-text)] mt-2 mb-3">Achieving Cruelty-Free Status</h4>
+                  <p className="text-sm md:text-base text-[var(--color-dark-text)]/70 font-light leading-relaxed font-satoshi md:mr-auto max-w-md">
+                    We built our extraction lab and secured rigorous certifications, proving that zero synthetic fillers or chemical additives are ever present in our product list.
+                  </p>
+                </div>
+                
+                <div className="hidden md:block md:w-1/2" />
+              </motion.div>
 
-            {/* Milestone 4 */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.2, delay: 0.3 }}
-              className="relative"
-            >
-              {/* Dot */}
-              <div className="absolute -left-[41px] md:-left-[73px] top-1.5 w-6 h-6 rounded-full bg-[var(--color-primary)] border-4 border-[var(--color-dark-text)] shadow-lg" />
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)] font-general">2026 • Global Evolution</span>
-                <h4 className="text-2xl font-serif font-light text-white mt-2 mb-3">Expanding to Deep Skincare Devotion</h4>
-                <p className="text-sm text-white/60 font-light leading-relaxed max-w-xl font-satoshi">
-                  Unveiling new high-potency toners and masks, continuing our commitment to sustainable packaging, clean trade, and luxury wellness.
-                </p>
-              </div>
-            </motion.div>
+              {/* Milestone 3 */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 1 }}
+                className="relative flex flex-col md:flex-row items-start md:items-center justify-between group"
+              >
+                {/* Dot */}
+                <div className="absolute left-3.5 md:left-1/2 top-2 md:top-1/2 w-4 h-4 rounded-full bg-[var(--color-primary)] border-[3px] border-[var(--color-cream)] shadow-md md:-translate-x-1/2 md:-translate-y-1/2 z-10 transition-transform duration-500 group-hover:scale-125" />
+                
+                {/* Content - Left side */}
+                <div className="pl-12 md:pl-0 md:w-1/2 md:pr-16 md:text-right">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)] font-general">2025 • National Launch</span>
+                  <h4 className="text-2xl md:text-3xl font-serif font-light text-[var(--color-dark-text)] mt-2 mb-3">Pioneering Organic Wellness</h4>
+                  <p className="text-sm md:text-base text-[var(--color-dark-text)]/70 font-light leading-relaxed font-satoshi md:ml-auto max-w-md">
+                    Officially launched Hridhay Connect website, delivering our signature serums to thousands of customers looking to restore harmony and natural skin radiance.
+                  </p>
+                </div>
+                
+                <div className="hidden md:block md:w-1/2" />
+              </motion.div>
 
+              {/* Milestone 4 */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 1 }}
+                className="relative flex flex-col md:flex-row items-start md:items-center justify-between group md:flex-row-reverse"
+              >
+                {/* Dot */}
+                <div className="absolute left-3.5 md:left-1/2 top-2 md:top-1/2 w-4 h-4 rounded-full bg-[var(--color-primary)] border-[3px] border-[var(--color-cream)] shadow-md md:-translate-x-1/2 md:-translate-y-1/2 z-10 transition-transform duration-500 group-hover:scale-125" />
+                
+                {/* Content - Right side */}
+                <div className="pl-12 md:pl-0 md:w-1/2 md:pl-16 md:text-left">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)] font-general">2026 • Global Evolution</span>
+                  <h4 className="text-2xl md:text-3xl font-serif font-light text-[var(--color-dark-text)] mt-2 mb-3">Expanding to Deep Skincare Devotion</h4>
+                  <p className="text-sm md:text-base text-[var(--color-dark-text)]/70 font-light leading-relaxed font-satoshi md:mr-auto max-w-md">
+                    Unveiling new high-potency toners and masks, continuing our commitment to sustainable packaging, clean trade, and luxury wellness.
+                  </p>
+                </div>
+                
+                <div className="hidden md:block md:w-1/2" />
+              </motion.div>
+
+            </div>
           </div>
         </div>
       </section>
 
       {/* 10. Customer Love Section (Carousel on mobile, grid on desktop) */}
-      <section className="relative py-28 md:py-40 bg-white/60 border-y border-[var(--color-primary)]/10 overflow-hidden">
+      {/* <section className="relative py-28 md:py-40 bg-white/60 border-y border-[var(--color-primary)]/10 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }} variants={fadeUpContainer} className="text-center max-w-3xl mx-auto mb-16 md:mb-24">
             <motion.span variants={fadeUpItem} className="text-[var(--color-primary)] font-semibold tracking-[0.2em] uppercase text-xs mb-4 block">Shared Journeys</motion.span>
@@ -408,13 +386,13 @@ export function AboutPage() {
             ))}
           </motion.div>
         </div>
-      </section>
+      </section> */}
 
       {/* Premium Image Carousel Section */}
       <AboutImageCarousel />
 
       {/* 11. Newsletter Section */}
-      <section className="relative py-28 md:py-36 bg-white border-y border-[var(--color-primary)]/5">
+      {/* <section className="relative py-28 md:py-36 bg-white border-y border-[var(--color-primary)]/5">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-50px" }} variants={fadeUpContainer} className="bg-[var(--color-cream)] rounded-[3rem] p-12 md:p-20 shadow-xl border border-[var(--color-primary)]/10 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-10"><Sparkles className="w-24 h-24 text-[var(--color-primary)]" /></div>
@@ -437,7 +415,7 @@ export function AboutPage() {
             </motion.form>
           </motion.div>
         </div>
-      </section>
+      </section> */}
 
       {/* 12. Premium CTA Section */}
       <section className="relative py-32 md:py-48 bg-[var(--color-dark-text)] text-[var(--color-cream)] overflow-hidden">
