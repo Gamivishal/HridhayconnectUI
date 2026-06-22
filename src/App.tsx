@@ -1,39 +1,41 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Navigation } from "./components/Navigation";
 import { HeroSection } from "./components/HeroSection";
-import { CategoryCarousel } from "./components/CategoryCarousel";
-import {
-  TopCategories,
-  TrendingProducts,
-  NewArrivals,
-  FeaturedProducts,
-  BestSellers,
-  OnSaleProducts
-} from "./components/DynamicHomeSections";
 import { Marquee } from "./components/Marquee";
-import { BrandStory } from "./components/BrandStory";
-import { BrandStatistics } from "./components/BrandStatistics";
-import { Ingredients } from "./components/Ingredients";
-import { FeaturedCollection } from "./components/FeaturedCollection";
-import { WellnessExperience } from "./components/WellnessExperience";
-import { InteractiveScroll } from "./components/InteractiveScroll";
-import { Testimonials } from "./components/Testimonials";
-import { TrustBadges } from "./components/TrustBadges";
-import { Footer } from "./components/Footer";
-import { InstagramSection } from "./components/InstagramSection";
-import { HomepageImageShowcase } from "./components/HomepageImageShowcase";
-import { AboutPage } from "./components/AboutPage";
-import { SoapCategoryPage } from "./components/SoapCategoryPage";
-import { HairOilCategoryPage } from "./components/HairOilCategoryPage";
-import { MukhwasCategoryPage } from "./components/MukhwasCategoryPage";
-import { TeaMasalaCategoryPage } from "./components/TeaMasalaCategoryPage";
-import { HridhaySpecialCategoryPage } from "./components/HridhaySpecialCategoryPage";
-import { ProductPage } from "./components/ProductPage";
-import { CartPage } from "./components/CartPage";
-import { CheckoutPage } from "./components/CheckoutPage";
 import { MiniCartDrawer } from "./components/MiniCartDrawer";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { SignUpModal } from "./components/SignUpModal";
+
+// Lazy Loaded Components
+const CategoryCarousel = lazy(() => import("./components/CategoryCarousel").then(m => ({ default: m.CategoryCarousel })));
+const TopCategories = lazy(() => import("./components/DynamicHomeSections").then(m => ({ default: m.TopCategories })));
+const TrendingProducts = lazy(() => import("./components/DynamicHomeSections").then(m => ({ default: m.TrendingProducts })));
+const NewArrivals = lazy(() => import("./components/DynamicHomeSections").then(m => ({ default: m.NewArrivals })));
+const FeaturedProducts = lazy(() => import("./components/DynamicHomeSections").then(m => ({ default: m.FeaturedProducts })));
+const BestSellers = lazy(() => import("./components/DynamicHomeSections").then(m => ({ default: m.BestSellers })));
+const OnSaleProducts = lazy(() => import("./components/DynamicHomeSections").then(m => ({ default: m.OnSaleProducts })));
+const BrandStory = lazy(() => import("./components/BrandStory").then(m => ({ default: m.BrandStory })));
+const BrandStatistics = lazy(() => import("./components/BrandStatistics").then(m => ({ default: m.BrandStatistics })));
+const Ingredients = lazy(() => import("./components/Ingredients").then(m => ({ default: m.Ingredients })));
+const FeaturedCollection = lazy(() => import("./components/FeaturedCollection").then(m => ({ default: m.FeaturedCollection })));
+const WellnessExperience = lazy(() => import("./components/WellnessExperience").then(m => ({ default: m.WellnessExperience })));
+const InteractiveScroll = lazy(() => import("./components/InteractiveScroll").then(m => ({ default: m.InteractiveScroll })));
+const Testimonials = lazy(() => import("./components/Testimonials").then(m => ({ default: m.Testimonials })));
+const TrustBadges = lazy(() => import("./components/TrustBadges").then(m => ({ default: m.TrustBadges })));
+const Footer = lazy(() => import("./components/Footer").then(m => ({ default: m.Footer })));
+const InstagramSection = lazy(() => import("./components/InstagramSection").then(m => ({ default: m.InstagramSection })));
+const HomepageImageShowcase = lazy(() => import("./components/HomepageImageShowcase").then(m => ({ default: m.HomepageImageShowcase })));
+
+// Lazy Loaded Pages
+const AboutPage = lazy(() => import("./components/AboutPage").then(m => ({ default: m.AboutPage })));
+const SoapCategoryPage = lazy(() => import("./components/SoapCategoryPage").then(m => ({ default: m.SoapCategoryPage })));
+const HairOilCategoryPage = lazy(() => import("./components/HairOilCategoryPage").then(m => ({ default: m.HairOilCategoryPage })));
+const MukhwasCategoryPage = lazy(() => import("./components/MukhwasCategoryPage").then(m => ({ default: m.MukhwasCategoryPage })));
+const TeaMasalaCategoryPage = lazy(() => import("./components/TeaMasalaCategoryPage").then(m => ({ default: m.TeaMasalaCategoryPage })));
+const HridhaySpecialCategoryPage = lazy(() => import("./components/HridhaySpecialCategoryPage").then(m => ({ default: m.HridhaySpecialCategoryPage })));
+const ProductPage = lazy(() => import("./components/ProductPage").then(m => ({ default: m.ProductPage })));
+const CartPage = lazy(() => import("./components/CartPage").then(m => ({ default: m.CartPage })));
+const CheckoutPage = lazy(() => import("./components/CheckoutPage").then(m => ({ default: m.CheckoutPage })));
 import { useSignUp } from "./context/SignUpContext";
 import { products } from "./data/products";
 import { FloatingWhatsApp } from "./components/FloatingWhatsApp";
@@ -186,59 +188,59 @@ export default function App() {
 
       <Navigation currentPage={currentPage} />
 
-      {currentPage === 'home' ? (
-        <>
-          <HeroSection />
-          <Marquee />
-          <CategoryCarousel />
-          <TopCategories />
-          <BrandStory />
-          <TrendingProducts />
-          <NewArrivals />
-          <BrandStatistics />
-          <FeaturedProducts />
-          <BestSellers />
-          <OnSaleProducts />
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[var(--color-cream)]"><div className="w-8 h-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div></div>}>
+        {currentPage === 'home' ? (
+          <>
+            <HeroSection />
+            <Marquee />
+            <CategoryCarousel />
+            <TopCategories />
+            <BrandStory />
+            <TrendingProducts />
+            <NewArrivals />
+            <BrandStatistics />
+            <FeaturedProducts />
+            <BestSellers />
+            <OnSaleProducts />
 
+            <Ingredients />
+            {/* <FeaturedCollection /> */}
+            <InteractiveScroll />
+            <WellnessExperience />
+            <Testimonials />
+            <TrustBadges />
+            <HomepageImageShowcase />
+            <InstagramSection />
+          </>
+        ) : currentPage === 'about' ? (
+          <AboutPage />
+        ) : currentPage === 'soap' ? (
+          <SoapCategoryPage />
+        ) : currentPage === 'hair-oil' ? (
+          <HairOilCategoryPage />
+        ) : currentPage === 'mukhwas' ? (
+          <MukhwasCategoryPage />
+        ) : currentPage === 'tea-masala' ? (
+          <TeaMasalaCategoryPage />
+        ) : currentPage === 'hridhay-special' ? (
+          <HridhaySpecialCategoryPage />
+        ) : currentPage === 'product' ? (
+          <ProductPage productId={selectedProductId} onBack={() => {
+            const prod = products.find(p => p.id === selectedProductId);
+            if (prod) {
+              window.location.hash = `#${prod.category}`;
+            } else {
+              window.location.hash = "#home";
+            }
+          }} />
+        ) : currentPage === 'cart' ? (
+          <CartPage />
+        ) : currentPage === 'checkout' ? (
+          <CheckoutPage />
+        ) : null}
 
-
-          <Ingredients />
-          {/* <FeaturedCollection /> */}
-          <InteractiveScroll />
-          <WellnessExperience />
-          <Testimonials />
-          <TrustBadges />
-          <HomepageImageShowcase />
-          <InstagramSection />
-        </>
-      ) : currentPage === 'about' ? (
-        <AboutPage />
-      ) : currentPage === 'soap' ? (
-        <SoapCategoryPage />
-      ) : currentPage === 'hair-oil' ? (
-        <HairOilCategoryPage />
-      ) : currentPage === 'mukhwas' ? (
-        <MukhwasCategoryPage />
-      ) : currentPage === 'tea-masala' ? (
-        <TeaMasalaCategoryPage />
-      ) : currentPage === 'hridhay-special' ? (
-        <HridhaySpecialCategoryPage />
-      ) : currentPage === 'product' ? (
-        <ProductPage productId={selectedProductId} onBack={() => {
-          const prod = products.find(p => p.id === selectedProductId);
-          if (prod) {
-            window.location.hash = `#${prod.category}`;
-          } else {
-            window.location.hash = "#home";
-          }
-        }} />
-      ) : currentPage === 'cart' ? (
-        <CartPage />
-      ) : currentPage === 'checkout' ? (
-        <CheckoutPage />
-      ) : null}
-
-      <Footer />
+        <Footer />
+      </Suspense>
 
       <MiniCartDrawer />
 

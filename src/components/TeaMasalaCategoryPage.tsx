@@ -75,6 +75,8 @@ function TeaMasalaCard({
         <img
           src={masala.images[0]}
           alt={masala.name}
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-contain object-center group-hover:scale-[1.04] transition-transform duration-[2.2s] ease-out brightness-95 group-hover:brightness-[1.02]"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-dark-text)]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
@@ -413,6 +415,8 @@ export function TeaMasalaCategoryPage() {
               <img
                 src="https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=1200&auto=format&fit=crop"
                 alt="Ayurvedic Chai Pour"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover saturate-[0.8] brightness-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-dark-text)]/20 to-transparent pointer-events-none" />
@@ -429,6 +433,8 @@ export function TeaMasalaCategoryPage() {
               <img
                 src="https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=800&auto=format&fit=crop"
                 alt="Pounded Spices"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover saturate-[0.8]"
               />
             </motion.div>
@@ -493,7 +499,7 @@ export function TeaMasalaCategoryPage() {
               <div key={idx} className="bg-white/40 border border-white/60 p-6 rounded-[2.2rem] shadow-sm flex flex-col justify-between group/card">
                 <div>
                   <div className="w-full aspect-[16/10] rounded-[1.8rem] overflow-hidden mb-6 relative">
-                    <img src={ing.img} alt={ing.name} className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-[1s]" />
+                    <img src={ing.img} alt={ing.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-[1s]" />
                   </div>
                   <div className="flex items-center justify-between gap-2 mb-3">
                     <h4 className="text-lg font-serif font-medium text-black">{ing.name}</h4>
@@ -516,7 +522,7 @@ export function TeaMasalaCategoryPage() {
               <div key={idx} className="bg-white/40 border border-white/60 p-6 rounded-[2.2rem] shadow-sm flex flex-col justify-between group/card">
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
                   <div className="sm:col-span-5 w-full aspect-[16/11] rounded-[1.8rem] overflow-hidden relative">
-                    <img src={ing.img} alt={ing.name} className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-[1s]" />
+                    <img src={ing.img} alt={ing.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-[1s]" />
                   </div>
                   <div className="sm:col-span-7">
                     <div className="flex items-center justify-between gap-2 mb-3">
@@ -602,6 +608,8 @@ export function TeaMasalaCategoryPage() {
           <img
             src="https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=1600&auto=format&fit=crop"
             alt="Warm Tea Serving Moment"
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover brightness-[0.7] saturate-[0.85]"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-cream)] via-transparent to-transparent z-10" />

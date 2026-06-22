@@ -43,9 +43,9 @@ export function DynamicSectionWrapper({ componentId, layout = 'carousel' }: { co
   return <SectionCarousel section={section} />;
 }
 
-export function TopCategories() { return <DynamicSectionWrapper componentId={2} />; }
-export function TrendingProducts() { return <DynamicSectionWrapper componentId={3} layout="grid" />; }
-export function NewArrivals() { return <DynamicSectionWrapper componentId={4} />; }
-export function FeaturedProducts() { return <DynamicSectionWrapper componentId={5} layout="grid" />; }
-export function BestSellers() { return <DynamicSectionWrapper componentId={6} />; }
-export function OnSaleProducts() { return <DynamicSectionWrapper componentId={7} layout="grid" />; }
+export const TopCategories = React.memo(function TopCategories() { return <DynamicSectionWrapper componentId={2} />; });
+export const TrendingProducts = React.memo(function TrendingProducts() { return <DynamicSectionWrapper componentId={3} layout="grid" />; });
+export const NewArrivals = React.memo(function NewArrivals() { return <DynamicSectionWrapper componentId={4} />; });
+export const FeaturedProducts = React.memo(function FeaturedProducts() { return <DynamicSectionWrapper componentId={5} layout="grid" />; });
+export const BestSellers = React.memo(function BestSellers() { return <DynamicSectionWrapper componentId={6} />; });
+export const OnSaleProducts = React.memo(function OnSaleProducts() { return <DynamicSectionWrapper componentId={7} layout="grid" />; });

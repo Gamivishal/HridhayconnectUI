@@ -38,6 +38,8 @@ export function SectionGrid({ section }: { section: HomeSection }) {
                 <img
                   src={product.images[0]}
                   alt={product.name}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-contain transition-transform duration-[1.5s] group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -65,6 +67,7 @@ export function SectionGrid({ section }: { section: HomeSection }) {
                     e.stopPropagation();
                     toggleWishlist(String(product.id));
                   }}
+                  aria-label={isInWishlist(String(product.id)) ? "Remove from wishlist" : "Add to wishlist"}
                   className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[60] p-1.5 sm:p-2 rounded-full bg-white/80 backdrop-blur-md shadow-sm hover:bg-white hover:scale-110 transition-all duration-300 group/wishlist"
                 >
                   <Heart
@@ -79,6 +82,7 @@ export function SectionGrid({ section }: { section: HomeSection }) {
                     e.stopPropagation();
                     addToCart(product, 1, product.category === 'mukhwas' ? 'Pouch' : undefined);
                   }}
+                  aria-label={`Add ${product.name} to cart`}
                   className="absolute bottom-2 right-2 sm:bottom-5 sm:right-5 bg-white/95 backdrop-blur-md p-2.5 sm:p-3.5 rounded-full shadow-xl opacity-0 group-hover:opacity-100 translate-y-6 group-hover:translate-y-0 transition-all duration-500 hover:bg-[var(--color-primary)] hover:text-white text-[var(--color-dark-text)]"
                 >
                   <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />

@@ -62,10 +62,10 @@ export function AboutPage() {
 
           <div className="lg:col-span-6 relative h-[60vh] md:h-[80vh] w-full flex items-center justify-center mt-12 lg:mt-0">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }} className="relative w-[85%] md:w-[80%] h-full rounded-t-[12rem] md:rounded-t-[18rem] rounded-b-[2rem] md:rounded-b-[3rem] overflow-hidden shadow-2xl border border-white/40">
-              <img src="/Image/AboutPageImage/Section_1_largerImage.jpg" alt="Botanical setup" className="w-full h-full object-cover mix-blend-normal transition-transform duration-1000 hover:scale-105" />
+              <img src="/Image/AboutPageImage/Section_1_largerImage.jpg" alt="Botanical setup" loading="lazy" decoding="async" className="w-full h-full object-cover mix-blend-normal transition-transform duration-1000 hover:scale-105" />
             </motion.div>
             <motion.div initial={{ opacity: 0, x: -40, y: 40 }} whileInView={{ opacity: 1, x: 0, y: 0 }} viewport={{ once: true }} transition={{ duration: 1.6, delay: 0.4, ease: [0.16, 1, 0.3, 1] }} className="absolute bottom-[5%] left-[0%] md:-left-[5%] w-[50%] md:w-[45%] aspect-[4/3] rounded-2xl md:rounded-3xl overflow-hidden border-[6px] md:border-8 border-[var(--color-cream)] shadow-2xl">
-              <img src="/Image/AboutPageImage/TwoSoap.webp" alt="Herbal apothecary extraction" className="w-full h-full object-cover saturate-[0.85] transition-transform duration-1000 hover:scale-110" />
+              <img src="/Image/AboutPageImage/TwoSoap.webp" alt="Herbal apothecary extraction" loading="lazy" decoding="async" className="w-full h-full object-cover saturate-[0.85] transition-transform duration-1000 hover:scale-110" />
             </motion.div>
           </div>
         </div>
@@ -104,7 +104,7 @@ export function AboutPage() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-center">
           <div className="lg:col-span-6 relative h-[60vh] md:h-[70vh] w-full flex items-center justify-center order-last lg:order-first">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }} className="absolute w-[85%] md:w-[90%] h-full rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border border-[var(--color-primary)]/10 bg-white">
-              <img src="/Image/AboutPageImage/Photo1.jpg" alt="Gujarati farmer harvesting natural botanicals" className="w-full h-full object-cover saturate-[0.85] brightness-[1.02] transition-transform duration-1000 hover:scale-105" />
+              <img src="/Image/AboutPageImage/Photo1.jpg" alt="Gujarati farmer harvesting natural botanicals" loading="lazy" decoding="async" className="w-full h-full object-cover saturate-[0.85] brightness-[1.02] transition-transform duration-1000 hover:scale-105" />
             </motion.div>
             <motion.div initial={{ opacity: 0, scale: 0 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.6, type: "spring" }} className="absolute -right-2 md:-right-6 top-[20%] bg-white/80 backdrop-blur-xl border border-white text-[var(--color-primary)] p-5 md:p-6 rounded-3xl shadow-xl w-36 md:w-44 text-center">
               <Award className="w-8 h-8 mx-auto mb-2 text-[var(--color-primary)]" />
@@ -171,10 +171,10 @@ export function AboutPage() {
 
             <div className="lg:col-span-6 relative h-[60vh] md:h-[80vh] w-full flex items-center justify-center mt-12 lg:mt-0">
               <motion.div initial={{ opacity: 0, scale: 0.9, y: 50 }} whileInView={{ opacity: 1, scale: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }} className="absolute w-[70%] md:w-[60%] h-[80%] md:h-[75%] rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border border-white/40">
-                <img src="/Image/AboutPageImage/Ingredients2.jpg" alt="Minimal luxury serum container" className="w-full h-full object-cover saturate-[0.85] transition-transform duration-1000 hover:scale-105" />
+                <img src="/Image/AboutPageImage/Ingredients2.jpg" alt="Minimal luxury serum container" loading="lazy" decoding="async" className="w-full h-full object-cover saturate-[0.85] transition-transform duration-1000 hover:scale-105" />
               </motion.div>
               <motion.div initial={{ opacity: 0, scale: 0.95, x: 50, y: -30 }} whileInView={{ opacity: 1, scale: 1, x: 0, y: 0 }} viewport={{ once: true }} transition={{ duration: 1.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }} className="absolute right-[0%] md:right-[5%] bottom-[5%] md:bottom-[10%] w-[55%] md:w-[45%] aspect-[3/4] rounded-t-[8rem] md:rounded-t-[10rem] rounded-b-[2rem] md:rounded-b-3xl overflow-hidden border-[6px] md:border-8 border-[var(--color-cream)] shadow-2xl">
-                <img src="/Image/AboutPageImage/AllproductMix.webp" alt="Botanical extracts" className="w-full h-full object-cover saturate-[0.7] transition-transform duration-1000 hover:scale-110" />
+                <img src="/Image/AboutPageImage/AllproductMix.webp" alt="Botanical extracts" loading="lazy" decoding="async" className="w-full h-full object-cover saturate-[0.7] transition-transform duration-1000 hover:scale-110" />
               </motion.div>
             </div>
           </div>
@@ -200,7 +200,7 @@ export function AboutPage() {
             ].map((ing, idx) => (
               <motion.div key={idx} variants={fadeUpItem} className="flex flex-col items-center text-center group cursor-pointer">
                 <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-xl mb-4 relative transition-transform duration-500 group-hover:-translate-y-3">
-                  <img src={ing.img} alt={ing.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 saturate-[0.85] group-hover:saturate-100" />
+                  <img src={ing.img} alt={ing.name} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 saturate-[0.85] group-hover:saturate-100" />
                   <div className="absolute inset-0 bg-[var(--color-primary)]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
                 <h4 className="font-serif font-medium text-black text-lg mb-1">{ing.name}</h4>
@@ -218,7 +218,7 @@ export function AboutPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-center">
             <div className="lg:col-span-7 relative h-[50vh] md:h-[70vh] w-full order-last lg:order-first mt-12 lg:mt-0">
               <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 1.6 }} className="w-full h-full rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border border-[var(--color-primary)]/10 bg-white">
-                <img src="/Image/AboutPageImage/Photo1.jpg" alt="Indian Gujarati woman enjoying mindful self-care ritual" className="w-full h-full object-cover saturate-[0.85] transition-transform duration-1000 hover:scale-105" />
+                <img src="/Image/AboutPageImage/Photo1.jpg" alt="Indian Gujarati woman enjoying mindful self-care ritual" loading="lazy" decoding="async" className="w-full h-full object-cover saturate-[0.85] transition-transform duration-1000 hover:scale-105" />
               </motion.div>
             </div>
             <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }} variants={fadeUpContainer} className="lg:col-span-5 flex flex-col justify-center">

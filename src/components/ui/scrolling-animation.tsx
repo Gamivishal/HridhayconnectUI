@@ -71,7 +71,9 @@ export function HomePage() {
                       transform: `translate(${expandRadius * Math.cos(0)}px, ${expandRadius * Math.sin(0)}px)`,
                     }}
                   >
-                    <img
+                      <img
+                      loading="lazy"
+                      decoding="async"
                       src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0"
                       alt="Profile 1"
                       className="w-full h-full object-cover"
@@ -84,7 +86,9 @@ export function HomePage() {
                       transform: `translate(${expandRadius * Math.cos(Math.PI / 4)}px, ${expandRadius * Math.sin(Math.PI / 4)}px)`,
                     }}
                   >
-                    <img
+                      <img
+                      loading="lazy"
+                      decoding="async"
                       src="https://images.unsplash.com/photo-1610652492500-ded49ceeb378?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0"
                       alt="Profile 2"
                       className="w-full h-full object-cover"
@@ -97,7 +101,9 @@ export function HomePage() {
                       transform: `translate(${expandRadius * Math.cos(Math.PI / 2)}px, ${expandRadius * Math.sin(Math.PI / 2)}px)`,
                     }}
                   >
-                    <img
+                      <img
+                      loading="lazy"
+                      decoding="async"
                       src="https://images.unsplash.com/photo-1619365734050-cb5e64a42d43?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0"
                       alt="Profile 3"
                       className="w-full h-full object-cover"
@@ -110,7 +116,9 @@ export function HomePage() {
                       transform: `translate(${expandRadius * Math.cos((3 * Math.PI) / 4)}px, ${expandRadius * Math.sin((3 * Math.PI) / 4)}px)`,
                     }}
                   >
-                    <img
+                      <img
+                      loading="lazy"
+                      decoding="async"
                       src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0"
                       alt="Profile 4"
                       className="w-full h-full object-cover"
@@ -123,7 +131,9 @@ export function HomePage() {
                       transform: `translate(${expandRadius * Math.cos(Math.PI)}px, ${expandRadius * Math.sin(Math.PI)}px)`,
                     }}
                   >
-                    <img
+                      <img
+                      loading="lazy"
+                      decoding="async"
                       src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0"
                       alt="Profile 5"
                       className="w-full h-full object-cover"
@@ -136,7 +146,9 @@ export function HomePage() {
                       transform: `translate(${expandRadius * Math.cos((5 * Math.PI) / 4)}px, ${expandRadius * Math.sin((5 * Math.PI) / 4)}px)`,
                     }}
                   >
-                    <img
+                      <img
+                      loading="lazy"
+                      decoding="async"
                       src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0"
                       alt="Profile 6"
                       className="w-full h-full object-cover"
@@ -149,7 +161,9 @@ export function HomePage() {
                       transform: `translate(${expandRadius * Math.cos((3 * Math.PI) / 2)}px, ${expandRadius * Math.sin((3 * Math.PI) / 2)}px)`,
                     }}
                   >
-                    <img
+                      <img
+                      loading="lazy"
+                      decoding="async"
                       src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0"
                       alt="Profile 7"
                       className="w-full h-full object-cover"
@@ -162,7 +176,9 @@ export function HomePage() {
                       transform: `translate(${expandRadius * Math.cos((7 * Math.PI) / 4)}px, ${expandRadius * Math.sin((7 * Math.PI) / 4)}px)`,
                     }}
                   >
-                    <img
+                      <img
+                      loading="lazy"
+                      decoding="async"
                       src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0"
                       alt="Profile 8"
                       className="w-full h-full object-cover"
