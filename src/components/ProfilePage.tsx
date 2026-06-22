@@ -765,11 +765,23 @@ export const ProfilePage = () => {
                                   <div className="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-primary)]"></div>
                                 )}
                                 
-                                {addr.IsDefault && (
-                                  <span className="absolute top-6 right-6 text-[10px] bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-3 py-1.5 rounded-full uppercase tracking-[0.15em] font-bold flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-3 h-3" /> Default
-                                  </span>
-                                )}
+                                <div className="absolute top-6 right-6">
+                                  <label className="flex items-center gap-2 cursor-pointer group/radio">
+                                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${addr.IsDefault ? 'border-[var(--color-primary)] bg-[var(--color-primary)]' : 'border-neutral-300 group-hover/radio:border-[var(--color-primary)]/50'}`}>
+                                      {addr.IsDefault && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
+                                    </div>
+                                    <input 
+                                      type="radio" 
+                                      name="defaultShipping" 
+                                      className="sr-only" 
+                                      checked={addr.IsDefault} 
+                                      onChange={() => !addr.IsDefault && handleSetDefaultShipping(addr.Id)} 
+                                    />
+                                    <span className={`text-[10px] uppercase tracking-[0.15em] font-bold ${addr.IsDefault ? 'text-[var(--color-primary)]' : 'text-neutral-400 group-hover/radio:text-[var(--color-primary)]/70'}`}>
+                                      Default
+                                    </span>
+                                  </label>
+                                </div>
                                 
                                 <h4 className="font-serif text-2xl text-neutral-900 mb-4 tracking-tight">{profileData?.FirstName} {profileData?.LastName}</h4>
                                 
@@ -791,14 +803,6 @@ export const ProfilePage = () => {
                                   <button onClick={() => openAddressModal('SHIPPING', addr)} className="text-xs font-semibold text-neutral-500 hover:text-[var(--color-primary)] transition-colors flex items-center gap-1.5 uppercase tracking-wider">
                                     <Edit2 className="w-3.5 h-3.5" /> Edit
                                   </button>
-                                  {!addr.IsDefault && (
-                                    <>
-                                      <div className="w-1 h-1 rounded-full bg-neutral-300"></div>
-                                      <button onClick={() => handleSetDefaultShipping(addr.Id)} className="text-xs font-semibold text-neutral-500 hover:text-[var(--color-primary)] transition-colors uppercase tracking-wider">
-                                        Set as Default
-                                      </button>
-                                    </>
-                                  )}
                                 </div>
                               </div>
                             ))}
