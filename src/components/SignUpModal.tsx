@@ -222,11 +222,12 @@ function FloatingSelect({
 interface SignUpModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialMode?: 'signin' | 'signup';
 }
 
-export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
+export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpModalProps) {
   const { syncCartWithApi, mergeGuestCartToApi } = useCart();
-  const [authMode, setAuthMode] = useState<'signup' | 'signin'>('signup');
+  const [authMode, setAuthMode] = useState<'signup' | 'signin'>(initialMode);
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -282,11 +283,12 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
         setIsLoading(false);
         setShowPassword(false);
         setShowConfirm(false);
-        setAuthMode('signup');
       }, 500);
       return () => clearTimeout(t);
+    } else {
+      setAuthMode(initialMode);
     }
-  }, [isOpen]);
+  }, [isOpen, initialMode]);
 
   const setField = (key: keyof typeof form) => (v: string | boolean) => {
     setForm((f) => ({ ...f, [key]: v }));
@@ -937,23 +939,7 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
                       )}
                     </motion.button>
 
-                    {/* Divider */}
-                    <div className="flex items-center gap-4 py-1">
-                      <div className="flex-1 h-[1px] bg-black/5" />
-                      <span className="text-[9px] text-black/30 font-semibold uppercase tracking-wider font-general">
-                        or continue with
-                      </span>
-                      <div className="flex-1 h-[1px] bg-black/5" />
-                    </div>
 
-                    {/* Google Button */}
-                    <button
-                      type="button"
-                      className="w-full py-4 rounded-2xl border border-black/10 hover:border-black/25 bg-white/70 hover:bg-white text-xs font-semibold text-[var(--color-dark-text)] flex items-center justify-center gap-2.5 shadow-sm hover:shadow transition-all duration-300 cursor-pointer"
-                    >
-                      <Chrome className="w-4 h-4 text-[var(--color-primary)]" />
-                      <span>Google Account</span>
-                    </button>
 
                     {/* Bottom toggle helper */}
                     <p className="text-center text-[11px] text-black/45 font-light font-satoshi">

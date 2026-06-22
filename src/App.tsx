@@ -243,7 +243,7 @@ export default function App() {
       <MiniCartDrawer />
 
       {/* Premium Sign Up Modal */}
-      <SignUpModal isOpen={isSignUpOpen} onClose={closeSignUp} />
+      <SignUpModal isOpen={isSignUpOpen} onClose={closeSignUp} initialMode={useSignUp().initialMode} />
 
       <FloatingWhatsApp />
       <GlobalToastProvider />

@@ -306,7 +306,7 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
               </div>
             ) : (
               <StarButton
-                onClick={openSignUp}
+                onClick={() => openSignUp('signin')}
                 style={{
                   paddingLeft: "1.375rem",
                   paddingRight: "1.375rem",
@@ -318,7 +318,7 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                 }}
                 className="!hidden md:!inline-flex"
               >
-                Sign Up
+                Login
               </StarButton>
             )}
 
@@ -593,7 +593,7 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                   <motion.button
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      openSignUp();
+                      openSignUp('signin');
                     }}
                     className="flex items-center justify-between w-full py-3.5 px-1 cursor-pointer border-b border-[#5B2A86]/6"
                     initial={{ opacity: 0, x: 20 }}
@@ -602,7 +602,7 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                     whileTap={{ x: 4 }}
                   >
                     <span className="font-serif text-base tracking-wide text-[#5B2A86] font-semibold">
-                      Sign Up / Login
+                      Login
                     </span>
                     <span
                       className="inline-flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0"
@@ -631,7 +631,7 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      openSignUp();
+                      openSignUp('signin');
                     }}
                     className="relative w-full flex items-center justify-center overflow-hidden rounded-2xl cursor-pointer"
                     style={{

@@ -45,3 +45,17 @@
   opacity: 0.04;
   pointer-events: none;
 }
+
+/* Remove browser-injected password reveal/eye icons */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+input[type="password"]::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+}

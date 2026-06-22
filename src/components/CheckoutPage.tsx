@@ -33,6 +33,23 @@ export function CheckoutPage() {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [addressError, setAddressError] = useState("");
   
+  // New Address Form States
+  const [isAddAddressModalOpen, setIsAddAddressModalOpen] = useState(false);
+  const [countries, setCountries] = useState<{id: number, name: string}[]>([]);
+  const [states, setStates] = useState<{id: number, name: string}[]>([]);
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [addAddressError, setAddAddressError] = useState("");
+  const [newAddress, setNewAddress] = useState({
+    countryId: 0,
+    stateId: 0,
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    postalCode: "",
+    mobileNo: "",
+    alternativeMobileNo: "",
+  });
+  
   // Coupon
   const [couponCode, setCouponCode] = useState("");
   const [discountPercent, setDiscountPercent] = useState(0);
@@ -73,6 +90,78 @@ export function CheckoutPage() {
     };
     fetchAddresses();
   }, []);
+
+  // Fetch Countries
+  useEffect(() => {
+    if (isAddAddressModalOpen && countries.length === 0) {
+      get("/Dropdown/CountryList").then((res: any) => {
+        if (res && res.data) setCountries(res.data);
+      }).catch(console.error);
+    }
+  }, [isAddAddressModalOpen]);
+
+  // Fetch States based on Country
+  useEffect(() => {
+    if (newAddress.countryId > 0) {
+      get(`/Dropdown/StateList?CountryId=${newAddress.countryId}`).then((res: any) => {
+        if (res && res.data) setStates(res.data);
+      }).catch(console.error);
+    } else {
+      setStates([]);
+    }
+  }, [newAddress.countryId]);
+
+  const handleSaveAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddAddressError("");
+    setIsAddingAddress(true);
+    
+    try {
+      const customerId = localStorage.getItem("customerId");
+      if (!customerId) throw new Error("Not logged in");
+
+      const payload = {
+        id: 0,
+        customerId: Number(customerId),
+        countryId: Number(newAddress.countryId),
+        stateId: Number(newAddress.stateId),
+        addressLine1: newAddress.addressLine1,
+        addressLine2: newAddress.addressLine2,
+        city: newAddress.city,
+        postalCode: newAddress.postalCode,
+        mobileNo: newAddress.mobileNo,
+        alternativeMobileNo: newAddress.alternativeMobileNo,
+        addressType: "SHIPPING"
+      };
+
+      const res: any = await post("/Customer/Save", payload);
+      
+      if (res.isSuccess || res.statusCode === 1 || res.statusCode === 200) {
+        setIsAddAddressModalOpen(false);
+        // Refresh addresses
+        const fetchRes: any = await get(`/Dropdown/CustomerAdress?customerId=${customerId}`);
+        if (fetchRes && fetchRes.data) {
+          setAddresses(fetchRes.data);
+          const data = fetchRes.data;
+          // Set the last added address as selected
+          if (data.length > 0) {
+            setSelectedAddress(data[data.length - 1]);
+          }
+        }
+        // Reset form
+        setNewAddress({
+          countryId: 0, stateId: 0, addressLine1: "", addressLine2: "", city: "", postalCode: "", mobileNo: "", alternativeMobileNo: ""
+        });
+      } else {
+        setAddAddressError(res.message || "Failed to add address");
+      }
+    } catch (err) {
+      console.error(err);
+      setAddAddressError("A network error occurred. Please try again.");
+    } finally {
+      setIsAddingAddress(false);
+    }
+  };
   
   // Redirect back if checkout items are empty and not completed
   useEffect(() => {
@@ -336,9 +425,9 @@ export function CheckoutPage() {
                   </div>
                   <button 
                     onClick={() => {
-                      window.location.hash = "#profile";
+                      setIsAddAddressModalOpen(true);
                     }} 
-                    className="text-[10px] bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] transition-colors text-white px-5 py-2.5 rounded-full uppercase tracking-widest font-semibold mt-2 shadow-sm"
+                    className="text-[10px] bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] transition-colors text-white px-5 py-2.5 rounded-full uppercase tracking-widest font-semibold mt-2 shadow-sm cursor-pointer"
                   >
                     Add New Address
                   </button>
@@ -762,13 +851,15 @@ export function CheckoutPage() {
                         )}
                       </div>
                       
-                      {/* Hidden radio input for accessibility */}
                       <input 
                         type="radio" 
                         name="delivery_address" 
                         className="sr-only" 
                         checked={selectedAddress?.id === addr.id}
-                        onChange={() => setSelectedAddress(addr)}
+                        onChange={() => {
+                          setSelectedAddress(addr);
+                          setTimeout(() => setIsAddressModalOpen(false), 150); // slight delay for visual feedback
+                        }}
                       />
                     </label>
                   ))
@@ -776,21 +867,173 @@ export function CheckoutPage() {
               </div>
               
               {/* Footer */}
-              <div className="p-6 border-t border-black/5 bg-white/50 flex flex-col sm:flex-row gap-3">
+              <div className="p-6 border-t border-black/5 bg-white/50 flex">
                 <button 
                   onClick={() => {
                     setIsAddressModalOpen(false);
-                    window.location.hash = "#profile";
+                    setIsAddAddressModalOpen(true);
                   }} 
-                  className="flex-1 py-4 rounded-full border border-black/10 text-[var(--color-dark-text)] text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-colors text-center cursor-pointer shadow-sm"
+                  className="w-full py-4 rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white text-[10px] font-bold uppercase tracking-widest transition-colors shadow-md text-center cursor-pointer"
                 >
                   Add New Address
                 </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {isAddAddressModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-6 bg-black/40 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-[var(--color-cream)] w-full max-w-xl max-h-[90vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden relative"
+            >
+              <div className="flex justify-between items-center p-6 border-b border-black/5 bg-white/40">
+                <h3 className="font-serif text-xl md:text-2xl text-[var(--color-dark-text)]">Add New Address</h3>
                 <button 
-                  onClick={() => setIsAddressModalOpen(false)} 
-                  className="flex-1 py-4 rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white text-[10px] font-bold uppercase tracking-widest transition-colors shadow-md text-center cursor-pointer"
+                  onClick={() => setIsAddAddressModalOpen(false)} 
+                  className="p-2 bg-black/5 hover:bg-black/10 rounded-full transition-colors cursor-pointer"
                 >
-                  Confirm Selection
+                  <X className="w-5 h-5 text-[var(--color-dark-text)]" />
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+                <form id="add-address-form" onSubmit={handleSaveAddress} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-dark-text)]/60">Country *</label>
+                      <select
+                        required
+                        value={newAddress.countryId}
+                        onChange={(e) => setNewAddress({ ...newAddress, countryId: Number(e.target.value), stateId: 0 })}
+                        className="w-full bg-white/50 border border-black/10 rounded-xl py-3 px-4 text-sm focus:border-[var(--color-primary)] outline-none"
+                      >
+                        <option value="0" disabled>Select Country</option>
+                        {countries.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-dark-text)]/60">State *</label>
+                      <select
+                        required
+                        value={newAddress.stateId}
+                        onChange={(e) => setNewAddress({ ...newAddress, stateId: Number(e.target.value) })}
+                        disabled={!newAddress.countryId || states.length === 0}
+                        className="w-full bg-white/50 border border-black/10 rounded-xl py-3 px-4 text-sm focus:border-[var(--color-primary)] outline-none disabled:opacity-50"
+                      >
+                        <option value="0" disabled>Select State</option>
+                        {states.map(s => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-dark-text)]/60">City *</label>
+                      <input
+                        required
+                        type="text"
+                        value={newAddress.city}
+                        onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
+                        className="w-full bg-white/50 border border-black/10 rounded-xl py-3 px-4 text-sm focus:border-[var(--color-primary)] outline-none"
+                        placeholder="Enter city"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-dark-text)]/60">Postal Code *</label>
+                      <input
+                        required
+                        type="text"
+                        value={newAddress.postalCode}
+                        onChange={(e) => setNewAddress({ ...newAddress, postalCode: e.target.value })}
+                        className="w-full bg-white/50 border border-black/10 rounded-xl py-3 px-4 text-sm focus:border-[var(--color-primary)] outline-none"
+                        placeholder="Enter zip/postal code"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-dark-text)]/60">Address Line 1 *</label>
+                    <input
+                      required
+                      type="text"
+                      value={newAddress.addressLine1}
+                      onChange={(e) => setNewAddress({ ...newAddress, addressLine1: e.target.value })}
+                      className="w-full bg-white/50 border border-black/10 rounded-xl py-3 px-4 text-sm focus:border-[var(--color-primary)] outline-none"
+                      placeholder="House no., Building, Street"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-dark-text)]/60">Address Line 2 (Optional)</label>
+                    <input
+                      type="text"
+                      value={newAddress.addressLine2}
+                      onChange={(e) => setNewAddress({ ...newAddress, addressLine2: e.target.value })}
+                      className="w-full bg-white/50 border border-black/10 rounded-xl py-3 px-4 text-sm focus:border-[var(--color-primary)] outline-none"
+                      placeholder="Area, Colony, Landmark"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-dark-text)]/60">Mobile No *</label>
+                      <input
+                        required
+                        type="tel"
+                        value={newAddress.mobileNo}
+                        onChange={(e) => setNewAddress({ ...newAddress, mobileNo: e.target.value })}
+                        className="w-full bg-white/50 border border-black/10 rounded-xl py-3 px-4 text-sm focus:border-[var(--color-primary)] outline-none"
+                        placeholder="Enter mobile number"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-dark-text)]/60">Alternative Mobile (Optional)</label>
+                      <input
+                        type="tel"
+                        value={newAddress.alternativeMobileNo}
+                        onChange={(e) => setNewAddress({ ...newAddress, alternativeMobileNo: e.target.value })}
+                        className="w-full bg-white/50 border border-black/10 rounded-xl py-3 px-4 text-sm focus:border-[var(--color-primary)] outline-none"
+                        placeholder="Enter alternative mobile"
+                      />
+                    </div>
+                  </div>
+
+                  {addAddressError && (
+                    <div className="text-[10px] text-red-500 font-medium pl-1 mt-2">
+                      {addAddressError}
+                    </div>
+                  )}
+                </form>
+              </div>
+
+              <div className="p-6 border-t border-black/5 bg-white/50 flex gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setIsAddAddressModalOpen(false)} 
+                  className="flex-1 py-4 rounded-full border border-black/10 text-[var(--color-dark-text)] text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-colors text-center cursor-pointer shadow-sm"
+                >
+                  Cancel
+                </button>
+                <button 
+                  form="add-address-form"
+                  type="submit"
+                  disabled={isAddingAddress || newAddress.countryId === 0 || newAddress.stateId === 0}
+                  className="flex-1 py-4 rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] disabled:opacity-50 text-white text-[10px] font-bold uppercase tracking-widest transition-colors shadow-md flex justify-center items-center gap-2 cursor-pointer"
+                >
+                  {isAddingAddress ? "Saving..." : "Save Address"}
                 </button>
               </div>
             </motion.div>

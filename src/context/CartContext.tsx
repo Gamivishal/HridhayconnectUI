@@ -37,10 +37,15 @@ export function resolveCartItem(apiCartItem: any): CartItem | null {
   const variantId = getCaseInsensitiveProperty<any>(apiCartItem, "VariantId") || getCaseInsensitiveProperty<any>(apiCartItem, "VarientId");
   const quantity = getCaseInsensitiveProperty<number>(apiCartItem, "Quantity") || getCaseInsensitiveProperty<number>(apiCartItem, "qty") || 1;
   const productName = getCaseInsensitiveProperty<string>(apiCartItem, "ProductName") || getCaseInsensitiveProperty<string>(apiCartItem, "name") || "";
-  const price = getCaseInsensitiveProperty<number>(apiCartItem, "Price") || 0;
+  const price = getCaseInsensitiveProperty<number>(apiCartItem, "Price") || getCaseInsensitiveProperty<number>(apiCartItem, "SellPrice") || 0;
   
-  const rawPackingType = getCaseInsensitiveProperty<any>(apiCartItem, "packingType") || getCaseInsensitiveProperty<any>(apiCartItem, "PackingType") || "";
-  const packingType = typeof rawPackingType === "string" ? rawPackingType : String(rawPackingType);
+  const rawPackingType = getCaseInsensitiveProperty<any>(apiCartItem, "packingType") || getCaseInsensitiveProperty<any>(apiCartItem, "PackingType");
+  let packingType = "";
+  if (typeof rawPackingType === "string") {
+    packingType = rawPackingType.trim();
+  } else if (rawPackingType && typeof rawPackingType !== "object") {
+    packingType = String(rawPackingType).trim();
+  }
 
   const imagePathRaw = getCaseInsensitiveProperty<string>(apiCartItem, "ImagePath") || getCaseInsensitiveProperty<string>(apiCartItem, "imagepath") || "";
   const resolvedImg = imagePathRaw ? resolveImageUrl(imagePathRaw) : null;

@@ -2,24 +2,31 @@ import { createContext, useContext, useState, ReactNode } from "react";
 
 interface SignUpContextType {
   isSignUpOpen: boolean;
-  openSignUp: () => void;
+  initialMode: 'signin' | 'signup';
+  openSignUp: (mode?: 'signin' | 'signup') => void;
   closeSignUp: () => void;
 }
 
 const SignUpContext = createContext<SignUpContextType>({
   isSignUpOpen: false,
+  initialMode: 'signup',
   openSignUp: () => {},
   closeSignUp: () => {},
 });
 
 export function SignUpProvider({ children }: { children: ReactNode }) {
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
+  const [initialMode, setInitialMode] = useState<'signin' | 'signup'>('signup');
 
   return (
     <SignUpContext.Provider
       value={{
         isSignUpOpen,
-        openSignUp: () => setIsSignUpOpen(true),
+        initialMode,
+        openSignUp: (mode = 'signup') => {
+          setInitialMode(mode);
+          setIsSignUpOpen(true);
+        },
         closeSignUp: () => setIsSignUpOpen(false),
       }}
     >
@@ -29,3 +36,4 @@ export function SignUpProvider({ children }: { children: ReactNode }) {
 }
 
 export const useSignUp = () => useContext(SignUpContext);
+
