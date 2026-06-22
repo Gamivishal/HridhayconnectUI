@@ -282,22 +282,22 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                       </div>
 
                       {/* Placeholders for future pages */}
-                      <a href="#profile" onClick={() => setIsProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
+                      <button onClick={() => { setIsProfileOpen(false); window.location.hash = 'profile'; window.dispatchEvent(new HashChangeEvent('hashchange')); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
                         <User className="w-3.5 h-3.5" />
                         <span>Profile Details</span>
-                      </a>
-                      <a href="#orders" onClick={() => setIsProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
+                      </button>
+                      <button onClick={() => { setIsProfileOpen(false); window.location.hash = 'orders'; window.dispatchEvent(new HashChangeEvent('hashchange')); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
                         <ShoppingBag className="w-3.5 h-3.5" />
                         <span>Order History</span>
-                      </a>
-                      <a href="#addresses" onClick={() => setIsProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
+                      </button>
+                      <button onClick={() => { setIsProfileOpen(false); window.location.hash = 'addresses'; window.dispatchEvent(new HashChangeEvent('hashchange')); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
                         <MapPin className="w-3.5 h-3.5" />
                         <span>Addresses</span>
-                      </a>
-                      <a href="#rewards" onClick={() => setIsProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
+                      </button>
+                      <button onClick={() => { setIsProfileOpen(false); window.location.hash = 'rewards'; window.dispatchEvent(new HashChangeEvent('hashchange')); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
                         <Gift className="w-3.5 h-3.5" />
                         <span>Rewards</span>
-                      </a>
+                      </button>
 
                       <div className="h-[1px] w-full bg-[#5B2A86]/10 my-2"></div>
 

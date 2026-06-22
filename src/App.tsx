@@ -100,7 +100,7 @@ export default function App() {
           if (prev !== 'checkout') window.scrollTo({ top: 0, behavior: "smooth" });
           return 'checkout';
         });
-      } else if (hash.startsWith("#profile") || hash.startsWith("#/profile")) {
+      } else if (hash.startsWith("#profile") || hash.startsWith("#/profile") || hash === "#orders" || hash === "#addresses" || hash === "#rewards") {
         setCurrentPage(prev => {
           if (prev !== 'profile') window.scrollTo({ top: 0, behavior: "smooth" });
           return 'profile';
@@ -152,7 +152,7 @@ export default function App() {
             if (prev !== 'checkout') window.scrollTo({ top: 0, behavior: "smooth" });
             return 'checkout';
           });
-        } else if (path === "/profile") {
+        } else if (path === "/profile" || path === "/orders" || path === "/addresses" || path === "/rewards") {
           setCurrentPage(prev => {
             if (prev !== 'profile') window.scrollTo({ top: 0, behavior: "smooth" });
             return 'profile';

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Mail, Phone, Shield, ArrowLeft, ShoppingBag, LogOut, Edit2, Save, X, MapPin, Gift, Ticket, Award, ChevronRight, Plus, Truck, CheckCircle2, Calendar } from "lucide-react";
+import { User, Mail, Phone, Shield, ArrowLeft, ShoppingBag, LogOut, Edit2, Save, X, MapPin, Gift, Ticket, Award, ChevronRight, Plus, Truck, CheckCircle2, Calendar, Sparkles } from "lucide-react";
 import { get, post } from "../api/BaseService";
 import { getCaseInsensitiveProperty } from "../api/productService";
 import { showApiResponseToast, showToast } from "../utils/toastService";
@@ -13,6 +13,7 @@ interface ProfileData {
   MobileNo: string;
   Gender: string;
   GenderName: string;
+  RewardCoins?: number;
 }
 
 interface AddressInfo {
@@ -146,6 +147,7 @@ export const ProfilePage = () => {
   const [orderSearchQuery, setOrderSearchQuery] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState("All");
   const [isOrderFilterOpen, setIsOrderFilterOpen] = useState(false);
+  const [orderDetailsTab, setOrderDetailsTab] = useState<'ITEMS' | 'SHIPPING' | 'SUMMARY'>('ITEMS');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -362,11 +364,11 @@ export const ProfilePage = () => {
         countryId: Number(addressForm.CountryId),
         stateId: Number(addressForm.StateId),
         addressLine1: addressForm.AddressLine1 || "",
-        addressLine2: addressForm.AddressLine2 || "",
+        addressLine2: typeof addressForm.AddressLine2 === 'string' && addressForm.AddressLine2.trim() !== "" ? addressForm.AddressLine2 : null,
         city: addressForm.City || "",
         postalCode: addressForm.PostalCode || "",
         mobileNo: addressForm.MobileNo || "",
-        alternativeMobileNo: addressForm.AlternativeMobileNo || "",
+        alternativeMobileNo: typeof addressForm.AlternativeMobileNo === 'string' && addressForm.AlternativeMobileNo.trim() !== "" ? addressForm.AlternativeMobileNo : null,
         addressType: addressFormMode
       };
 
@@ -438,7 +440,10 @@ export const ProfilePage = () => {
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setActiveTab(item.id)}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        window.location.hash = item.id;
+                      }}
                       className={`flex items-center justify-between w-full px-5 py-4 rounded-2xl transition-all duration-300 ${
                         isActive 
                           ? 'bg-[var(--color-primary)] text-white shadow-md shadow-[var(--color-primary)]/20' 
@@ -504,147 +509,169 @@ export const ProfilePage = () => {
                   ) : profileData ? (
                     <div className="p-6 sm:p-12">
                       
-                      {/* Profile Header Card */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-12 pb-10 border-b border-neutral-100/80">
-                        <div className="flex items-center gap-6">
-                          <div className="relative">
-                            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)] flex items-center justify-center text-white text-4xl font-serif shadow-xl shadow-[var(--color-primary)]/20 border-4 border-white">
-                              {profileData.FirstName ? profileData.FirstName[0].toUpperCase() : <User className="w-12 h-12" />}
+                      {/* Premium Welcome Hero */}
+                      <div className="relative overflow-hidden bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-[2rem] p-8 sm:p-10 mb-10 shadow-2xl shadow-neutral-900/20 text-white">
+                        {/* Decorative glow */}
+                        <div className="absolute -top-24 -right-24 w-64 h-64 bg-[var(--color-primary)] rounded-full mix-blend-screen filter blur-[80px] opacity-40"></div>
+                        
+                        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-8">
+                          <div className="flex items-center gap-6">
+                            <div className="relative">
+                              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white text-3xl font-serif shadow-inner border border-white/20">
+                                {profileData.FirstName ? profileData.FirstName[0].toUpperCase() : <User className="w-10 h-10" />}
+                              </div>
+                              <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full p-1.5 shadow-lg border-2 border-neutral-900">
+                                <Award className="w-4 h-4 text-white" />
+                              </div>
                             </div>
-                            <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1.5 shadow-sm border border-neutral-100">
-                              <Award className="w-6 h-6 text-yellow-500" />
+                            
+                            <div className="flex flex-col">
+                              <p className="text-white/60 text-sm font-satoshi uppercase tracking-widest font-semibold mb-1">Welcome Back</p>
+                              <h2 className="text-3xl sm:text-4xl font-serif text-white mb-2 tracking-tight">
+                                {getPrefix(profileData.Gender)}
+                                {profileData.FirstName} {profileData.LastName}
+                              </h2>
+                              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md border border-white/10 rounded-full w-fit">
+                                <Sparkles className="w-3 h-3 text-amber-400" />
+                                <span className="text-white/90 text-[10px] font-bold tracking-wider uppercase">
+                                  Premium Member
+                                </span>
+                              </div>
                             </div>
                           </div>
-                          
-                          <div className="flex flex-col">
-                            <h2 className="text-3xl font-serif text-neutral-900 mb-1 tracking-tight">
-                              {getPrefix(profileData.Gender)}
-                              {profileData.FirstName} {profileData.LastName}
-                            </h2>
-                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-[var(--color-primary)]/10 to-[var(--color-accent)]/5 rounded-full w-fit mt-1">
-                              <Award className="w-3.5 h-3.5 text-[var(--color-primary)]" />
-                              <span className="text-[var(--color-primary)] text-xs font-semibold tracking-wider uppercase">
-                                Hridhay Connect Member
-                              </span>
-                            </div>
-                          </div>
-                        </div>
 
-                        <div className="sm:ml-auto mt-4 sm:mt-0">
-                          {isEditing ? (
-                            <div className="flex items-center gap-3">
-                              <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 rounded-full hover:bg-neutral-100 text-neutral-600 transition-colors font-medium text-sm flex items-center gap-2">
-                                <X className="w-4 h-4" /> Cancel
-                              </button>
-                              <button onClick={handleSave} disabled={isSaving} className="px-6 py-2.5 rounded-full bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)] transition-all shadow-lg shadow-[var(--color-primary)]/25 font-medium text-sm flex items-center gap-2 disabled:opacity-70">
-                                {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
-                                {isSaving ? 'Saving...' : 'Save Changes'}
-                              </button>
+                          {/* Quick Stats */}
+                          <div className="flex gap-6 sm:gap-10 border-t sm:border-t-0 sm:border-l border-white/10 pt-6 sm:pt-0 sm:pl-10">
+                            <div className="flex flex-col gap-1">
+                              <span className="text-white/50 text-[10px] uppercase tracking-widest font-bold">Total Orders</span>
+                              <span className="text-3xl font-serif text-white">{orders.length}</span>
                             </div>
-                          ) : (
-                            <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-6 py-2.5 rounded-full border border-neutral-200/80 bg-white text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300 transition-all font-medium text-sm shadow-sm">
-                              <Edit2 className="w-4 h-4" />
-                              Edit Profile
-                            </button>
-                          )}
+                            <div className="flex flex-col gap-1">
+                              <span className="text-white/50 text-[10px] uppercase tracking-widest font-bold">Reward Coins</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-3xl font-serif text-amber-400">{profileData?.RewardCoins || 0}</span>
+                                <span className="text-amber-400/60 text-xs font-bold uppercase mt-1">Pts</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
+                      {/* Header Section */}
+                      <div className="flex items-center justify-between mb-8 px-2">
+                        <h3 className="text-2xl font-serif text-neutral-900 tracking-tight">Personal Details</h3>
+                      </div>
+
                       {/* Information Cards Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         
                         {/* First Name */}
-                        <div className="group bg-white rounded-3xl p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-neutral-100 hover:border-[var(--color-primary)]/30 transition-all duration-300">
-                          <div className="flex items-center gap-3 mb-4 text-neutral-500">
-                            <div className="w-8 h-8 rounded-full bg-[var(--color-cream)] flex items-center justify-center text-[var(--color-primary)] group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors duration-300">
-                              <User className="w-4 h-4" />
-                            </div>
-                            <span className="font-satoshi text-xs uppercase tracking-widest font-semibold">First Name</span>
+                        <div className="group bg-white rounded-[1.5rem] p-6 shadow-[0_4px_24px_rgb(0,0,0,0.02)] border border-neutral-100/60 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-neutral-200 transition-all duration-500 relative overflow-hidden">
+                          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[var(--color-primary)] to-[var(--color-accent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                          <div className="flex items-center gap-3 mb-3 text-neutral-400">
+                            <User className="w-4 h-4 group-hover:text-[var(--color-primary)] transition-colors duration-300" />
+                            <span className="font-satoshi text-[10px] uppercase tracking-[0.2em] font-bold">First Name</span>
                           </div>
                           {isEditing ? (
                             <input
                               type="text"
                               value={form.firstName}
                               onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                              className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primary)] focus:bg-white text-neutral-900 font-medium transition-all"
+                              className="w-full bg-neutral-50/50 border border-neutral-200 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--color-primary)]/10 text-neutral-900 font-medium transition-all text-sm"
                               placeholder="Enter your first name"
                             />
                           ) : (
-                            <p className="text-neutral-900 font-medium text-lg px-2">
+                            <p className="text-neutral-900 font-serif text-xl tracking-tight">
                               {profileData.FirstName || "Not provided"}
                             </p>
                           )}
                         </div>
 
                         {/* Last Name */}
-                        <div className="group bg-white rounded-3xl p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-neutral-100 hover:border-[var(--color-primary)]/30 transition-all duration-300">
-                          <div className="flex items-center gap-3 mb-4 text-neutral-500">
-                            <div className="w-8 h-8 rounded-full bg-[var(--color-cream)] flex items-center justify-center text-[var(--color-primary)] group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors duration-300">
-                              <User className="w-4 h-4" />
-                            </div>
-                            <span className="font-satoshi text-xs uppercase tracking-widest font-semibold">Last Name</span>
+                        <div className="group bg-white rounded-[1.5rem] p-6 shadow-[0_4px_24px_rgb(0,0,0,0.02)] border border-neutral-100/60 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-neutral-200 transition-all duration-500 relative overflow-hidden">
+                          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[var(--color-primary)] to-[var(--color-accent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                          <div className="flex items-center gap-3 mb-3 text-neutral-400">
+                            <User className="w-4 h-4 group-hover:text-[var(--color-primary)] transition-colors duration-300" />
+                            <span className="font-satoshi text-[10px] uppercase tracking-[0.2em] font-bold">Last Name</span>
                           </div>
                           {isEditing ? (
                             <input
                               type="text"
                               value={form.lastName}
                               onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                              className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primary)] focus:bg-white text-neutral-900 font-medium transition-all"
+                              className="w-full bg-neutral-50/50 border border-neutral-200 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--color-primary)]/10 text-neutral-900 font-medium transition-all text-sm"
                               placeholder="Enter your last name"
                             />
                           ) : (
-                            <p className="text-neutral-900 font-medium text-lg px-2">
+                            <p className="text-neutral-900 font-serif text-xl tracking-tight">
                               {profileData.LastName || "Not provided"}
                             </p>
                           )}
                         </div>
 
                         {/* Email Address */}
-                        <div className="group bg-white rounded-3xl p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-neutral-100 hover:border-[var(--color-primary)]/30 transition-all duration-300 md:col-span-2">
-                          <div className="flex items-center gap-3 mb-4 text-neutral-500">
-                            <div className="w-8 h-8 rounded-full bg-[var(--color-cream)] flex items-center justify-center text-[var(--color-primary)] group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors duration-300">
-                              <Mail className="w-4 h-4" />
-                            </div>
-                            <span className="font-satoshi text-xs uppercase tracking-widest font-semibold">Email Address</span>
+                        <div className="group bg-white rounded-[1.5rem] p-6 shadow-[0_4px_24px_rgb(0,0,0,0.02)] border border-neutral-100/60 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-neutral-200 transition-all duration-500 relative overflow-hidden md:col-span-2">
+                          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[var(--color-primary)] to-[var(--color-accent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                          <div className="flex items-center gap-3 mb-3 text-neutral-400">
+                            <Mail className="w-4 h-4 group-hover:text-[var(--color-primary)] transition-colors duration-300" />
+                            <span className="font-satoshi text-[10px] uppercase tracking-[0.2em] font-bold">Email Address</span>
                           </div>
                           {isEditing ? (
                             <input
                               type="email"
                               value={form.email}
                               onChange={(e) => setForm({ ...form, email: e.target.value })}
-                              className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primary)] focus:bg-white text-neutral-900 font-medium transition-all"
+                              className="w-full bg-neutral-50/50 border border-neutral-200 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--color-primary)]/10 text-neutral-900 font-medium transition-all text-sm"
                               placeholder="Enter your email address"
                             />
                           ) : (
-                            <p className="text-neutral-900 font-medium text-lg px-2">
+                            <p className="text-neutral-900 font-serif text-xl tracking-tight">
                               {profileData.Email || "Not provided"}
                             </p>
                           )}
                         </div>
 
                         {/* Mobile Number */}
-                        <div className="group bg-white rounded-3xl p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-neutral-100 hover:border-[var(--color-primary)]/30 transition-all duration-300 md:col-span-2">
-                          <div className="flex items-center gap-3 mb-4 text-neutral-500">
-                            <div className="w-8 h-8 rounded-full bg-[var(--color-cream)] flex items-center justify-center text-[var(--color-primary)] group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors duration-300">
-                              <Phone className="w-4 h-4" />
-                            </div>
-                            <span className="font-satoshi text-xs uppercase tracking-widest font-semibold">Mobile Number</span>
+                        <div className="group bg-white rounded-[1.5rem] p-6 shadow-[0_4px_24px_rgb(0,0,0,0.02)] border border-neutral-100/60 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-neutral-200 transition-all duration-500 relative overflow-hidden md:col-span-2">
+                          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[var(--color-primary)] to-[var(--color-accent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                          <div className="flex items-center gap-3 mb-3 text-neutral-400">
+                            <Phone className="w-4 h-4 group-hover:text-[var(--color-primary)] transition-colors duration-300" />
+                            <span className="font-satoshi text-[10px] uppercase tracking-[0.2em] font-bold">Mobile Number</span>
                           </div>
                           {isEditing ? (
                             <input
                               type="tel"
                               value={form.mobileNo}
                               onChange={(e) => setForm({ ...form, mobileNo: e.target.value })}
-                              className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primary)] focus:bg-white text-neutral-900 font-medium transition-all"
+                              className="w-full bg-neutral-50/50 border border-neutral-200 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--color-primary)]/10 text-neutral-900 font-medium transition-all text-sm"
                               placeholder="Enter your mobile number"
                             />
                           ) : (
-                            <p className="text-neutral-900 font-medium text-lg px-2">
+                            <p className="text-neutral-900 font-serif text-xl tracking-tight">
                               {profileData.MobileNo || "Not provided"}
                             </p>
                           )}
                         </div>
 
+                      </div>
+
+                      <div className="mt-8 flex justify-end">
+                        {isEditing ? (
+                          <div className="flex items-center gap-3 w-full sm:w-auto">
+                            <button onClick={() => setIsEditing(false)} className="flex-1 sm:flex-none px-6 py-3 rounded-xl hover:bg-neutral-100 text-neutral-600 transition-colors font-medium text-[15px] flex items-center justify-center gap-2 border border-transparent hover:border-neutral-200">
+                              <X className="w-4 h-4" /> Cancel
+                            </button>
+                            <button onClick={handleSave} disabled={isSaving} className="flex-1 sm:flex-none px-8 py-3 rounded-xl bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)] transition-all shadow-lg shadow-[var(--color-primary)]/25 font-medium text-[15px] flex items-center justify-center gap-2 disabled:opacity-70">
+                              {isSaving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-5 h-5" />}
+                              {isSaving ? 'Saving...' : 'Save Changes'}
+                            </button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setIsEditing(true)} className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 rounded-xl border border-neutral-200/80 bg-white text-neutral-700 hover:bg-[var(--color-primary)] hover:text-white hover:border-[var(--color-primary)] transition-all font-medium text-[15px] shadow-sm group">
+                            <Edit2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                            Edit Profile
+                          </button>
+                        )}
                       </div>
                     </div>
                   ) : null}
@@ -679,15 +706,28 @@ export const ProfilePage = () => {
                         </div>
                         
                         {homeAddress ? (
-                          <div className="bg-white rounded-3xl p-7 border border-neutral-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)] relative hover:border-[var(--color-primary)]/30 transition-colors">
-                            <span className="absolute top-5 right-5 text-[10px] bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-2.5 py-1 rounded-md uppercase tracking-wider font-bold">HOME</span>
-                            <p className="font-semibold text-neutral-900 text-lg mb-2">{profileData?.FirstName} {profileData?.LastName}</p>
-                            <p className="text-sm text-neutral-600 mb-1 leading-relaxed">{safeRender(homeAddress.AddressLine1)} {homeAddress.AddressLine2 && typeof homeAddress.AddressLine2 !== 'object' ? `, ${homeAddress.AddressLine2}` : ''}</p>
-                            <p className="text-sm text-neutral-600 mb-1">{safeRender(homeAddress.City)}, {safeRender(homeAddress.PostalCode)}</p>
-                            <p className="text-sm text-neutral-600 mb-1">{safeRender(homeAddress.State)} {safeRender(homeAddress.Country)}</p>
-                            <p className="text-sm font-medium text-neutral-700 mb-4 mt-2 bg-neutral-50 px-3 py-1.5 rounded-lg inline-block">Mobile: {safeRender(homeAddress.MobileNo)}</p>
-                            <div className="pt-4 border-t border-neutral-50">
-                              <button onClick={() => openAddressModal('HOME', homeAddress)} className="text-xs font-semibold text-[var(--color-primary)] hover:opacity-80 transition-opacity flex items-center gap-1.5">
+                          <div className="group bg-white rounded-[1.5rem] p-8 border border-neutral-100/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-[var(--color-primary)]/20 transition-all duration-500 overflow-hidden">
+                            <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-[var(--color-primary)] to-[var(--color-accent)] opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                            <span className="absolute top-6 right-6 text-[10px] bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-3 py-1.5 rounded-full uppercase tracking-[0.15em] font-bold">HOME</span>
+                            
+                            <h4 className="font-serif text-2xl text-neutral-900 mb-4 tracking-tight">{profileData?.FirstName} {profileData?.LastName}</h4>
+                            
+                            <div className="space-y-1.5 mb-6">
+                              <p className="text-[14px] text-neutral-600 leading-relaxed font-satoshi">
+                                {safeRender(homeAddress.AddressLine1)} 
+                                {homeAddress.AddressLine2 && typeof homeAddress.AddressLine2 !== 'object' ? `, ${homeAddress.AddressLine2}` : ''}
+                              </p>
+                              <p className="text-[14px] text-neutral-600 font-satoshi">{safeRender(homeAddress.City)}, {safeRender(homeAddress.PostalCode)}</p>
+                              <p className="text-[14px] text-neutral-600 font-satoshi">{safeRender(homeAddress.State)}, {safeRender(homeAddress.Country)}</p>
+                            </div>
+                            
+                            <p className="text-[14px] font-medium text-neutral-700 mb-6 bg-neutral-50/80 px-4 py-2 rounded-xl inline-flex items-center gap-2 border border-neutral-100">
+                              <Phone className="w-4 h-4 text-neutral-400" />
+                              {safeRender(homeAddress.MobileNo)}
+                            </p>
+                            
+                            <div className="pt-5 border-t border-neutral-100/80 flex items-center">
+                              <button onClick={() => openAddressModal('HOME', homeAddress)} className="text-xs font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent)] transition-colors flex items-center gap-1.5 uppercase tracking-wider">
                                 <Edit2 className="w-3.5 h-3.5" /> Edit Address
                               </button>
                             </div>
@@ -720,26 +760,41 @@ export const ProfilePage = () => {
                         {shippingAddresses.length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             {shippingAddresses.map(addr => (
-                              <div key={addr.Id} className={`bg-white rounded-3xl p-7 border ${addr.IsDefault ? 'border-[var(--color-primary)] shadow-md shadow-[var(--color-primary)]/10' : 'border-neutral-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:border-neutral-200'} relative transition-colors`}>
+                              <div key={addr.Id} className={`group bg-white rounded-[1.5rem] p-8 border ${addr.IsDefault ? 'border-[var(--color-primary)]/40 shadow-[0_8px_30px_rgba(91,42,134,0.08)]' : 'border-neutral-100/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-[var(--color-primary)]/20'} relative transition-all duration-500 overflow-hidden`}>
                                 {addr.IsDefault && (
-                                  <span className="absolute top-5 right-5 text-[10px] bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-2.5 py-1 rounded-md uppercase tracking-wider font-bold flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-3.5 h-3.5" /> Default
+                                  <div className="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-primary)]"></div>
+                                )}
+                                
+                                {addr.IsDefault && (
+                                  <span className="absolute top-6 right-6 text-[10px] bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-3 py-1.5 rounded-full uppercase tracking-[0.15em] font-bold flex items-center gap-1.5">
+                                    <CheckCircle2 className="w-3 h-3" /> Default
                                   </span>
                                 )}
-                                <p className="font-semibold text-neutral-900 text-lg mb-2">{profileData?.FirstName} {profileData?.LastName}</p>
-                                <p className="text-sm text-neutral-600 mb-1 leading-relaxed">{safeRender(addr.AddressLine1)} {addr.AddressLine2 && typeof addr.AddressLine2 !== 'object' ? `, ${addr.AddressLine2}` : ''}</p>
-                                <p className="text-sm text-neutral-600 mb-1">{safeRender(addr.City)}, {safeRender(addr.PostalCode)}</p>
-                                <p className="text-sm text-neutral-600 mb-1">{safeRender(addr.State)} {safeRender(addr.Country)}</p>
-                                <p className="text-sm font-medium text-neutral-700 mb-4 mt-2 bg-neutral-50 px-3 py-1.5 rounded-lg inline-block">Mobile: {safeRender(addr.MobileNo)}</p>
                                 
-                                <div className="flex items-center gap-4 pt-4 border-t border-neutral-50">
-                                  <button onClick={() => openAddressModal('SHIPPING', addr)} className="text-xs font-semibold text-neutral-500 hover:text-[var(--color-primary)] transition-colors flex items-center gap-1.5">
+                                <h4 className="font-serif text-2xl text-neutral-900 mb-4 tracking-tight">{profileData?.FirstName} {profileData?.LastName}</h4>
+                                
+                                <div className="space-y-1.5 mb-6">
+                                  <p className="text-[14px] text-neutral-600 leading-relaxed font-satoshi">
+                                    {safeRender(addr.AddressLine1)} 
+                                    {addr.AddressLine2 && typeof addr.AddressLine2 !== 'object' ? `, ${addr.AddressLine2}` : ''}
+                                  </p>
+                                  <p className="text-[14px] text-neutral-600 font-satoshi">{safeRender(addr.City)}, {safeRender(addr.PostalCode)}</p>
+                                  <p className="text-[14px] text-neutral-600 font-satoshi">{safeRender(addr.State)}, {safeRender(addr.Country)}</p>
+                                </div>
+                                
+                                <p className="text-[14px] font-medium text-neutral-700 mb-6 bg-neutral-50/80 px-4 py-2 rounded-xl inline-flex items-center gap-2 border border-neutral-100">
+                                  <Phone className="w-4 h-4 text-neutral-400" />
+                                  {safeRender(addr.MobileNo)}
+                                </p>
+                                
+                                <div className="flex items-center gap-6 pt-5 border-t border-neutral-100/80">
+                                  <button onClick={() => openAddressModal('SHIPPING', addr)} className="text-xs font-semibold text-neutral-500 hover:text-[var(--color-primary)] transition-colors flex items-center gap-1.5 uppercase tracking-wider">
                                     <Edit2 className="w-3.5 h-3.5" /> Edit
                                   </button>
                                   {!addr.IsDefault && (
                                     <>
-                                      <span className="text-neutral-200">|</span>
-                                      <button onClick={() => handleSetDefaultShipping(addr.Id)} className="text-xs font-semibold text-neutral-500 hover:text-[var(--color-primary)] transition-colors">
+                                      <div className="w-1 h-1 rounded-full bg-neutral-300"></div>
+                                      <button onClick={() => handleSetDefaultShipping(addr.Id)} className="text-xs font-semibold text-neutral-500 hover:text-[var(--color-primary)] transition-colors uppercase tracking-wider">
                                         Set as Default
                                       </button>
                                     </>
@@ -840,36 +895,40 @@ export const ProfilePage = () => {
                                 )}
                               </div>
                               
-                              <div className="bg-white rounded-[2rem] p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-neutral-100/50 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[var(--color-primary)]/5 to-transparent rounded-bl-full pointer-events-none"></div>
+                              <div className="bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-[2rem] p-8 sm:p-10 shadow-2xl shadow-neutral-900/20 flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative overflow-hidden text-white border border-neutral-700/50">
+                                <div className="absolute -top-24 -right-24 w-64 h-64 bg-[var(--color-primary)] rounded-full mix-blend-screen filter blur-[80px] opacity-30 pointer-events-none"></div>
                                 
-                                <div>
+                                <div className="relative z-10">
+                                  <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Order Summary Hero</p>
                                   <div className="flex items-center gap-3 mb-2">
-                                    <h2 className="text-2xl sm:text-3xl font-serif text-neutral-900 tracking-tight">Order #{safeRender(order.OrderNumber)}</h2>
+                                    <h2 className="text-3xl sm:text-4xl font-serif text-white tracking-tight">Order #{safeRender(order.OrderNumber)}</h2>
                                   </div>
-                                  <p className="text-neutral-500 font-medium flex items-center gap-2">
+                                  <p className="text-white/70 font-medium flex items-center gap-2 font-satoshi">
                                     <Calendar className="w-4 h-4" />
                                     Placed on {new Date(safeRender(order.OrderDate)).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute:'2-digit' })}
                                   </p>
                                 </div>
                                 
-                                <div className="flex flex-wrap items-center gap-3">
-                                  <div className="flex flex-col items-start md:items-end gap-1.5">
-                                    <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Order Status</span>
-                                    <span className={`px-4 py-1.5 text-sm font-bold uppercase tracking-wider rounded-xl ${
+                                <div className="flex flex-wrap items-center gap-6 lg:gap-10 border-t lg:border-t-0 lg:border-l border-white/10 pt-6 lg:pt-0 lg:pl-10 relative z-10">
+                                  <div className="flex flex-col items-start gap-2">
+                                    <span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">Order Status</span>
+                                    <span className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] rounded-full border backdrop-blur-md ${
                                       ['Cancelled', 'Returned', 'Refunded', 'Cancel'].some(s => safeRender(order.OrderStatusName).includes(s)) 
-                                        ? 'bg-red-50 text-red-600 border border-red-100' 
-                                        : 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
+                                        ? 'bg-red-500/20 text-red-300 border-red-500/30' 
+                                        : 'bg-white/10 text-white border-white/20'
                                     }`}>
                                       {safeRender(order.OrderStatusName)}
                                     </span>
                                   </div>
-                                  <div className="w-px h-10 bg-neutral-200 hidden md:block mx-2"></div>
-                                  <div className="flex flex-col items-start gap-1.5">
-                                    <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Payment Status</span>
-                                    <span className={`px-4 py-1.5 text-sm font-bold uppercase tracking-wider rounded-xl ${order.PaymentStatusName === 'Paid' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'}`}>
+                                  <div className="flex flex-col items-start gap-2">
+                                    <span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">Payment Status</span>
+                                    <span className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] rounded-full border backdrop-blur-md ${order.PaymentStatusName === 'Paid' ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-orange-500/20 text-orange-300 border-orange-500/30'}`}>
                                       {safeRender(order.PaymentStatusName)}
                                     </span>
+                                  </div>
+                                  <div className="flex flex-col items-start gap-1">
+                                    <span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">Final Amount</span>
+                                    <span className="text-3xl font-serif tracking-tight text-white">₹{safeRender(order.GrandTotal)}</span>
                                   </div>
                                 </div>
                               </div>
@@ -923,22 +982,75 @@ export const ProfilePage = () => {
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-                              {/* Left Column: Products & Status History & Address */}
-                              <div className="lg:col-span-2 space-y-6 sm:space-y-8">
-                                
+                            {/* Order Details Tabs */}
+                            <div className="flex gap-4 overflow-x-auto pb-4 pt-4 scrollbar-hide border-b border-neutral-100 mb-6">
+                              <button 
+                                onClick={() => setOrderDetailsTab('ITEMS')}
+                                className={`whitespace-nowrap px-6 py-3 rounded-xl text-[14px] font-bold transition-all ${orderDetailsTab === 'ITEMS' ? 'bg-[var(--color-primary)] text-white shadow-md' : 'bg-white text-neutral-600 border border-neutral-200/80 hover:bg-neutral-50 hover:border-neutral-300'}`}
+                              >
+                                Item Details
+                              </button>
+                              <button 
+                                onClick={() => setOrderDetailsTab('SHIPPING')}
+                                className={`whitespace-nowrap px-6 py-3 rounded-xl text-[14px] font-bold transition-all ${orderDetailsTab === 'SHIPPING' ? 'bg-[var(--color-primary)] text-white shadow-md' : 'bg-white text-neutral-600 border border-neutral-200/80 hover:bg-neutral-50 hover:border-neutral-300'}`}
+                              >
+                                Shipping Address
+                              </button>
+                              <button 
+                                onClick={() => setOrderDetailsTab('SUMMARY')}
+                                className={`whitespace-nowrap px-6 py-3 rounded-xl text-[14px] font-bold transition-all ${orderDetailsTab === 'SUMMARY' ? 'bg-[var(--color-primary)] text-white shadow-md' : 'bg-white text-neutral-600 border border-neutral-200/80 hover:bg-neutral-50 hover:border-neutral-300'}`}
+                              >
+                                Order Summary
+                              </button>
+                            </div>
+
+                            <div className="animate-fade-in">
+                              {orderDetailsTab === 'ITEMS' && (
+                                <div className="space-y-6 sm:space-y-8 max-w-4xl">
+                                  
+                                  {/* Vertical Status Timeline */}
+                                <div className="bg-white rounded-[2rem] p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-neutral-100/50">
+                                  <h3 className="font-serif text-xl text-neutral-900 mb-6">Status History</h3>
+                                  <div className="relative pl-6 border-l-2 border-neutral-100 space-y-8">
+                                    {trackingSteps.map((step, idx) => {
+                                      const isFirst = idx === trackingSteps.length - 1; // latest is first in array usually, or last depending on parse. Assuming chron.
+                                      const isError = step.status.toLowerCase().includes('cancel') || step.status.toLowerCase().includes('return') || step.status.toLowerCase().includes('refund');
+                                      return (
+                                        <div key={idx} className="relative">
+                                          <div className={`absolute -left-[35px] w-4 h-4 rounded-full border-4 border-white shadow-sm ${
+                                            isFirst 
+                                              ? (isError ? 'bg-red-500' : 'bg-[var(--color-primary)]') 
+                                              : 'bg-neutral-300'
+                                          }`}></div>
+                                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 -mt-1.5">
+                                            <div>
+                                              <p className={`font-bold text-sm ${isFirst ? 'text-neutral-900' : 'text-neutral-500'}`}>{step.status}</p>
+                                              {step.date && <p className="text-xs text-neutral-400 font-medium mt-1">{step.date}</p>}
+                                            </div>
+                                            {isFirst && (
+                                              <span className="px-3 py-1 bg-neutral-50 text-neutral-500 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-neutral-200">
+                                                Latest Update
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+
                                 {/* Product List */}
                                 <div className="space-y-4">
                                   <h3 className="font-serif text-xl text-neutral-900 px-2">Items Ordered ({items.length})</h3>
                                   <div className="grid grid-cols-1 gap-4">
                                     {items.map(item => (
-                                      <div key={item.Id} className="bg-white rounded-[1.5rem] p-4 sm:p-5 shadow-[0_4px_20px_rgb(0,0,0,0.02)] border border-neutral-100 flex flex-col sm:flex-row items-start sm:items-center gap-5 hover:border-neutral-200 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all">
-                                        <div className="w-20 h-20 bg-neutral-50 rounded-2xl border border-neutral-100 flex items-center justify-center shrink-0 overflow-hidden relative">
+                                      <div key={item.Id} className="group bg-white rounded-[1.5rem] p-5 shadow-[0_4px_24px_rgb(0,0,0,0.02)] border border-neutral-100/60 flex flex-col sm:flex-row items-start sm:items-center gap-6 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-neutral-200 transition-all duration-300">
+                                        <div className="w-24 h-24 bg-neutral-50 rounded-2xl border border-neutral-100 flex items-center justify-center shrink-0 overflow-hidden relative group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all">
                                           {item.ImagePath && typeof item.ImagePath === 'string' && item.ImagePath.trim() !== '' ? (
                                             <img 
                                               src={`https://localhost:7103${item.ImagePath}`} 
                                               alt={safeRender(item.ProductName)} 
-                                              className="w-full h-full object-cover" 
+                                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" 
                                               onError={(e) => { 
                                                 e.currentTarget.style.display = 'none'; 
                                                 if(e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.classList.remove('hidden'); 
@@ -946,112 +1058,130 @@ export const ProfilePage = () => {
                                             />
                                           ) : null}
                                           <ShoppingBag className={`w-8 h-8 text-neutral-300 ${item.ImagePath && typeof item.ImagePath === 'string' && item.ImagePath.trim() !== '' ? 'hidden' : ''}`} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                          <p className="font-bold text-neutral-900 text-lg truncate">{safeRender(item.ProductName)}</p>
-                                          {item.VariantName && typeof item.VariantName === 'string' && item.VariantName.trim() !== '' && (
-                                            <p className="text-sm text-neutral-500 mt-0.5">Variant: {item.VariantName}</p>
-                                          )}
-                                          <div className="flex items-center gap-4 mt-2">
-                                            <p className="text-sm font-semibold text-neutral-600 bg-neutral-50 px-3 py-1 rounded-lg">Qty: {safeRender(item.Quantity)}</p>
-                                            <p className="text-sm font-medium text-neutral-500">₹{safeRender(item.UnitPrice)} each</p>
+                                          <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-md rounded-lg px-2 py-0.5 shadow-sm border border-black/5 flex items-center justify-center">
+                                            <span className="text-[10px] font-bold text-neutral-900">x{safeRender(item.Quantity)}</span>
                                           </div>
                                         </div>
-                                        <div className="sm:text-right mt-2 sm:mt-0">
-                                          <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-1">Total</p>
-                                          <p className="font-bold text-xl text-neutral-900">₹{safeRender(item.TotalPrice)}</p>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="font-serif text-xl text-neutral-900 truncate group-hover:text-[var(--color-primary)] transition-colors">{safeRender(item.ProductName)}</p>
+                                          {item.VariantName && typeof item.VariantName === 'string' && item.VariantName.trim() !== '' && (
+                                            <p className="text-[14px] text-neutral-500 mt-1 font-satoshi">{item.VariantName}</p>
+                                          )}
+                                          <div className="flex items-center gap-4 mt-3">
+                                            <p className="text-[14px] font-medium text-neutral-500 font-satoshi">Unit Price: ₹{safeRender(item.UnitPrice)}</p>
+                                          </div>
+                                        </div>
+                                        <div className="sm:text-right mt-2 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-t-0 border-neutral-100/80 w-full sm:w-auto flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-end">
+                                          <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] mb-1">Item Total</p>
+                                          <p className="font-serif text-2xl text-neutral-900 tracking-tight">₹{safeRender(item.TotalPrice)}</p>
                                         </div>
                                       </div>
                                     ))}
                                   </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 gap-6 sm:gap-8">
+                                </div>
+                              )}
+
+                              {orderDetailsTab === 'SHIPPING' && (
+                                <div className="max-w-2xl">
                                   {/* Shipping Address */}
-                                  <div className="bg-white rounded-[2rem] p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-neutral-100/50 h-fit">
-                                    <div className="flex items-center gap-3 mb-6">
-                                      <div className="w-10 h-10 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center">
+                                  <div className="bg-white rounded-[1.5rem] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-neutral-100/60 h-fit relative overflow-hidden">
+                                    <div className="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-primary)]/40"></div>
+                                    <div className="flex items-center gap-4 mb-6">
+                                      <div className="w-12 h-12 rounded-xl bg-[var(--color-primary)]/5 flex items-center justify-center border border-[var(--color-primary)]/10">
                                         <MapPin className="w-5 h-5 text-[var(--color-primary)]" />
                                       </div>
-                                      <h3 className="font-serif text-xl text-neutral-900">Shipping Address</h3>
+                                      <h3 className="font-serif text-2xl text-neutral-900 tracking-tight">Shipping Address</h3>
                                     </div>
-                                    <div className="space-y-4">
+                                    <div className="space-y-5">
                                       <div>
-                                        <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-1">Deliver To</p>
-                                        <p className="font-bold text-neutral-900">{profileData?.FirstName} {profileData?.LastName}</p>
-                                        <p className="text-sm font-medium text-neutral-600 flex items-center gap-1.5 mt-1">
-                                          <Phone className="w-3.5 h-3.5" /> {safeRender(order.MobileNo)}
-                                          {order.AlternativeMobileNo && typeof order.AlternativeMobileNo === 'string' && ` / ${order.AlternativeMobileNo}`}
+                                        <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] mb-1.5">Deliver To</p>
+                                        <p className="font-serif text-xl text-neutral-900">{profileData?.FirstName} {profileData?.LastName}</p>
+                                        <p className="text-[14px] font-medium text-neutral-600 flex items-center gap-1.5 mt-2 font-satoshi">
+                                          <Phone className="w-4 h-4 text-neutral-400" /> {safeRender(order.MobileNo)}
+                                          {order.AlternativeMobileNo && typeof order.AlternativeMobileNo === 'string' && <span className="text-neutral-300">|</span>}
+                                          {order.AlternativeMobileNo && typeof order.AlternativeMobileNo === 'string' && order.AlternativeMobileNo}
                                         </p>
                                       </div>
-                                      <div className="w-full h-px bg-neutral-100"></div>
+                                      <div className="w-full h-px bg-neutral-100/80"></div>
                                       <div>
-                                        <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-1.5">Address</p>
-                                        <p className="text-sm text-neutral-700 leading-relaxed">{safeRender(order.AddressLine1)}</p>
-                                        {order.AddressLine2 && typeof order.AddressLine2 === 'string' && (
-                                          <p className="text-sm text-neutral-700 leading-relaxed">{order.AddressLine2}</p>
-                                        )}
-                                        <p className="text-sm text-neutral-700 leading-relaxed">{safeRender(order.City)} - {safeRender(order.PostalCode)}</p>
+                                        <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] mb-2">Address Details</p>
+                                        <div className="space-y-1">
+                                          <p className="text-[15px] text-neutral-700 leading-relaxed font-satoshi">{safeRender(order.AddressLine1)}</p>
+                                          {order.AddressLine2 && typeof order.AddressLine2 === 'string' && (
+                                            <p className="text-[15px] text-neutral-700 leading-relaxed font-satoshi">{order.AddressLine2}</p>
+                                          )}
+                                          <p className="text-[15px] text-neutral-700 leading-relaxed font-satoshi">{safeRender(order.City)} - {safeRender(order.PostalCode)}</p>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
+                              )}
 
-                              {/* Right Column: Order Summary */}
-                              <div className="lg:col-span-1">
-                                <div className="bg-white rounded-[2rem] p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-neutral-100/50 sticky top-32">
-                                  <h3 className="font-serif text-xl text-neutral-900 mb-6">Order Summary</h3>
+                              {orderDetailsTab === 'SUMMARY' && (
+                                <div className="max-w-md">
+                                  <div className="bg-white rounded-[1.5rem] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-neutral-100/60 h-fit">
+                                  <h3 className="font-serif text-2xl text-neutral-900 mb-8 tracking-tight">Order Summary</h3>
                                   
-                                  <div className="space-y-4 mb-6">
-                                    <div className="flex justify-between items-center text-sm font-medium text-neutral-600">
+                                  <div className="space-y-5 mb-8">
+                                    <div className="flex justify-between items-center text-[15px] font-medium text-neutral-600 font-satoshi">
                                       <span>Subtotal ({items.length} items)</span>
                                       <span>₹{safeRender(order.TotalAmount)}</span>
                                     </div>
                                     
                                     {order.DeliveryFee > 0 ? (
-                                      <div className="flex justify-between items-center text-sm font-medium text-neutral-600">
+                                      <div className="flex justify-between items-center text-[15px] font-medium text-neutral-600 font-satoshi">
                                         <span>Delivery Fee</span>
                                         <span>+₹{safeRender(order.DeliveryFee)}</span>
                                       </div>
                                     ) : (
-                                      <div className="flex justify-between items-center text-sm font-medium text-green-600">
+                                      <div className="flex justify-between items-center text-[15px] font-medium text-green-600 font-satoshi">
                                         <span>Delivery Fee</span>
-                                        <span>Free</span>
+                                        <span className="uppercase text-xs font-bold tracking-wider">Free</span>
                                       </div>
                                     )}
 
                                     {order.DiscountAmount > 0 && (
-                                      <div className="flex justify-between items-center text-sm font-medium text-green-600 bg-green-50/50 p-2 rounded-lg -mx-2">
+                                      <div className="flex justify-between items-center text-[15px] font-medium text-green-600 bg-green-50/50 p-3 rounded-xl border border-green-100/50 font-satoshi">
                                         <span>Offer Discount</span>
-                                        <span>-₹{safeRender(order.DiscountAmount)}</span>
+                                        <span className="font-bold">-₹{safeRender(order.DiscountAmount)}</span>
                                       </div>
                                     )}
 
                                     {order.CoinDiscountAmount > 0 && (
-                                      <div className="flex justify-between items-center text-sm font-medium text-[var(--color-primary)] bg-[var(--color-primary)]/5 p-2 rounded-lg -mx-2">
+                                      <div className="flex justify-between items-center text-[15px] font-medium text-[var(--color-primary)] bg-[var(--color-primary)]/5 p-3 rounded-xl border border-[var(--color-primary)]/10 font-satoshi">
                                         <span>Coins Used ({safeRender(order.UsedCoins)})</span>
-                                        <span>-₹{safeRender(order.CoinDiscountAmount)}</span>
+                                        <span className="font-bold">-₹{safeRender(order.CoinDiscountAmount)}</span>
                                       </div>
                                     )}
                                   </div>
 
-                                  <div className="pt-5 border-t border-neutral-100 border-dashed">
-                                    <div className="flex justify-between items-end mb-2">
-                                      <span className="text-base font-bold text-neutral-900">Grand Total</span>
-                                      <span className="text-3xl font-bold text-[var(--color-primary)] tracking-tight">₹{safeRender(order.GrandTotal)}</span>
+                                  <div className="pt-6 border-t border-neutral-100/80 border-dashed relative">
+                                    <div className="absolute -top-3 -left-10 w-6 h-6 bg-neutral-50 rounded-full border-r border-neutral-100/80"></div>
+                                    <div className="absolute -top-3 -right-10 w-6 h-6 bg-neutral-50 rounded-full border-l border-neutral-100/80"></div>
+                                    
+                                    <div className="flex justify-between items-end mb-4">
+                                      <span className="text-[15px] font-bold text-neutral-900 font-satoshi">Grand Total</span>
+                                      <span className="font-serif text-4xl text-neutral-900 tracking-tight">₹{safeRender(order.GrandTotal)}</span>
                                     </div>
-                                    <div className="flex items-center justify-between mt-4 bg-neutral-50 px-4 py-3 rounded-xl border border-neutral-100">
-                                      <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Payment Mode</span>
-                                      <span className="text-sm font-bold text-neutral-900">{safeRender(order.PaymentModeName)}</span>
+                                    
+                                    <div className="flex items-center justify-between mt-6 bg-neutral-50/80 px-5 py-4 rounded-xl border border-neutral-100/80">
+                                      <div className="flex items-center gap-3">
+                                        <Award className="w-5 h-5 text-neutral-400" />
+                                        <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em]">Payment Mode</span>
+                                      </div>
+                                      <span className="text-[14px] font-bold text-neutral-900">{safeRender(order.PaymentModeName)}</span>
                                     </div>
                                   </div>
                                   
-                                  <button onClick={() => { /* Need Help Logic */ }} className="w-full mt-6 py-3.5 bg-white border-2 border-neutral-200 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50 hover:border-neutral-300 transition-colors">
+                                  <button onClick={() => { /* Need Help Logic */ }} className="w-full mt-6 py-4 bg-white border border-neutral-200/80 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50 hover:border-neutral-300 transition-all text-[14px] shadow-sm flex items-center justify-center gap-2 group">
                                     Need Help?
                                   </button>
                                 </div>
-                              </div>
+                                </div>
+                              )}
                             </div>
                           </>
                         );
@@ -1105,7 +1235,7 @@ export const ProfilePage = () => {
                           <div className="w-10 h-10 rounded-full border-4 border-[var(--color-primary)] border-t-transparent animate-spin"></div>
                         </div>
                       ) : (
-                        <div className="mt-8 space-y-5">
+                        <div className="mt-8">
                           {(() => {
                             // Apply filters
                             const filteredOrders = orders.filter(o => {
@@ -1126,78 +1256,74 @@ export const ProfilePage = () => {
                               );
                             }
 
-                            return filteredOrders.map(order => (
-                              <div key={order.Id} className="bg-white rounded-[2rem] border border-neutral-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)] p-6 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-[var(--color-primary)]/20 transition-all duration-300 flex flex-col md:flex-row gap-6 md:items-center justify-between group cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                                
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-6 flex-1">
-                                  {/* Thumbnail Preview */}
-                                  <div className="w-20 h-20 bg-gradient-to-br from-neutral-50 to-neutral-100 rounded-2xl flex items-center justify-center shrink-0 border border-neutral-200 shadow-inner overflow-hidden relative group-hover:scale-105 transition-transform duration-500">
-                                    {(() => {
-                                      const firstItem = orderItems.find(i => i.OrderId === order.Id);
-                                      if (firstItem && firstItem.ImagePath && typeof firstItem.ImagePath === 'string' && firstItem.ImagePath.trim() !== '') {
-                                        return (
-                                          <img 
-                                            src={`https://localhost:7103${firstItem.ImagePath}`} 
-                                            alt="Product" 
-                                            className="w-full h-full object-cover absolute inset-0" 
-                                            onError={(e) => { 
-                                              e.currentTarget.style.display = 'none'; 
-                                              if(e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.classList.remove('hidden'); 
-                                            }} 
-                                          />
-                                        );
-                                      }
-                                      return null;
-                                    })()}
-                                    <ShoppingBag className={`w-8 h-8 text-neutral-300 relative z-10 ${orderItems.find(i => i.OrderId === order.Id)?.ImagePath ? 'hidden' : ''}`} />
-                                    <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity z-20"></div>
-                                  </div>
-                                  
-                                  <div className="space-y-3 flex-1">
-                                    <div className="flex flex-wrap items-center gap-3">
-                                      <h3 className="font-bold text-neutral-900 text-lg group-hover:text-[var(--color-primary)] transition-colors">#{safeRender(order.OrderNumber)}</h3>
-                                      <span className="w-1 h-1 rounded-full bg-neutral-300 hidden sm:block"></span>
-                                      <p className="text-neutral-500 text-sm font-medium flex items-center gap-1.5">
-                                        <Calendar className="w-3.5 h-3.5" />
-                                        {new Date(safeRender(order.OrderDate)).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                                      </p>
-                                    </div>
-                                    
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm border ${
-                                        ['Cancelled', 'Returned', 'Refunded', 'Cancel'].some(s => safeRender(order.OrderStatusName).includes(s))
-                                          ? 'bg-red-50 text-red-600 border-red-100'
-                                          : 'bg-[var(--color-cream)] text-[var(--color-primary)] border-[var(--color-primary)]/10'
-                                      }`}>
-                                        {safeRender(order.OrderStatusName)}
-                                      </span>
-                                      <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg border ${order.PaymentStatusName === 'Paid' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
-                                        {safeRender(order.PaymentStatusName)}
-                                      </span>
-                                      <span className="px-3 py-1 bg-neutral-50 text-neutral-600 text-xs font-bold uppercase tracking-wider rounded-lg border border-neutral-200 flex items-center gap-1.5">
-                                        <Award className="w-3.5 h-3.5" />
-                                        {safeRender(order.PaymentModeName)}
-                                      </span>
-                                    </div>
-                                  </div>
+                            return (
+                              <div className="bg-white rounded-[1.5rem] border border-neutral-100/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-left border-collapse min-w-[800px]">
+                                    <thead>
+                                      <tr className="border-b border-neutral-100 bg-neutral-50/50">
+                                        <th className="px-6 py-5 text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Order #</th>
+                                        <th className="px-6 py-5 text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Date Purchased</th>
+                                        <th className="px-6 py-5 text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Status</th>
+                                        <th className="px-6 py-5 text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Total</th>
+                                        <th className="px-6 py-5 text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] text-right">Action</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-neutral-100/80">
+                                      {filteredOrders.map(order => (
+                                        <tr key={order.Id} className="group hover:bg-neutral-50/50 transition-colors cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                                          <td className="px-6 py-5 align-middle">
+                                            <div>
+                                              <p className="font-serif text-lg text-neutral-900 group-hover:text-[var(--color-primary)] transition-colors tracking-tight">#{safeRender(order.OrderNumber)}</p>
+                                              <p className="text-xs font-medium text-neutral-500 mt-1 flex items-center gap-1">
+                                                <Award className="w-3 h-3" />
+                                                {safeRender(order.PaymentModeName)}
+                                              </p>
+                                            </div>
+                                          </td>
+                                          <td className="px-6 py-5 align-middle">
+                                            <p className="text-[14px] font-medium text-neutral-600 font-satoshi flex items-center gap-2">
+                                              <Calendar className="w-4 h-4 text-neutral-400" />
+                                              {new Date(safeRender(order.OrderDate)).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                            </p>
+                                          </td>
+                                          <td className="px-6 py-5 align-middle space-y-2">
+                                            <div>
+                                              <span className={`inline-block px-3 py-1 text-[9px] font-bold uppercase tracking-[0.15em] rounded-full shadow-sm border ${
+                                                ['Cancelled', 'Returned', 'Refunded', 'Cancel'].some(s => safeRender(order.OrderStatusName).includes(s))
+                                                  ? 'bg-red-50 text-red-600 border-red-100'
+                                                  : 'bg-[var(--color-cream)] text-[var(--color-primary)] border-[var(--color-primary)]/10'
+                                              }`}>
+                                                {safeRender(order.OrderStatusName)}
+                                              </span>
+                                            </div>
+                                            {order.PaymentStatusName && (
+                                              <div>
+                                                <span className={`inline-block px-3 py-1 text-[9px] font-bold uppercase tracking-[0.15em] rounded-full border ${order.PaymentStatusName === 'Paid' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
+                                                  {safeRender(order.PaymentStatusName)}
+                                                </span>
+                                              </div>
+                                            )}
+                                          </td>
+                                          <td className="px-6 py-5 align-middle">
+                                            <p className="font-serif text-xl text-neutral-900 tracking-tight">₹{safeRender(order.GrandTotal)}</p>
+                                          </td>
+                                          <td className="px-6 py-5 align-middle text-right">
+                                            <button 
+                                              onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }}
+                                              className="inline-flex px-5 py-2.5 bg-white border border-neutral-200/80 text-neutral-700 hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 hover:border-[var(--color-primary)]/30 rounded-full text-[13px] font-bold transition-all shadow-sm items-center justify-center gap-2 group/btn"
+                                            >
+                                              View
+                                              <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
+                                            </button>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
                                 </div>
-                                
-                                <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-4 border-t border-neutral-100 md:border-t-0 md:border-l pt-5 md:pt-0 md:pl-6 shrink-0 min-w-[140px]">
-                                  <div className="text-left md:text-right">
-                                    <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-1">Total</p>
-                                    <p className="font-bold text-2xl text-neutral-900 tracking-tight">₹{safeRender(order.GrandTotal)}</p>
-                                  </div>
-                                  <button 
-                                    onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }}
-                                    className="px-6 py-2.5 bg-white border-2 border-neutral-200 text-neutral-700 hover:text-white hover:bg-[var(--color-primary)] hover:border-[var(--color-primary)] rounded-xl text-sm font-bold transition-all shadow-sm flex items-center gap-2 group-hover:bg-[var(--color-primary)] group-hover:text-white group-hover:border-[var(--color-primary)]"
-                                  >
-                                    View Details
-                                    <ChevronRight className="w-4 h-4" />
-                                  </button>
-                                </div>
-
                               </div>
-                            ));
+                            );
                           })()}
                         </div>
                       )}
