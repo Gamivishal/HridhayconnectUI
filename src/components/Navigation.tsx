@@ -1,4 +1,4 @@
-import { ChevronDown, Sparkles, ArrowRight, ShoppingBag, User, LogOut } from "lucide-react";
+import { ChevronDown, Sparkles, ArrowRight, ShoppingBag, User, LogOut, MapPin, Gift } from "lucide-react";
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCart } from "../context/CartContext";
@@ -289,6 +289,14 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                       <a href="#orders" onClick={() => setIsProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
                         <ShoppingBag className="w-3.5 h-3.5" />
                         <span>Order History</span>
+                      </a>
+                      <a href="#addresses" onClick={() => setIsProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
+                        <MapPin className="w-3.5 h-3.5" />
+                        <span>Addresses</span>
+                      </a>
+                      <a href="#rewards" onClick={() => setIsProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
+                        <Gift className="w-3.5 h-3.5" />
+                        <span>Rewards</span>
                       </a>
 
                       <div className="h-[1px] w-full bg-[#5B2A86]/10 my-2"></div>

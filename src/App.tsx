@@ -36,13 +36,14 @@ const HridhaySpecialCategoryPage = lazy(() => import("./components/HridhaySpecia
 const ProductPage = lazy(() => import("./components/ProductPage").then(m => ({ default: m.ProductPage })));
 const CartPage = lazy(() => import("./components/CartPage").then(m => ({ default: m.CartPage })));
 const CheckoutPage = lazy(() => import("./components/CheckoutPage").then(m => ({ default: m.CheckoutPage })));
+const ProfilePage = lazy(() => import("./components/ProfilePage").then(m => ({ default: m.ProfilePage })));
 import { useSignUp } from "./context/SignUpContext";
 import { products } from "./data/products";
 import { FloatingWhatsApp } from "./components/FloatingWhatsApp";
 import { GlobalToastProvider } from "./components/GlobalToastProvider";
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'about' | 'soap' | 'hair-oil' | 'mukhwas' | 'tea-masala' | 'hridhay-special' | 'product' | 'cart' | 'checkout'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'about' | 'soap' | 'hair-oil' | 'mukhwas' | 'tea-masala' | 'hridhay-special' | 'product' | 'cart' | 'checkout' | 'profile'>('home');
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [showLoader, setShowLoader] = useState(true);
   const { isSignUpOpen, closeSignUp } = useSignUp();
@@ -99,6 +100,11 @@ export default function App() {
           if (prev !== 'checkout') window.scrollTo({ top: 0, behavior: "smooth" });
           return 'checkout';
         });
+      } else if (hash.startsWith("#profile") || hash.startsWith("#/profile")) {
+        setCurrentPage(prev => {
+          if (prev !== 'profile') window.scrollTo({ top: 0, behavior: "smooth" });
+          return 'profile';
+        });
       } else if (hash === "#home" || hash === "#") {
         setCurrentPage(prev => {
           if (prev !== 'home') window.scrollTo({ top: 0, behavior: "smooth" });
@@ -145,6 +151,11 @@ export default function App() {
           setCurrentPage(prev => {
             if (prev !== 'checkout') window.scrollTo({ top: 0, behavior: "smooth" });
             return 'checkout';
+          });
+        } else if (path === "/profile") {
+          setCurrentPage(prev => {
+            if (prev !== 'profile') window.scrollTo({ top: 0, behavior: "smooth" });
+            return 'profile';
           });
         } else if (path.startsWith("/product/")) {
           const prodId = path.replace("/product/", "");
@@ -237,6 +248,8 @@ export default function App() {
           <CartPage />
         ) : currentPage === 'checkout' ? (
           <CheckoutPage />
+        ) : currentPage === 'profile' ? (
+          <ProfilePage />
         ) : null}
 
         <Footer />
