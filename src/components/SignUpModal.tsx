@@ -227,7 +227,11 @@ interface SignUpModalProps {
 
 export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpModalProps) {
   const { syncCartWithApi, mergeGuestCartToApi } = useCart();
-  const [authMode, setAuthMode] = useState<'signup' | 'signin'>(initialMode);
+  const [authMode, setAuthMode] = useState<'signup' | 'signin' | 'forgot_email' | 'forgot_otp' | 'forgot_reset'>(initialMode);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotOtp, setForgotOtp] = useState("");
+  const [forgotPassword, setForgotPassword] = useState("");
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -278,6 +282,10 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
     if (!isOpen) {
       const t = setTimeout(() => {
         setForm({ firstName: "", lastName: "", email: "", phone: "", password: "", confirmPassword: "", gender: "", dateOfBirth: "", rememberMe: false });
+        setForgotEmail("");
+        setForgotOtp("");
+        setForgotPassword("");
+        setForgotConfirmPassword("");
         setErrors({});
         setIsSuccess(false);
         setIsLoading(false);
@@ -298,6 +306,7 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
   };
 
   const validate = (): boolean => {
+    if (authMode.startsWith('forgot_')) return true;
     const e: Partial<typeof form> = {};
     if (authMode === 'signup' && !form.firstName.trim()) {
       e.firstName = "First name is required";
@@ -349,6 +358,63 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
     e.preventDefault();
     if (!validate()) return;
     setIsLoading(true);
+
+    if (authMode === 'forgot_email') {
+      if (!forgotEmail.trim()) { setErrors({ email: "Email is required" }); setIsLoading(false); return; }
+      try {
+        const result: any = await post("/CustomerAuth/ForgotPassword_GenerateOTP", { email: forgotEmail });
+        showApiResponseToast(result);
+        if (result.isSuccess || result.statusCode === 1 || result.StatusCode === 1) {
+          setAuthMode('forgot_otp');
+        }
+      } catch (err: any) {
+        showToast("error", err?.response?.data?.message || err.message || "Failed to generate OTP");
+      }
+      setIsLoading(false);
+      return;
+    }
+
+    if (authMode === 'forgot_otp') {
+      if (!forgotOtp.trim()) { setErrors({ email: "OTP is required" }); setIsLoading(false); return; }
+      try {
+        const result: any = await post("/CustomerAuth/ForgotPassword_VerifyOTP", { email: forgotEmail, otp: parseInt(forgotOtp) });
+        showApiResponseToast(result);
+        if (result.isSuccess || result.statusCode === 1 || result.StatusCode === 1) {
+          setAuthMode('forgot_reset');
+        }
+      } catch (err: any) {
+        showToast("error", err?.response?.data?.message || err.message || "Failed to verify OTP");
+      }
+      setIsLoading(false);
+      return;
+    }
+
+    if (authMode === 'forgot_reset') {
+      if (!forgotPassword || forgotPassword !== forgotConfirmPassword) {
+        showToast("error", "Passwords do not match or are empty");
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const result: any = await post("/CustomerAuth/ForgotPassword_ResetPassword", { 
+           email: forgotEmail, 
+           otp: parseInt(forgotOtp), 
+           newPassword: forgotPassword, 
+           confirmPassword: forgotConfirmPassword 
+        });
+        showApiResponseToast(result);
+        if (result.isSuccess || result.statusCode === 1 || result.StatusCode === 1) {
+          setAuthMode('signin');
+          setForgotPassword("");
+          setForgotConfirmPassword("");
+          setForgotOtp("");
+        }
+      } catch (err: any) {
+        showToast("error", err?.response?.data?.message || err.message || "Failed to reset password");
+      }
+      setIsLoading(false);
+      return;
+    }
 
     if (authMode === 'signin') {
       try {
@@ -645,16 +711,19 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
                 <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                   <div>
                     <h2 className="font-serif text-2xl font-light text-[var(--color-dark-text)]">
-                      {authMode === 'signup' ? 'Create Account' : 'Welcome Back'}
+                      {authMode === 'signup' ? 'Create Account' : authMode.startsWith('forgot_') ? 'Forgot Password' : 'Welcome Back'}
                     </h2>
                     <p className="text-[11px] text-[var(--color-dark-text)]/40 font-light mt-1 font-satoshi">
                       {authMode === 'signup' 
                         ? 'Join our community for pure, restorative daily rituals.' 
+                        : authMode.startsWith('forgot_')
+                        ? 'Securely reset your password to regain access.'
                         : 'Securely sign into your private profile.'}
                     </p>
                   </div>
 
                   {/* Mode Tab Switcher */}
+                  {!authMode.startsWith('forgot_') && (
                   <div className="bg-black/5 p-1 rounded-xl flex items-center self-start sm:self-auto relative border border-black/5 shadow-inner">
                     <button
                       type="button"
@@ -686,13 +755,27 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
                       transition={{ type: "spring", stiffness: 350, damping: 28 }}
                     />
                   </div>
+                  )}
                 </div>
 
                 {/* AUTHENTICATION FORM */}
                 <form onSubmit={handleSubmit} className="flex-1 flex flex-col justify-between gap-8">
                   <div className="space-y-4">
                     <AnimatePresence mode="wait">
-                      {authMode === 'signup' ? (
+                      {authMode === 'forgot_email' ? (
+                        <motion.div key="forgot-email" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="space-y-4">
+                          <FloatingInput label="Email Address" type="email" value={forgotEmail} onChange={setForgotEmail} error={errors.email} icon={<Mail className="w-4 h-4" />} name="forgotEmail" focusedField={focusedField} onFocus={setFocusedField} onBlur={() => setFocusedField(null)} />
+                        </motion.div>
+                      ) : authMode === 'forgot_otp' ? (
+                        <motion.div key="forgot-otp" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="space-y-4">
+                          <FloatingInput label="Enter OTP" type="text" value={forgotOtp} onChange={setForgotOtp} error={errors.email} icon={<Lock className="w-4 h-4" />} name="forgotOtp" focusedField={focusedField} onFocus={setFocusedField} onBlur={() => setFocusedField(null)} />
+                        </motion.div>
+                      ) : authMode === 'forgot_reset' ? (
+                        <motion.div key="forgot-reset" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="space-y-4">
+                          <FloatingInput label="New Password" type={showPassword ? "text" : "password"} value={forgotPassword} onChange={setForgotPassword} error={errors.password} icon={<Lock className="w-4 h-4" />} name="forgotPassword" focusedField={focusedField} onFocus={setFocusedField} onBlur={() => setFocusedField(null)} rightElement={<button type="button" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>} />
+                          <FloatingInput label="Confirm Password" type={showConfirm ? "text" : "password"} value={forgotConfirmPassword} onChange={setForgotConfirmPassword} icon={<Lock className="w-4 h-4" />} name="forgotConfirmPassword" focusedField={focusedField} onFocus={setFocusedField} onBlur={() => setFocusedField(null)} rightElement={<button type="button" onClick={() => setShowConfirm(!showConfirm)}>{showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>} />
+                        </motion.div>
+                      ) : authMode === 'signup' ? (
                         <motion.div
                           key="signup-fields"
                           initial={{ opacity: 0, y: 10 }}
@@ -884,6 +967,7 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
                     </AnimatePresence>
 
                     {/* Checkbox and Forgot Password link */}
+                    {!authMode.startsWith('forgot_') && (
                     <div className="flex items-center justify-between pt-1">
                       <label className="flex items-center gap-2.5 cursor-pointer select-none">
                         <div
@@ -904,12 +988,14 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
                       {authMode === 'signin' && (
                         <button
                           type="button"
+                          onClick={() => setAuthMode('forgot_email')}
                           className="text-[11px] text-[var(--color-primary)] hover:underline font-satoshi font-semibold tracking-wide cursor-pointer"
                         >
                           Forgot Password?
                         </button>
                       )}
                     </div>
+                    )}
                   </div>
 
                   {/* Actions Column */}
@@ -933,7 +1019,7 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
                         </>
                       ) : (
                         <>
-                          <span>{authMode === 'signup' ? 'Create Account' : 'Sign In'}</span>
+                          <span>{authMode === 'signup' ? 'Create Account' : authMode === 'forgot_email' ? 'Send OTP' : authMode === 'forgot_otp' ? 'Verify OTP' : authMode === 'forgot_reset' ? 'Reset Password' : 'Sign In'}</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </>
                       )}
@@ -942,19 +1028,28 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
 
 
                     {/* Bottom toggle helper */}
-                    <p className="text-center text-[11px] text-black/45 font-light font-satoshi">
-                      {authMode === 'signup' ? 'Already have an account? ' : 'New to Hridhay Connect? '}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAuthMode(authMode === 'signup' ? 'signin' : 'signup');
-                          setErrors({});
-                        }}
-                        className="text-[var(--color-primary)] font-semibold hover:underline cursor-pointer"
-                      >
-                        {authMode === 'signup' ? 'Sign In' : 'Create Account'}
-                      </button>
-                    </p>
+                    {authMode.startsWith('forgot_') ? (
+                      <p className="text-center text-[11px] text-black/45 font-light font-satoshi">
+                        Remember your password?{' '}
+                        <button type="button" onClick={() => setAuthMode('signin')} className="text-[var(--color-primary)] font-semibold hover:underline cursor-pointer">
+                          Sign In
+                        </button>
+                      </p>
+                    ) : (
+                      <p className="text-center text-[11px] text-black/45 font-light font-satoshi">
+                        {authMode === 'signup' ? 'Already have an account? ' : 'New to Hridhay Connect? '}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAuthMode(authMode === 'signup' ? 'signin' : 'signup');
+                            setErrors({});
+                          }}
+                          className="text-[var(--color-primary)] font-semibold hover:underline cursor-pointer"
+                        >
+                          {authMode === 'signup' ? 'Sign In' : 'Create Account'}
+                        </button>
+                      </p>
+                    )}
                   </div>
                 </form>
 

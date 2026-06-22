@@ -177,7 +177,7 @@ export function CheckoutPage() {
   const shippingThreshold = 500;
   const shippingCost = subtotal >= shippingThreshold || shippingOption === 'express' ? (shippingOption === 'express' ? 120 : 0) : 60;
   
-  const taxCost = Math.round((subtotal - discountAmount) * 0.18); // 18% GST
+  const taxCost = 0; // Math.round((subtotal - discountAmount) * 0.18); // 18% GST
   const finalTotal = subtotal - discountAmount + shippingCost + taxCost;
   
   // Format estimated delivery dates
@@ -229,7 +229,7 @@ export function CheckoutPage() {
     try {
       const customerId = localStorage.getItem("customerId");
       
-      const json: any = await post(`/Cart/CheckOut?customerId=${customerId}&CustomerAddressId=${selectedAddress?.id}`, {});
+      const json: any = await post(`/Cart/CheckOut?customerId=${customerId}&CustomerAddressId=${selectedAddress?.id}&deliveryFee=${shippingCost || 0}`, {});
       
       // Checking common success indicators from the .NET backend API format
       if (json.isSuccess || json.statusCode === 1 || json.statusCode === 200) {
@@ -484,7 +484,7 @@ export function CheckoutPage() {
                   </span>
                 </button>
                 
-                <button
+                {/* <button
                   type="button"
                   onClick={() => setShippingOption('express')}
                   className={`w-full flex items-center justify-between p-4 sm:p-5 rounded-3xl border transition-all duration-300 text-left ${
@@ -508,7 +508,7 @@ export function CheckoutPage() {
                   <span className="text-xs font-semibold text-[var(--color-primary)] font-serif">
                     ₹120
                   </span>
-                </button>
+                </button> */}
               </div>
             </motion.div>
             
@@ -722,10 +722,10 @@ export function CheckoutPage() {
                   </span>
                 </div>
                 
-                <div className="flex justify-between font-light">
+                {/* <div className="flex justify-between font-light">
                   <span>GST Tax (18%)</span>
                   <span className="font-semibold text-[var(--color-dark-text)]">₹{taxCost}</span>
-                </div>
+                </div> */}
                 
                 <div className="flex justify-between items-center text-sm pt-4 border-t border-black/5 text-[var(--color-dark-text)] font-semibold font-serif">
                   <span className="text-xs uppercase font-sans font-bold tracking-wider text-[var(--color-dark-text)]/50">Order Total</span>
