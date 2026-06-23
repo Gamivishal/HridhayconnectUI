@@ -1,9 +1,11 @@
-import { ChevronDown, Sparkles, ArrowRight, ShoppingBag, User, LogOut, MapPin, Gift } from "lucide-react";
-import { useState, useEffect } from "react";
+import { ChevronDown, Sparkles, ArrowRight, ShoppingBag, User, LogOut, MapPin, Gift, Bell, X, Check } from "lucide-react";
+import React, { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCart } from "../context/CartContext";
 import { StarButton } from "./ui/StarButton";
 import { useSignUp } from "../context/SignUpContext";
+import { get, post } from "../api/BaseService";
+import { showToast } from "../utils/toastService";
 
 interface NavigationProps {
   currentPage?: 'home' | 'about' | 'soap' | 'hair-oil' | 'mukhwas' | 'tea-masala' | 'hridhay-special' | 'product' | 'cart';
@@ -35,6 +37,67 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
       window.removeEventListener("storage", checkAuth);
     };
   }, []);
+
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchNotifications = async () => {
+    if (!isLoggedIn) return;
+    try {
+      const res = await post('/Notification/GetAll', {
+        search: "",
+        start: 0,
+        length: 20,
+        sortColumnIndex: 0,
+        sortDirection: ""
+      });
+      if (res && res.data && res.data.table2) {
+        setNotifications(res.data.table2);
+        setUnreadCount(res.data.table2.filter((n: any) => !n.IsRead).length);
+      }
+    } catch (err) {
+      console.error("Failed to fetch notifications", err);
+    }
+  };
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchNotifications();
+    }
+    const handleUpdate = () => {
+      if (isLoggedIn) fetchNotifications();
+    };
+    window.addEventListener('notificationsUpdated', handleUpdate);
+    return () => window.removeEventListener('notificationsUpdated', handleUpdate);
+  }, [isLoggedIn]);
+
+  const handleReadNotification = async (id: number) => {
+    try {
+      await post(`/Notification/Read?id=${id}`, {});
+      fetchNotifications();
+      window.dispatchEvent(new Event('notificationsUpdated'));
+    } catch (err) { console.error(err); }
+  };
+
+  const handleReadAll = async () => {
+    try {
+      await post('/Notification/ReadAll', {});
+      fetchNotifications();
+      window.dispatchEvent(new Event('notificationsUpdated'));
+      showToast('success', 'All notifications marked as read');
+    } catch (err) { console.error(err); }
+  };
+
+  const handleDeleteNotification = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await post(`/Notification/Delete?id=${id}`, {});
+      fetchNotifications();
+      window.dispatchEvent(new Event('notificationsUpdated'));
+      showToast('success', 'Notification deleted');
+    } catch (err) { console.error(err); }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
@@ -255,11 +318,108 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
 
             {/* Desktop Sign Up CTA or Profile Dropdown */}
             {isLoggedIn ? (
-              <div
-                className="relative hidden md:block"
-                onMouseEnter={() => setIsProfileOpen(true)}
-                onMouseLeave={() => setIsProfileOpen(false)}
-              >
+              <div className="flex items-center gap-1 md:gap-3">
+                {/* Notification Bell */}
+                <div
+                  className="relative hidden md:block"
+                  onMouseEnter={() => { setIsNotificationOpen(true); setIsProfileOpen(false); }}
+                  onMouseLeave={() => setIsNotificationOpen(false)}
+                >
+                  <motion.button
+                    className="relative flex items-center justify-center w-10 h-10 rounded-full text-[#1B1720] cursor-pointer z-10 transition-colors hover:bg-[#5B2A86]/6"
+                    aria-label="Notifications"
+                    whileTap={{ scale: 0.92 }}
+                  >
+                    <Bell className="w-[19px] h-[19px] stroke-[1.6]" />
+                    <AnimatePresence>
+                      {unreadCount > 0 && (
+                        <motion.span
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                          className="absolute top-[7px] right-[7px] min-w-[15px] h-[15px] bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center px-[3px] leading-none shadow-[0_2px_8px_rgba(239,68,68,0.45)]"
+                        >
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </motion.button>
+
+                  <AnimatePresence>
+                    {isNotificationOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                        className="absolute right-0 top-full mt-2 w-[380px] bg-white/95 backdrop-blur-xl border border-white/50 rounded-2xl shadow-[0_20px_50px_rgba(91,42,134,0.12)] overflow-hidden z-50 flex flex-col max-h-[450px]"
+                      >
+                        <div className="px-5 py-4 border-b border-[#5B2A86]/10 flex items-center justify-between bg-neutral-50/50">
+                          <p className="text-[11px] uppercase tracking-[0.15em] font-bold text-[#5B2A86]">Notifications</p>
+                          {unreadCount > 0 && (
+                            <button onClick={handleReadAll} className="flex items-center gap-1.5 text-[10px] text-[#5B2A86] font-semibold hover:text-[#7A49A5] transition-colors bg-[#5B2A86]/5 hover:bg-[#5B2A86]/10 px-2 py-1 rounded-lg">
+                              <Check className="w-3 h-3" /> Mark all read
+                            </button>
+                          )}
+                        </div>
+                        
+                        <div className="overflow-y-auto flex-1 p-2 custom-scrollbar">
+                          {notifications.length === 0 ? (
+                            <div className="px-6 py-10 flex flex-col items-center justify-center text-center">
+                              <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mb-3">
+                                <Bell className="w-5 h-5 text-neutral-400" />
+                              </div>
+                              <p className="text-sm font-semibold text-neutral-700">All caught up!</p>
+                              <p className="text-xs text-neutral-400 mt-1 font-satoshi">You have no new notifications.</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-1">
+                              {notifications.map((notif: any) => (
+                                <div 
+                                  key={notif.Id} 
+                                  className={`relative p-4 rounded-xl transition-all duration-200 cursor-pointer border border-transparent ${notif.IsRead ? 'hover:bg-neutral-50' : 'bg-[#5B2A86]/[0.03] hover:bg-[#5B2A86]/[0.06] border-[#5B2A86]/10'} flex flex-col gap-2 group`}
+                                  onClick={() => !notif.IsRead && handleReadNotification(notif.Id)}
+                                >
+                                  <div className="flex items-start gap-3">
+                                    {!notif.IsRead && <div className="w-2 h-2 rounded-full bg-[#5B2A86] mt-1.5 flex-shrink-0 shadow-[0_0_8px_rgba(91,42,134,0.4)]"></div>}
+                                    <div className="flex-1 min-w-0 pr-6">
+                                      <p className={`text-sm leading-snug ${notif.IsRead ? 'text-neutral-600 font-medium' : 'text-neutral-900 font-semibold'} font-satoshi`}>{notif.Message}</p>
+                                      <p className="text-[10px] text-neutral-400 mt-1.5 uppercase tracking-wider font-semibold">
+                                        {new Date(notif.CreatedDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button 
+                                    onClick={(e) => handleDeleteNotification(notif.Id, e)} 
+                                    className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-1.5 bg-white shadow-sm border border-neutral-100 text-neutral-400 hover:text-red-500 hover:border-red-100 rounded-lg transition-all z-10" 
+                                    title="Delete"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="p-2 border-t border-[#5B2A86]/10 bg-neutral-50/50">
+                          <button 
+                            onClick={() => { setIsNotificationOpen(false); window.location.hash = 'notifications'; window.dispatchEvent(new HashChangeEvent('hashchange')); }} 
+                            className="w-full py-2.5 text-xs text-center text-[#5B2A86] font-bold uppercase tracking-wider hover:bg-[#5B2A86]/5 rounded-xl transition-colors"
+                          >
+                            View all notifications
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div
+                  className="relative hidden md:block"
+                  onMouseEnter={() => { setIsProfileOpen(true); setIsNotificationOpen(false); }}
+                  onMouseLeave={() => setIsProfileOpen(false)}
+                >
                 <motion.button
                   className="relative flex items-center justify-center w-10 h-10 rounded-full text-[#1B1720] cursor-pointer z-10 transition-colors hover:bg-[#5B2A86]/6"
                   aria-label="User Profile"
@@ -311,6 +471,7 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                     </motion.div>
                   )}
                 </AnimatePresence>
+              </div>
               </div>
             ) : (
               <StarButton

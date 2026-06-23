@@ -241,6 +241,7 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
     confirmPassword: "",
     gender: "",
     dateOfBirth: "",
+    referralCode: "",
     rememberMe: false,
   });
   const [genders, setGenders] = useState<{code: string, name: string}[]>([]);
@@ -268,6 +269,13 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
         if (json && json.data) setGenders(json.data);
       })
       .catch((err: any) => console.error("Failed to fetch genders", err));
+      
+    // Pre-fill referral code from URL if present
+    const params = new URLSearchParams(window.location.search);
+    const refCode = params.get("ref") || params.get("referralCode");
+    if (refCode) {
+      setForm(prev => ({ ...prev, referralCode: refCode }));
+    }
   }, []);
 
   // ESC to close
@@ -281,7 +289,7 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
   useEffect(() => {
     if (!isOpen) {
       const t = setTimeout(() => {
-        setForm({ firstName: "", lastName: "", email: "", phone: "", password: "", confirmPassword: "", gender: "", dateOfBirth: "", rememberMe: false });
+        setForm({ firstName: "", lastName: "", email: "", phone: "", password: "", confirmPassword: "", gender: "", dateOfBirth: "", referralCode: "", rememberMe: false });
         setForgotEmail("");
         setForgotOtp("");
         setForgotPassword("");
@@ -509,7 +517,8 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
           password: form.password,
           conformpasswordPassword: form.confirmPassword,
           dateOfBirth: form.dateOfBirth ? `${form.dateOfBirth}T00:00:00.000Z` : null,
-          gender: form.gender
+          gender: form.gender,
+          referralCode: form.referralCode || ""
         };
 
         console.log("[Register API Request] Sending payload to /CustomerAuth/Register", payload);
@@ -838,6 +847,18 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
                             onFocus={setFocusedField}
                             onBlur={() => setFocusedField(null)}
                             autoComplete="tel"
+                          />
+
+                          <FloatingInput
+                            label="Referral Code (Optional)"
+                            type="text"
+                            value={form.referralCode}
+                            onChange={(v) => setField("referralCode")(v)}
+                            icon={<Users className="w-4 h-4" />}
+                            name="referralCode"
+                            focusedField={focusedField}
+                            onFocus={setFocusedField}
+                            onBlur={() => setFocusedField(null)}
                           />
 
                           <div className="flex flex-col sm:flex-row gap-4">

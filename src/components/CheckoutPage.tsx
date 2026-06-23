@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
+import {
   ArrowLeft, CreditCard, ShieldCheck, Check, Trash2, Plus, Minus,
   Sparkles, Gift, Shield, CheckCircle2, ShoppingBag, Truck, Calendar, Sparkle, X, MapPin
 } from "lucide-react";
@@ -25,18 +25,18 @@ interface AddressInfo {
 
 export function CheckoutPage() {
   const { checkoutItems, clearCheckout, clearCart } = useCart();
-  
+
   // Local states
   const [addresses, setAddresses] = useState<AddressInfo[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<AddressInfo | null>(null);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [addressError, setAddressError] = useState("");
-  
+
   // New Address Form States
   const [isAddAddressModalOpen, setIsAddAddressModalOpen] = useState(false);
-  const [countries, setCountries] = useState<{id: number, name: string}[]>([]);
-  const [states, setStates] = useState<{id: number, name: string}[]>([]);
+  const [countries, setCountries] = useState<{ id: number, name: string }[]>([]);
+  const [states, setStates] = useState<{ id: number, name: string }[]>([]);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [addAddressError, setAddAddressError] = useState("");
   const [newAddress, setNewAddress] = useState({
@@ -49,22 +49,67 @@ export function CheckoutPage() {
     mobileNo: "",
     alternativeMobileNo: "",
   });
-  
+
   // Coupon
   const [couponCode, setCouponCode] = useState("");
   const [discountPercent, setDiscountPercent] = useState(0);
   const [couponError, setCouponError] = useState("");
   const [couponSuccess, setCouponSuccess] = useState("");
-  
+
   // Checkout flow states
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi' | 'paypal' | 'cod'>('card');
   const [cardDetails, setCardDetails] = useState({ number: "", expiry: "", cvv: "" });
   const [upiId, setUpiId] = useState("");
-  
+
   const [shippingOption, setShippingOption] = useState<'standard' | 'express'>('standard');
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [generatedOrderId, setGeneratedOrderId] = useState("");
+  
+  // Reward Coins usage
+  const [rewardSettings, setRewardSettings] = useState<any>(null);
+  const [availableCoins, setAvailableCoins] = useState(0);
+  const [useCoins, setUseCoins] = useState(false);
+  
+  useEffect(() => {
+    const fetchRewardData = async () => {
+      const customerId = localStorage.getItem("customerId");
+      if (!customerId) return;
+      try {
+        const [profileRes, settingsRes]: any = await Promise.all([
+          post("/Customer/GetAll", { Id: Number(customerId), Search: "" }),
+          get("/Reward/GetAll")
+        ]);
+        
+        let dataObj = profileRes;
+        if (profileRes && profileRes.data) {
+          dataObj = profileRes.data;
+        }
+        
+        if (dataObj) {
+          let table1 = dataObj.table1 || [];
+          if (!Array.isArray(table1) || table1.length === 0) {
+            for (const key of Object.keys(dataObj)) {
+              if (Array.isArray(dataObj[key]) && key.toLowerCase().includes("table1")) {
+                table1 = dataObj[key];
+                break;
+              }
+            }
+          }
+          if (table1 && table1.length > 0) {
+            setAvailableCoins(table1[0].RewardCoins || 0);
+          }
+        }
+        
+        if (settingsRes && settingsRes.data && settingsRes.data.length > 0) {
+          setRewardSettings(settingsRes.data[0]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch reward details", err);
+      }
+    };
+    fetchRewardData();
+  }, []);
   
   // Fetch Addresses
   useEffect(() => {
@@ -115,7 +160,7 @@ export function CheckoutPage() {
     e.preventDefault();
     setAddAddressError("");
     setIsAddingAddress(true);
-    
+
     try {
       const customerId = localStorage.getItem("customerId");
       if (!customerId) throw new Error("Not logged in");
@@ -135,7 +180,7 @@ export function CheckoutPage() {
       };
 
       const res: any = await post("/Customer/Save", payload);
-      
+
       if (res.isSuccess || res.statusCode === 1 || res.statusCode === 200) {
         setIsAddAddressModalOpen(false);
         // Refresh addresses
@@ -162,31 +207,65 @@ export function CheckoutPage() {
       setIsAddingAddress(false);
     }
   };
-  
+
   // Redirect back if checkout items are empty and not completed
   useEffect(() => {
     if (checkoutItems.length === 0 && !orderCompleted) {
       window.location.hash = "#cart";
     }
   }, [checkoutItems, orderCompleted]);
-  
+
   // Calculate pricing
   const subtotal = checkoutItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   const discountAmount = Math.round((subtotal * discountPercent) / 100);
+
+  // --- REWARD COIN CALCULATION ---
+  let possibleMaxCoinsAllowed = 0;
+  let possibleMaxDiscountRs = 0;
   
+  // Final usage variables
+  let finalUsedCoins = 0;
+  let finalCoinDiscount = 0;
+  let remainingCoins = availableCoins;
+
+  if (rewardSettings && availableCoins > 0) {
+    const baseAmountForCoins = subtotal - discountAmount;
+    const maxCoinUsagePercent = rewardSettings.MaxCoinUsagePercent || 0;
+    const coinToRupeeRate = rewardSettings.CoinToRupeeRate || 1;
+    
+    // Max usage rule based on cart value
+    const maxDiscountAllowedRs = (baseAmountForCoins * maxCoinUsagePercent) / 100;
+    const maxCoinsAllowed = maxDiscountAllowedRs * coinToRupeeRate;
+    
+    // Final limit (minimum of available or maximum allowed)
+    const rawCoinsLimit = Math.min(availableCoins, maxCoinsAllowed);
+    
+    // Rounding rule: Allow only full rupee redemption
+    possibleMaxCoinsAllowed = Math.floor(rawCoinsLimit / coinToRupeeRate) * coinToRupeeRate;
+    possibleMaxDiscountRs = possibleMaxCoinsAllowed / coinToRupeeRate;
+  }
+
+  // Checkbox Opt-In Logic
+  if (useCoins && possibleMaxCoinsAllowed > 0) {
+    finalUsedCoins = possibleMaxCoinsAllowed;
+    finalCoinDiscount = possibleMaxDiscountRs;
+  }
+  
+  remainingCoins = availableCoins - finalUsedCoins;
+
   const shippingThreshold = 500;
   const shippingCost = subtotal >= shippingThreshold || shippingOption === 'express' ? (shippingOption === 'express' ? 120 : 0) : 60;
-  
+
   const taxCost = 0; // Math.round((subtotal - discountAmount) * 0.18); // 18% GST
-  const finalTotal = subtotal - discountAmount + shippingCost + taxCost;
-  
+  const finalTotal = subtotal - discountAmount - finalCoinDiscount + shippingCost + taxCost;
+
   // Format estimated delivery dates
   const getDeliveryDate = (days: number) => {
     const d = new Date();
     d.setDate(d.getDate() + days);
     return d.toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric' });
   };
-  
+
   const validateForm = (): boolean => {
     if (!selectedAddress) {
       setAddressError("Please select a delivery address.");
@@ -195,15 +274,15 @@ export function CheckoutPage() {
     setAddressError("");
     return true;
   };
-  
+
   const handleApplyCoupon = (e: React.FormEvent) => {
     e.preventDefault();
     setCouponError("");
     setCouponSuccess("");
-    
+
     const code = couponCode.trim().toUpperCase();
     if (!code) return;
-    
+
     if (code === "HRIDHAY10") {
       setDiscountPercent(10);
       setCouponSuccess("HRIDHAY10 Applied (10% Discount Saved!)");
@@ -214,7 +293,7 @@ export function CheckoutPage() {
       setCouponError("Invalid or expired coupon code");
     }
   };
-  
+
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
@@ -223,26 +302,26 @@ export function CheckoutPage() {
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    
+
     setIsProcessing(true);
-    
+
     try {
       const customerId = localStorage.getItem("customerId");
-      
-      const json: any = await post(`/Cart/CheckOut?customerId=${customerId}&CustomerAddressId=${selectedAddress?.id}&deliveryFee=${shippingCost || 0}`, {});
-      
+
+      const json: any = await post(`/Cart/CheckOut?customerId=${customerId}&CustomerAddressId=${selectedAddress?.id}&deliveryFee=${shippingCost || 0}&usedCoins=${finalUsedCoins}&coinDiscountAmount=${finalCoinDiscount}`, {});
+
       // Checking common success indicators from the .NET backend API format
       if (json.isSuccess || json.statusCode === 1 || json.statusCode === 200) {
         const orderId = "HC-" + Math.floor(100000 + Math.random() * 900000);
         setGeneratedOrderId(orderId);
         setIsProcessing(false);
         setOrderCompleted(true);
-        
+
         // Clear cart items if they checked out their shopping cart
         clearCart();
         // Clear checkout data
         clearCheckout();
-        
+
         // Scroll to top for success experience
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
@@ -257,7 +336,7 @@ export function CheckoutPage() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
-  
+
   if (orderCompleted) {
     return (
       <div className="min-h-screen bg-[var(--color-cream)] pt-[100px] pb-24 px-6 relative overflow-hidden font-sans">
@@ -266,7 +345,7 @@ export function CheckoutPage() {
           <div className="absolute -top-[10%] -left-[10%] w-[50vw] h-[50vw] rounded-full bg-[var(--color-primary)]/10 blur-[130px]" />
           <div className="absolute -bottom-[10%] -right-[10%] w-[45vw] h-[45vw] rounded-full bg-[var(--color-accent)]/10 blur-[110px]" />
         </div>
-        
+
         <div className="max-w-3xl mx-auto relative z-10 text-center">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
@@ -275,7 +354,7 @@ export function CheckoutPage() {
             className="bg-white/50 backdrop-blur-xl border border-white/80 p-8 md:p-12 rounded-[3.5rem] shadow-xl shadow-[var(--color-primary)]/5"
           >
             {/* Animated Check */}
-            <motion.div 
+            <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 180 }}
@@ -283,19 +362,19 @@ export function CheckoutPage() {
             >
               <Check className="w-10 h-10 text-[var(--color-primary)] animate-pulse" />
             </motion.div>
-            
+
             <span className="text-[10px] uppercase tracking-[0.3em] font-semibold text-[var(--color-primary)] bg-[var(--color-primary)]/10 px-4 py-1.5 rounded-full inline-block mb-4">
               Order Confirmed
             </span>
-            
+
             <h1 className="text-4xl md:text-5xl font-serif text-[var(--color-dark-text)] mb-4">
               Thank you for your purchase
             </h1>
-            
+
             <p className="text-sm font-light font-satoshi text-[var(--color-dark-text)]/70 max-w-lg mx-auto mb-8 leading-relaxed">
               Your organic wellness ritual is prepared. We have sent a confirmation to your registered email with invoice details and live tracking information.
             </p>
-            
+
             {/* Order Ref & Details Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 bg-white/40 border border-white/60 p-6 rounded-[2rem] text-left mb-8 max-w-xl mx-auto text-xs">
               <div>
@@ -316,7 +395,7 @@ export function CheckoutPage() {
                 </span>
               </div>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row justify-center gap-4 max-w-md mx-auto">
               <button
                 onClick={() => { window.location.hash = "#home"; }}
@@ -336,7 +415,7 @@ export function CheckoutPage() {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen bg-[var(--color-cream)] pt-[100px] pb-24 px-6 md:px-12 relative overflow-hidden font-sans">
       {/* Background radial glow */}
@@ -344,27 +423,27 @@ export function CheckoutPage() {
         <div className="absolute top-[10%] left-[5%] w-[45vw] h-[45vw] rounded-full bg-[var(--color-primary)]/5 blur-[120px]" />
         <div className="absolute bottom-[25%] right-[5%] w-[38vw] h-[38vw] rounded-full bg-[var(--color-accent)]/8 blur-[105px]" />
       </div>
-      
+
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header Navigation */}
         <div className="flex justify-between items-center py-4 border-b border-[var(--color-primary)]/5 mb-10">
-          <button 
+          <button
             onClick={() => window.history.back()}
             className="group flex items-center gap-2 text-xs font-semibold uppercase tracking-widest hover:text-[var(--color-primary)] transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             <span>Return to shop</span>
           </button>
-          
+
           <div className="flex items-center gap-2.5 text-xs text-[var(--color-primary)] bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/10 px-4 py-2 rounded-full font-medium">
             <Shield className="w-3.5 h-3.5" />
             <span>Secure 256-Bit SSL Checkout</span>
           </div>
         </div>
-        
+
         {/* Main Grid */}
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-10 md:gap-14 items-start w-full">
-          
+
           {/* LEFT SIDE: Forms */}
           <div className="w-full lg:col-span-7 space-y-8">
             <motion.div
@@ -380,8 +459,8 @@ export function CheckoutPage() {
                 <h2 className="text-2xl md:text-3xl font-serif text-[var(--color-dark-text)] flex justify-between items-end">
                   Delivery Address
                   {addresses.length > 0 && (
-                    <button 
-                      onClick={() => setIsAddressModalOpen(true)} 
+                    <button
+                      onClick={() => setIsAddressModalOpen(true)}
                       className="text-xs font-sans text-[var(--color-primary)] hover:underline tracking-widest uppercase font-semibold mb-1"
                     >
                       Change Address
@@ -389,7 +468,7 @@ export function CheckoutPage() {
                   )}
                 </h2>
               </div>
-              
+
               {isLoadingAddresses ? (
                 <div className="animate-pulse flex flex-col gap-3 mt-6">
                   <div className="h-5 bg-black/5 rounded w-1/3"></div>
@@ -423,10 +502,10 @@ export function CheckoutPage() {
                     <h4 className="font-semibold text-[var(--color-dark-text)] mb-1">No Address Found</h4>
                     <p className="text-xs text-[var(--color-dark-text)]/60 max-w-xs mx-auto">Please add a delivery address to proceed with your checkout.</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => {
                       setIsAddAddressModalOpen(true);
-                    }} 
+                    }}
                     className="text-[10px] bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] transition-colors text-white px-5 py-2.5 rounded-full uppercase tracking-widest font-semibold mt-2 shadow-sm cursor-pointer"
                   >
                     Add New Address
@@ -440,7 +519,7 @@ export function CheckoutPage() {
                 </div>
               )}
             </motion.div>
-            
+
             {/* Delivery Curation */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -456,16 +535,15 @@ export function CheckoutPage() {
                   Delivery Options
                 </h2>
               </div>
-              
+
               <div className="space-y-4">
                 <button
                   type="button"
                   onClick={() => setShippingOption('standard')}
-                  className={`w-full flex items-center justify-between p-4 sm:p-5 rounded-3xl border transition-all duration-300 text-left ${
-                    shippingOption === 'standard' 
-                      ? 'bg-[var(--color-primary)]/5 border-[var(--color-primary)] shadow-sm' 
+                  className={`w-full flex items-center justify-between p-4 sm:p-5 rounded-3xl border transition-all duration-300 text-left ${shippingOption === 'standard'
+                      ? 'bg-[var(--color-primary)]/5 border-[var(--color-primary)] shadow-sm'
                       : 'bg-white/40 border-black/5 hover:border-black/25'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-5 h-5 rounded-full border border-black/20 flex items-center justify-center bg-white">
@@ -483,7 +561,7 @@ export function CheckoutPage() {
                     {subtotal >= shippingThreshold ? "FREE" : "₹60"}
                   </span>
                 </button>
-                
+
                 {/* <button
                   type="button"
                   onClick={() => setShippingOption('express')}
@@ -511,7 +589,7 @@ export function CheckoutPage() {
                 </button> */}
               </div>
             </motion.div>
-            
+
             {/* Payment Portal */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -527,7 +605,7 @@ export function CheckoutPage() {
                   Payment Gateway
                 </h2>
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {[
                   { id: 'card', name: 'Credit/Debit Card', desc: 'Secure encryption' },
@@ -539,18 +617,17 @@ export function CheckoutPage() {
                     key={item.id}
                     type="button"
                     onClick={() => setPaymentMethod(item.id as any)}
-                    className={`p-4 rounded-2xl border text-left transition-all duration-300 flex flex-col justify-between h-28 ${
-                      paymentMethod === item.id 
-                        ? 'bg-[var(--color-primary)]/5 border-[var(--color-primary)] shadow-sm' 
+                    className={`p-4 rounded-2xl border text-left transition-all duration-300 flex flex-col justify-between h-28 ${paymentMethod === item.id
+                        ? 'bg-[var(--color-primary)]/5 border-[var(--color-primary)] shadow-sm'
                         : 'bg-white/40 border-black/5 hover:border-black/20'
-                    }`}
+                      }`}
                   >
                     <span className="text-xs font-bold text-[var(--color-dark-text)]">{item.name}</span>
                     <span className="text-[10px] text-[var(--color-dark-text)]/40 font-light font-satoshi leading-snug">{item.desc}</span>
                   </button>
                 ))}
               </div>
-              
+
               <AnimatePresence mode="wait">
                 {paymentMethod === 'card' && (
                   <motion.div
@@ -587,7 +664,7 @@ export function CheckoutPage() {
                     </div>
                   </motion.div>
                 )}
-                
+
                 {paymentMethod === 'upi' && (
                   <motion.div
                     key="upi-form"
@@ -605,7 +682,7 @@ export function CheckoutPage() {
                     />
                   </motion.div>
                 )}
-                
+
                 {paymentMethod === 'paypal' && (
                   <motion.div
                     key="paypal-redirect"
@@ -617,7 +694,7 @@ export function CheckoutPage() {
                     You will be redirected to PayPal's secure authentication gateway to authorize payment upon clicking "Place Order".
                   </motion.div>
                 )}
-                
+
                 {paymentMethod === 'cod' && (
                   <motion.div
                     key="cod-confirm"
@@ -633,7 +710,7 @@ export function CheckoutPage() {
               </AnimatePresence>
             </motion.div>
           </div>
-          
+
           {/* RIGHT SIDE: Summary Card */}
           <div className="w-full lg:col-span-5 lg:sticky lg:top-[120px]">
             <motion.div
@@ -645,7 +722,7 @@ export function CheckoutPage() {
               <h3 className="text-xl font-serif text-[var(--color-dark-text)] border-b border-black/5 pb-4">
                 Order Review
               </h3>
-              
+
               {/* Product cards stack */}
               <div className="max-h-[280px] overflow-y-auto pr-1 space-y-4">
                 {checkoutItems.map((item, idx) => (
@@ -674,7 +751,7 @@ export function CheckoutPage() {
                   </div>
                 ))}
               </div>
-              
+
               {/* Coupon Section */}
               <form onSubmit={handleApplyCoupon} className="pt-4 border-t border-black/5 space-y-2">
                 <div className="flex gap-2">
@@ -697,14 +774,65 @@ export function CheckoutPage() {
                 {couponError && <span className="text-[10px] text-red-500 font-medium pl-1 block">{couponError}</span>}
                 {couponSuccess && <span className="text-[10px] text-emerald-600 font-semibold pl-1 block">{couponSuccess}</span>}
               </form>
-              
+
+              {/* Coin Usage Wallet Card */}
+              {availableCoins > 0 && rewardSettings && (
+                <div className="pt-4 border-t border-black/5">
+                  <div className={`p-4 rounded-2xl border transition-all duration-300 ${useCoins ? 'bg-emerald-50/50 border-emerald-200 shadow-sm' : 'bg-white/50 border-black/10'}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border ${useCoins ? 'bg-emerald-100 border-emerald-200' : 'bg-amber-100 border-amber-200'}`}>
+                          <Gift className={`w-5 h-5 ${useCoins ? 'text-emerald-600' : 'text-amber-500'}`} />
+                        </div>
+                        <div>
+                          <span className="text-sm font-semibold text-[var(--color-dark-text)] block">Reward Coins</span>
+                          {useCoins ? (
+                            <span className="text-[10px] text-emerald-600 font-medium block mt-0.5">Coins Applied Successfully!</span>
+                          ) : (
+                            <span className="text-[10px] text-[var(--color-dark-text)]/60 block mt-0.5">
+                              You can redeem up to ₹{possibleMaxDiscountRs} ({possibleMaxCoinsAllowed} coins)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" className="sr-only peer" checked={useCoins} onChange={(e) => setUseCoins(e.target.checked)} disabled={possibleMaxCoinsAllowed === 0} />
+                        <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 peer-disabled:opacity-50"></div>
+                      </label>
+                    </div>
+
+                    {useCoins && (
+                      <div className="bg-white/80 rounded-xl p-3 border border-emerald-100 space-y-2 text-[10px] mt-3">
+                        <div className="flex justify-between items-center text-[var(--color-dark-text)]">
+                          <span>Available Coins</span>
+                          <span className="font-semibold">{availableCoins} 🪙</span>
+                        </div>
+                        <div className="flex justify-between items-center text-emerald-700">
+                          <span>Using Coins</span>
+                          <span className="font-semibold">-{finalUsedCoins} 🪙</span>
+                        </div>
+                        <div className="flex justify-between items-center text-emerald-700">
+                          <span>Discount Applied</span>
+                          <span className="font-semibold">-₹{finalCoinDiscount}</span>
+                        </div>
+                        <div className="w-full h-px bg-emerald-100 my-1"></div>
+                        <div className="flex justify-between items-center text-[var(--color-dark-text)] font-medium">
+                          <span>Remaining After Checkout</span>
+                          <span className="font-bold">{remainingCoins} 🪙</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Price Breakdown */}
               <div className="space-y-3 pt-4 border-t border-black/5 text-xs text-[var(--color-dark-text)]/70">
                 <div className="flex justify-between font-light">
                   <span>Subtotal</span>
                   <span className="font-semibold text-[var(--color-dark-text)]">₹{subtotal}</span>
                 </div>
-                
+
                 {discountPercent > 0 && (
                   <div className="flex justify-between text-emerald-700 font-medium bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100/50">
                     <span className="flex items-center gap-1">
@@ -714,25 +842,35 @@ export function CheckoutPage() {
                     <span>-₹{discountAmount}</span>
                   </div>
                 )}
-                
+
+                {useCoins && finalCoinDiscount > 0 && (
+                  <div className="flex justify-between text-emerald-700 font-medium bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100/50">
+                    <span className="flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Reward Coin Discount
+                    </span>
+                    <span>-₹{finalCoinDiscount}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between font-light">
                   <span>Shipping Cost</span>
                   <span className="font-semibold text-[var(--color-dark-text)]">
                     {shippingCost === 0 ? <span className="text-emerald-700 font-semibold uppercase">Free</span> : `₹${shippingCost}`}
                   </span>
                 </div>
-                
+
                 {/* <div className="flex justify-between font-light">
                   <span>GST Tax (18%)</span>
                   <span className="font-semibold text-[var(--color-dark-text)]">₹{taxCost}</span>
                 </div> */}
-                
+
                 <div className="flex justify-between items-center text-sm pt-4 border-t border-black/5 text-[var(--color-dark-text)] font-semibold font-serif">
                   <span className="text-xs uppercase font-sans font-bold tracking-wider text-[var(--color-dark-text)]/50">Order Total</span>
                   <span className="text-xl text-[var(--color-primary)] font-bold">₹{finalTotal}</span>
                 </div>
               </div>
-              
+
               {/* Order Placement Button */}
               <div className="pt-2">
                 <button
@@ -753,7 +891,7 @@ export function CheckoutPage() {
                   )}
                 </button>
               </div>
-              
+
               {/* Guaranteed badges */}
               <div className="bg-white/40 rounded-2xl p-4 border border-black/5 flex items-center justify-between text-[10px] text-[var(--color-dark-text)]/40 font-light">
                 <div className="flex items-center gap-1.5">
@@ -773,7 +911,7 @@ export function CheckoutPage() {
               </div>
             </motion.div>
           </div>
-          
+
         </div>
       </div>
 
@@ -794,14 +932,14 @@ export function CheckoutPage() {
               {/* Header */}
               <div className="flex justify-between items-center p-6 border-b border-black/5 bg-white/40">
                 <h3 className="font-serif text-xl md:text-2xl text-[var(--color-dark-text)]">Select Delivery Address</h3>
-                <button 
-                  onClick={() => setIsAddressModalOpen(false)} 
+                <button
+                  onClick={() => setIsAddressModalOpen(false)}
                   className="p-2 bg-black/5 hover:bg-black/10 rounded-full transition-colors cursor-pointer"
                 >
                   <X className="w-5 h-5 text-[var(--color-dark-text)]" />
                 </button>
               </div>
-              
+
               {/* Body */}
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
                 {addresses.length === 0 ? (
@@ -811,18 +949,16 @@ export function CheckoutPage() {
                   </div>
                 ) : (
                   addresses.map((addr) => (
-                    <label 
+                    <label
                       key={addr.id}
-                      className={`flex gap-4 p-5 rounded-3xl border cursor-pointer transition-all duration-300 ${
-                        selectedAddress?.id === addr.id 
+                      className={`flex gap-4 p-5 rounded-3xl border cursor-pointer transition-all duration-300 ${selectedAddress?.id === addr.id
                           ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5 shadow-sm"
                           : "border-black/10 bg-white/50 hover:border-black/20"
-                      }`}
+                        }`}
                     >
                       <div className="flex-shrink-0 mt-1">
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors bg-white ${
-                          selectedAddress?.id === addr.id ? "border-[var(--color-primary)]" : "border-black/20"
-                        }`}>
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors bg-white ${selectedAddress?.id === addr.id ? "border-[var(--color-primary)]" : "border-black/20"
+                          }`}>
                           {selectedAddress?.id === addr.id && <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]" />}
                         </div>
                       </div>
@@ -842,7 +978,7 @@ export function CheckoutPage() {
                           <br />
                           {addr.stateName}, {addr.countryName}
                         </p>
-                        
+
                         {selectedAddress?.id === addr.id && (
                           <div className="mt-3 flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[var(--color-primary)] font-bold bg-[var(--color-primary)]/10 w-fit px-2 py-1 rounded-md">
                             <Check className="w-3.5 h-3.5" />
@@ -850,11 +986,11 @@ export function CheckoutPage() {
                           </div>
                         )}
                       </div>
-                      
-                      <input 
-                        type="radio" 
-                        name="delivery_address" 
-                        className="sr-only" 
+
+                      <input
+                        type="radio"
+                        name="delivery_address"
+                        className="sr-only"
                         checked={selectedAddress?.id === addr.id}
                         onChange={() => {
                           setSelectedAddress(addr);
@@ -865,14 +1001,14 @@ export function CheckoutPage() {
                   ))
                 )}
               </div>
-              
+
               {/* Footer */}
               <div className="p-6 border-t border-black/5 bg-white/50 flex">
-                <button 
+                <button
                   onClick={() => {
                     setIsAddressModalOpen(false);
                     setIsAddAddressModalOpen(true);
-                  }} 
+                  }}
                   className="w-full py-4 rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white text-[10px] font-bold uppercase tracking-widest transition-colors shadow-md text-center cursor-pointer"
                 >
                   Add New Address
@@ -897,14 +1033,14 @@ export function CheckoutPage() {
             >
               <div className="flex justify-between items-center p-6 border-b border-black/5 bg-white/40">
                 <h3 className="font-serif text-xl md:text-2xl text-[var(--color-dark-text)]">Add New Address</h3>
-                <button 
-                  onClick={() => setIsAddAddressModalOpen(false)} 
+                <button
+                  onClick={() => setIsAddAddressModalOpen(false)}
                   className="p-2 bg-black/5 hover:bg-black/10 rounded-full transition-colors cursor-pointer"
                 >
                   <X className="w-5 h-5 text-[var(--color-dark-text)]" />
                 </button>
               </div>
-              
+
               <div className="flex-1 overflow-y-auto p-4 sm:p-6">
                 <form id="add-address-form" onSubmit={handleSaveAddress} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1020,14 +1156,14 @@ export function CheckoutPage() {
               </div>
 
               <div className="p-6 border-t border-black/5 bg-white/50 flex gap-3">
-                <button 
+                <button
                   type="button"
-                  onClick={() => setIsAddAddressModalOpen(false)} 
+                  onClick={() => setIsAddAddressModalOpen(false)}
                   className="flex-1 py-4 rounded-full border border-black/10 text-[var(--color-dark-text)] text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-colors text-center cursor-pointer shadow-sm"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   form="add-address-form"
                   type="submit"
                   disabled={isAddingAddress || newAddress.countryId === 0 || newAddress.stateId === 0}
