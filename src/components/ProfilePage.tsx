@@ -484,7 +484,7 @@ export const ProfilePage = () => {
       setIsSubmittingCancel(true);
       const payload = {
         id: cancelingOrder.Id,
-        status: "8",
+        status: "12",
         reason: cancelReason
       };
 
@@ -493,7 +493,7 @@ export const ProfilePage = () => {
       // unless there is a [FromBody] wrapper class defined.
       const queryParams = new URLSearchParams({
         id: cancelingOrder.Id.toString(),
-        status: "8",
+        status: "12",
         reason: cancelReason
       }).toString();
 
