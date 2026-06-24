@@ -356,90 +356,90 @@ export async function fetchHomepageSectionsFromApi(forceRefresh = false): Promis
   homeSectionsPromise = (async () => {
     try {
       const result: any = await post("/Home/GetHomeComponent", {});
-    const data = getCaseInsensitiveProperty(result, "data") || result;
+      const data = getCaseInsensitiveProperty(result, "data") || result;
 
-    const table2 = getCaseInsensitiveProperty<any[]>(data, "table2") || [];
-    const table3 = getCaseInsensitiveProperty<any[]>(data, "table3") || [];
+      const table2 = getCaseInsensitiveProperty<any[]>(data, "table2") || [];
+      const table3 = getCaseInsensitiveProperty<any[]>(data, "table3") || [];
 
-    if (!Array.isArray(table2) || !Array.isArray(table3)) return [];
+      if (!Array.isArray(table2) || !Array.isArray(table3)) return [];
 
-    const sections: HomeSection[] = [];
+      const sections: HomeSection[] = [];
 
-    // Sort table2 by DisplayOrder (if available) or by ID
-    const sortedSections = [...table2].sort((a, b) => {
-      const orderA = getCaseInsensitiveProperty<number>(a, "DisplayOrder") ?? 999;
-      const orderB = getCaseInsensitiveProperty<number>(b, "DisplayOrder") ?? 999;
-      return orderA - orderB;
-    });
-
-    for (const t2 of sortedSections) {
-      const primaryId = getCaseInsensitiveProperty<number>(t2, "Id") ?? 0;
-      const logicalComponentId = getCaseInsensitiveProperty<number>(t2, "ComponentId") ?? 0;
-      const title = getCaseInsensitiveProperty<string>(t2, "Title") ?? "";
-      const refType = getCaseInsensitiveProperty<string>(t2, "RefType") ?? "";
-      const displayOrder = getCaseInsensitiveProperty<number>(t2, "DisplayOrder") ?? 0;
-
-      const rawItems = table3.filter((t3: any) => {
-        const cid = getCaseInsensitiveProperty<number>(t3, "ComponentItemId");
-        return cid === primaryId; // Match table3.ComponentItemId with table2.Id
+      // Sort table2 by DisplayOrder (if available) or by ID
+      const sortedSections = [...table2].sort((a, b) => {
+        const orderA = getCaseInsensitiveProperty<number>(a, "DisplayOrder") ?? 999;
+        const orderB = getCaseInsensitiveProperty<number>(b, "DisplayOrder") ?? 999;
+        return orderA - orderB;
       });
 
-      let parsedItems: any[] = [];
+      for (const t2 of sortedSections) {
+        const primaryId = getCaseInsensitiveProperty<number>(t2, "Id") ?? 0;
+        const logicalComponentId = getCaseInsensitiveProperty<number>(t2, "ComponentId") ?? 0;
+        const title = getCaseInsensitiveProperty<string>(t2, "Title") ?? "";
+        const refType = getCaseInsensitiveProperty<string>(t2, "RefType") ?? "";
+        const displayOrder = getCaseInsensitiveProperty<number>(t2, "DisplayOrder") ?? 0;
 
-      if (refType.toLowerCase() === "category") {
-        parsedItems = rawItems.map((r: any) => {
-          const catId = getCaseInsensitiveProperty<number>(r, "CategoryId");
-          const catName = getCaseInsensitiveProperty<string>(r, "CategoryName");
-          const imgPath = getCaseInsensitiveProperty<string>(r, "ImagePath");
-
-          let resolvedCat = "soap";
-          if (catId === 15) resolvedCat = "soap";
-          else if (catId === 16) resolvedCat = "hair-oil";
-          else if (catId === 17) resolvedCat = "mukhwas";
-          else if (catId === 18) resolvedCat = "tea-masala";
-          else if (catId === 19) resolvedCat = "hridhay-special";
-
-          return {
-            id: resolvedCat,
-            categoryId: catId,
-            name: catName || resolvedCat,
-            image: resolveImageUrl(imgPath)
-          };
-        });
-      } else {
-        const grouped: Record<number, any[]> = {};
-        rawItems.forEach((r: any) => {
-          const pId = getCaseInsensitiveProperty<number>(r, "ProductId");
-          if (pId) {
-            if (!grouped[pId]) grouped[pId] = [];
-            grouped[pId].push(r);
-          }
+        const rawItems = table3.filter((t3: any) => {
+          const cid = getCaseInsensitiveProperty<number>(t3, "ComponentItemId");
+          return cid === primaryId; // Match table3.ComponentItemId with table2.Id
         });
 
-        parsedItems = Object.keys(grouped).map(pIdStr => {
-          return parseApiProductGroup(grouped[Number(pIdStr)]);
-        });
+        let parsedItems: any[] = [];
+
+        if (refType.toLowerCase() === "category") {
+          parsedItems = rawItems.map((r: any) => {
+            const catId = getCaseInsensitiveProperty<number>(r, "CategoryId");
+            const catName = getCaseInsensitiveProperty<string>(r, "CategoryName");
+            const imgPath = getCaseInsensitiveProperty<string>(r, "ImagePath");
+
+            let resolvedCat = "soap";
+            if (catId === 15) resolvedCat = "soap";
+            else if (catId === 16) resolvedCat = "hair-oil";
+            else if (catId === 17) resolvedCat = "mukhwas";
+            else if (catId === 18) resolvedCat = "tea-masala";
+            else if (catId === 19) resolvedCat = "hridhay-special";
+
+            return {
+              id: resolvedCat,
+              categoryId: catId,
+              name: catName || resolvedCat,
+              image: resolveImageUrl(imgPath)
+            };
+          });
+        } else {
+          const grouped: Record<number, any[]> = {};
+          rawItems.forEach((r: any) => {
+            const pId = getCaseInsensitiveProperty<number>(r, "ProductId");
+            if (pId) {
+              if (!grouped[pId]) grouped[pId] = [];
+              grouped[pId].push(r);
+            }
+          });
+
+          parsedItems = Object.keys(grouped).map(pIdStr => {
+            return parseApiProductGroup(grouped[Number(pIdStr)]);
+          });
+        }
+
+        if (parsedItems.length > 0) {
+          sections.push({
+            id: primaryId,
+            componentId: logicalComponentId,
+            title,
+            refType,
+            displayOrder,
+            items: parsedItems
+          });
+        }
       }
 
-      if (parsedItems.length > 0) {
-        sections.push({
-          id: primaryId,
-          componentId: logicalComponentId,
-          title,
-          refType,
-          displayOrder,
-          items: parsedItems
-        });
-      }
+      homeSectionsCache = sections;
+      return sections;
+    } catch (error) {
+      console.error("Failed to fetch homepage sections", error);
+      return [];
     }
-
-    homeSectionsCache = sections;
-    return sections;
-  } catch (error) {
-    console.error("Failed to fetch homepage sections", error);
-    return [];
-  }
   })();
-  
+
   return homeSectionsPromise;
 }

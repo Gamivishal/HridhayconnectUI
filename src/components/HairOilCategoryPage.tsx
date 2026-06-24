@@ -2,6 +2,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
 import { useRef, useEffect, useState } from "react";
 import { Award, Heart, Leaf, Star, Sparkle, Plus, ChevronDown, Check } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 import { products, syncProducts } from "../data/products";
 import { InnerPageBanner } from "./InnerPageBanner";
 import { fetchProductsFromApi } from "../api/productService";
@@ -35,10 +36,9 @@ function HairOilCard({
   oil,
   index,
   cartState,
-  wishlistState,
-  handleAddToCart,
-  toggleWishlist
+  handleAddToCart
 }: HairOilCardProps) {
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const productRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: productRef,
@@ -107,16 +107,18 @@ function HairOilCard({
         </div>
 
         {/* Wishlist Toggle Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleWishlist(oil.id);
-          }}
-          className="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/80 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-sm text-black hover:text-[var(--color-primary)] hover:scale-105 transition-all duration-300 z-10 cursor-pointer"
-          aria-label="Add to Wishlist"
-        >
-          <Heart className={`w-4 h-4 transition-all duration-300 ${wishlistState[oil.id] ? "fill-[var(--color-primary)] text-[var(--color-primary)] scale-110" : ""}`} />
-        </button>
+        {(!oil.variants || oil.variants.length <= 1) && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleWishlist(Number((oil as any).productId || oil.id), Number(oil.variants?.[0]?.varientId || (oil as any).variantId || 0));
+            }}
+            className="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/80 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-sm text-black hover:text-[var(--color-primary)] hover:scale-105 transition-all duration-300 z-10 cursor-pointer"
+            aria-label="Add to Wishlist"
+          >
+            <Heart className={`w-4 h-4 transition-all duration-300 ${isInWishlist(Number((oil as any).productId || oil.id)) ? "fill-[var(--color-primary)] text-[var(--color-primary)] scale-110" : ""}`} />
+          </button>
+        )}
 
         {/* Quick Add To Cart overlay */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out z-20">
@@ -337,9 +339,8 @@ export function HairOilCategoryPage() {
     }
   ];
 
-  // Cart/Wishlist Interactions (for micro-interaction feedback)
+  // Cart Interactions (for micro-interaction feedback)
   const [cartState, setCartState] = useState<Record<string, boolean>>({});
-  const [wishlistState, setWishlistState] = useState<Record<string, boolean>>({});
 
   const { addToCart } = useCart();
 
@@ -352,10 +353,6 @@ export function HairOilCategoryPage() {
     setTimeout(() => {
       setCartState(prev => ({ ...prev, [id]: false }));
     }, 2000);
-  };
-
-  const toggleWishlist = (id: string) => {
-    setWishlistState(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   return (
@@ -408,9 +405,7 @@ export function HairOilCategoryPage() {
                 oil={oil}
                 index={index}
                 cartState={cartState}
-                wishlistState={wishlistState}
                 handleAddToCart={handleAddToCart}
-                toggleWishlist={toggleWishlist}
               />
             ))}
           </div>

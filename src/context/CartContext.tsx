@@ -47,6 +47,17 @@ export function resolveCartItem(apiCartItem: any): CartItem | null {
     packingType = String(rawPackingType).trim();
   }
 
+  const variantAttributeValuesOnlyRaw = getCaseInsensitiveProperty<any>(apiCartItem, "VariantAttributeValues_Only");
+  let variantAttributeValuesOnly = typeof variantAttributeValuesOnlyRaw === "string" ? variantAttributeValuesOnlyRaw.trim() : "";
+
+  const variantAttributeValuesIdRaw = getCaseInsensitiveProperty<any>(apiCartItem, "VariantAttributeValues_Id");
+  const variantAttributeValuesId = typeof variantAttributeValuesIdRaw === "string" ? variantAttributeValuesIdRaw.trim() : "";
+
+  // If the attribute ID is 13 (Weight), hide the "Weight :" prefix
+  if (variantAttributeValuesId.startsWith("13:") || variantAttributeValuesId === "13") {
+    variantAttributeValuesOnly = variantAttributeValuesOnly.replace(/Weight\s*:\s*/i, "").trim();
+  }
+
   const imagePathRaw = getCaseInsensitiveProperty<string>(apiCartItem, "ImagePath") || getCaseInsensitiveProperty<string>(apiCartItem, "imagepath") || "";
   const resolvedImg = imagePathRaw ? resolveImageUrl(imagePathRaw) : null;
 
@@ -82,10 +93,11 @@ export function resolveCartItem(apiCartItem: any): CartItem | null {
       const variant = finalProduct.variants.find(v => Number(v.varientId) === parsedVariantId);
       if (variant) {
         console.log(`[resolveCartItem] Resolving variant attributes for variant ID ${parsedVariantId}:`, variant.variantAttributeValues_Only);
+        const attrVal = variantAttributeValuesOnly || variant.variantAttributeValues_Only || "";
         finalProduct = {
           ...finalProduct,
-          price: variant.price,
-          name: `${finalProduct.name} (${variant.variantAttributeValues_Only})`
+          price: price || variant.price,
+          name: attrVal ? `${finalProduct.name} (${attrVal})` : finalProduct.name
         };
         // Use variant image if no dynamic image was provided by the API cart item
         if (!resolvedImg && variant.imagePath) {
@@ -115,7 +127,7 @@ export function resolveCartItem(apiCartItem: any): CartItem | null {
     id: parsedVariantId 
       ? `${parsedProductId}-${parsedVariantId}${packingType ? `-${packingType.toLowerCase()}` : ""}` 
       : `${parsedProductId}${packingType ? `-${packingType.toLowerCase()}` : ""}`,
-    name: productName,
+    name: variantAttributeValuesOnly ? `${productName} (${variantAttributeValuesOnly})` : productName,
     price: price,
     originalPrice: Math.round(price * 1.8),
     discount: "45% OFF",

@@ -1,7 +1,8 @@
-import { ChevronDown, Sparkles, ArrowRight, ShoppingBag, User, LogOut, MapPin, Gift, Bell, X, Check } from "lucide-react";
+import { ChevronDown, Sparkles, ArrowRight, ShoppingBag, User, LogOut, MapPin, Gift, Bell, X, Check, Heart } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 import { StarButton } from "./ui/StarButton";
 import { useSignUp } from "../context/SignUpContext";
 import { get, post } from "../api/BaseService";
@@ -19,6 +20,7 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const { cartCount, setIsCartOpen, clearCart } = useCart();
+  const { wishlistItems } = useWishlist();
   const { openSignUp } = useSignUp();
 
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
@@ -150,8 +152,8 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
     <>
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
-            ? 'bg-white/75 backdrop-blur-2xl border-b border-[#5B2A86]/8 shadow-[0_4px_24px_rgba(91,42,134,0.07)]'
-            : 'bg-transparent'
+          ? 'bg-white/75 backdrop-blur-2xl border-b border-[#5B2A86]/8 shadow-[0_4px_24px_rgba(91,42,134,0.07)]'
+          : 'bg-transparent'
           }`}
       >
         {/* Subtle gradient glow at top */}
@@ -208,8 +210,8 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
             >
               <button
                 className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${isOpen || ['soap', 'hair-oil', 'mukhwas', 'tea-masala', 'hridhay-special'].includes(currentPage)
-                    ? 'text-[#5B2A86] font-bold'
-                    : 'text-[#1B1720] hover:text-[#7A49A5]'
+                  ? 'text-[#5B2A86] font-bold'
+                  : 'text-[#1B1720] hover:text-[#7A49A5]'
                   }`}
               >
                 <span>Shop By Category</span>
@@ -291,6 +293,39 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
           {/* ── RIGHT: Actions ── */}
           <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
 
+            {/* Wishlist Button */}
+            <motion.a
+              href="#wishlist"
+              onClick={(e) => {
+                if (!isLoggedIn) {
+                  e.preventDefault();
+                  openSignUp('signin');
+                } else {
+                  setIsOpen(false);
+                }
+              }}
+              className="relative flex items-center justify-center w-10 h-10 rounded-full text-[#1B1720] cursor-pointer z-10 transition-colors hover:bg-[#5B2A86]/6"
+              aria-label="Wishlist"
+              whileTap={{ scale: 0.92 }}
+              transition={{ duration: 0.15 }}
+            >
+              <Heart className="w-[19px] h-[19px] stroke-[1.6]" />
+              <AnimatePresence>
+                {wishlistItems.length > 0 && (
+                  <motion.span
+                    key={wishlistItems.length}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                    className="absolute top-[7px] right-[7px] min-w-[15px] h-[15px] bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center px-[3px] leading-none shadow-[0_2px_8px_rgba(239,68,68,0.45)]"
+                  >
+                    {wishlistItems.length > 9 ? '9+' : wishlistItems.length}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.a>
+
             {/* Cart Button */}
             <motion.button
               onClick={() => setIsCartOpen(true)}
@@ -362,7 +397,7 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                             </button>
                           )}
                         </div>
-                        
+
                         <div className="overflow-y-auto flex-1 p-2 custom-scrollbar">
                           {notifications.length === 0 ? (
                             <div className="px-6 py-10 flex flex-col items-center justify-center text-center">
@@ -375,8 +410,8 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                           ) : (
                             <div className="space-y-1">
                               {notifications.map((notif: any) => (
-                                <div 
-                                  key={notif.Id} 
+                                <div
+                                  key={notif.Id}
                                   className={`relative p-4 rounded-xl transition-all duration-200 cursor-pointer border border-transparent ${notif.IsRead ? 'hover:bg-neutral-50' : 'bg-[#5B2A86]/[0.03] hover:bg-[#5B2A86]/[0.06] border-[#5B2A86]/10'} flex flex-col gap-2 group`}
                                   onClick={() => !notif.IsRead && handleReadNotification(notif.Id)}
                                 >
@@ -389,9 +424,9 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                                       </p>
                                     </div>
                                   </div>
-                                  <button 
-                                    onClick={(e) => handleDeleteNotification(notif.Id, e)} 
-                                    className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-1.5 bg-white shadow-sm border border-neutral-100 text-neutral-400 hover:text-red-500 hover:border-red-100 rounded-lg transition-all z-10" 
+                                  <button
+                                    onClick={(e) => handleDeleteNotification(notif.Id, e)}
+                                    className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-1.5 bg-white shadow-sm border border-neutral-100 text-neutral-400 hover:text-red-500 hover:border-red-100 rounded-lg transition-all z-10"
                                     title="Delete"
                                   >
                                     <X className="w-3.5 h-3.5" />
@@ -403,8 +438,8 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                         </div>
 
                         <div className="p-2 border-t border-[#5B2A86]/10 bg-neutral-50/50">
-                          <button 
-                            onClick={() => { setIsNotificationOpen(false); window.location.hash = 'notifications'; window.dispatchEvent(new HashChangeEvent('hashchange')); }} 
+                          <button
+                            onClick={() => { setIsNotificationOpen(false); window.location.hash = 'notifications'; window.dispatchEvent(new HashChangeEvent('hashchange')); }}
                             className="w-full py-2.5 text-xs text-center text-[#5B2A86] font-bold uppercase tracking-wider hover:bg-[#5B2A86]/5 rounded-xl transition-colors"
                           >
                             View all notifications
@@ -420,58 +455,58 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                   onMouseEnter={() => { setIsProfileOpen(true); setIsNotificationOpen(false); }}
                   onMouseLeave={() => setIsProfileOpen(false)}
                 >
-                <motion.button
-                  className="relative flex items-center justify-center w-10 h-10 rounded-full text-[#1B1720] cursor-pointer z-10 transition-colors hover:bg-[#5B2A86]/6"
-                  aria-label="User Profile"
-                  whileTap={{ scale: 0.92 }}
-                >
-                  <User className="w-[19px] h-[19px] stroke-[1.6]" />
-                </motion.button>
+                  <motion.button
+                    className="relative flex items-center justify-center w-10 h-10 rounded-full text-[#1B1720] cursor-pointer z-10 transition-colors hover:bg-[#5B2A86]/6"
+                    aria-label="User Profile"
+                    whileTap={{ scale: 0.92 }}
+                  >
+                    <User className="w-[19px] h-[19px] stroke-[1.6]" />
+                  </motion.button>
 
-                <AnimatePresence>
-                  {isProfileOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 12, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.98 }}
-                      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                      className="absolute right-0 top-full mt-2 w-48 bg-white/95 backdrop-blur-xl border border-white/50 rounded-2xl shadow-[0_20px_50px_rgba(91,42,134,0.12)] overflow-hidden z-50 py-2"
-                    >
-                      <div className="px-4 py-3 border-b border-[#5B2A86]/10 mb-2">
-                        <p className="text-[10px] uppercase tracking-widest font-semibold text-[#5B2A86]">My Account</p>
-                      </div>
-
-                      {/* Placeholders for future pages */}
-                      <button onClick={() => { setIsProfileOpen(false); window.location.hash = 'profile'; window.dispatchEvent(new HashChangeEvent('hashchange')); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
-                        <User className="w-3.5 h-3.5" />
-                        <span>Profile Details</span>
-                      </button>
-                      <button onClick={() => { setIsProfileOpen(false); window.location.hash = 'orders'; window.dispatchEvent(new HashChangeEvent('hashchange')); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
-                        <ShoppingBag className="w-3.5 h-3.5" />
-                        <span>Order History</span>
-                      </button>
-                      <button onClick={() => { setIsProfileOpen(false); window.location.hash = 'addresses'; window.dispatchEvent(new HashChangeEvent('hashchange')); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
-                        <MapPin className="w-3.5 h-3.5" />
-                        <span>Addresses</span>
-                      </button>
-                      <button onClick={() => { setIsProfileOpen(false); window.location.hash = 'rewards'; window.dispatchEvent(new HashChangeEvent('hashchange')); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
-                        <Gift className="w-3.5 h-3.5" />
-                        <span>Rewards</span>
-                      </button>
-
-                      <div className="h-[1px] w-full bg-[#5B2A86]/10 my-2"></div>
-
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 transition-colors text-left font-medium"
+                  <AnimatePresence>
+                    {isProfileOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                        className="absolute right-0 top-full mt-2 w-48 bg-white/95 backdrop-blur-xl border border-white/50 rounded-2xl shadow-[0_20px_50px_rgba(91,42,134,0.12)] overflow-hidden z-50 py-2"
                       >
-                        <LogOut className="w-3.5 h-3.5" />
-                        <span>Sign Out</span>
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                        <div className="px-4 py-3 border-b border-[#5B2A86]/10 mb-2">
+                          <p className="text-[10px] uppercase tracking-widest font-semibold text-[#5B2A86]">My Account</p>
+                        </div>
+
+                        {/* Placeholders for future pages */}
+                        <button onClick={() => { setIsProfileOpen(false); window.location.hash = 'profile'; window.dispatchEvent(new HashChangeEvent('hashchange')); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
+                          <User className="w-3.5 h-3.5" />
+                          <span>Profile Details</span>
+                        </button>
+                        <button onClick={() => { setIsProfileOpen(false); window.location.hash = 'orders'; window.dispatchEvent(new HashChangeEvent('hashchange')); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>Order History</span>
+                        </button>
+                        <button onClick={() => { setIsProfileOpen(false); window.location.hash = 'addresses'; window.dispatchEvent(new HashChangeEvent('hashchange')); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
+                          <MapPin className="w-3.5 h-3.5" />
+                          <span>Addresses</span>
+                        </button>
+                        <button onClick={() => { setIsProfileOpen(false); window.location.hash = 'rewards'; window.dispatchEvent(new HashChangeEvent('hashchange')); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
+                          <Gift className="w-3.5 h-3.5" />
+                          <span>Rewards</span>
+                        </button>
+
+                        <div className="h-[1px] w-full bg-[#5B2A86]/10 my-2"></div>
+
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 transition-colors text-left font-medium"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          <span>Sign Out</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             ) : (
               <StarButton
@@ -613,8 +648,8 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                   >
                     <span
                       className={`font-serif text-base tracking-wide ${currentPage === link.page
-                          ? "text-[#5B2A86] font-semibold"
-                          : "text-[#1B1720] font-medium"
+                        ? "text-[#5B2A86] font-semibold"
+                        : "text-[#1B1720] font-medium"
                         }`}
                     >
                       {link.label}

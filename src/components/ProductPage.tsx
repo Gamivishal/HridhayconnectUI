@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { products, Product, syncProducts } from "../data/products";
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 import { fetchProductsFromApi } from "../api/productService";
 
 interface ProductPageProps {
@@ -32,7 +33,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'desc' | 'ingredients' | 'benefits' | 'faq'>('desc');
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const [cartAdded, setCartAdded] = useState(false);
   const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -347,6 +348,20 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
               </div>
 
               <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const pId = Number((currentProduct as any).productId || currentProduct.id || 0);
+                  const vId = Number(selectedVariant?.varientId || currentProduct.variants?.[0]?.varientId || (currentProduct as any).variantId || 0);
+                  const packingType = currentProduct.category === "mukhwas" ? packaging : undefined;
+                  toggleWishlist(pId, vId, packingType);
+                }}
+                className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/80 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-sm text-[var(--color-dark-text)] hover:text-[var(--color-primary)] hover:scale-105 transition-all duration-300 z-10 cursor-pointer"
+                aria-label="Add to Wishlist"
+              >
+                <Heart className={`w-5 h-5 transition-all duration-300 ${isInWishlist(Number((currentProduct as any).productId || currentProduct.id || 0), Number(selectedVariant?.varientId || currentProduct.variants?.[0]?.varientId || (currentProduct as any).variantId || 0), currentProduct.category === "mukhwas" ? packaging : undefined) ? "fill-[var(--color-primary)] text-[var(--color-primary)] scale-110" : ""}`} />
+              </button>
+
+              <button
                 onClick={() => setIsFullscreen(true)}
                 className="absolute bottom-5 right-5 w-10 h-10 rounded-full bg-white/80 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-sm text-black hover:text-[var(--color-primary)] hover:scale-105 transition-all duration-300 cursor-pointer"
                 aria-label="Enlarge Image"
@@ -477,8 +492,8 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                                   key={val}
                                   onClick={() => handleAttrSelect(key, val)}
                                   className={`px-5 py-2.5 text-xs font-semibold rounded-full border transition-all duration-300 cursor-pointer ${isSelected
-                                      ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-md shadow-[var(--color-primary)]/10"
-                                      : "bg-white/80 text-[var(--color-dark-text)]/80 border-black/10 hover:border-black/30 hover:bg-white"
+                                    ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-md shadow-[var(--color-primary)]/10"
+                                    : "bg-white/80 text-[var(--color-dark-text)]/80 border-black/10 hover:border-black/30 hover:bg-white"
                                     }`}
                                 >
                                   {val}
@@ -507,8 +522,8 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                           key={v.varientId}
                           onClick={() => handleVariantSelect(v)}
                           className={`px-5 py-2.5 text-xs font-semibold rounded-full border transition-all duration-300 cursor-pointer ${isSelected
-                              ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-md shadow-[var(--color-primary)]/10"
-                              : "bg-white/80 text-[var(--color-dark-text)]/80 border-black/10 hover:border-black/30 hover:bg-white"
+                            ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-md shadow-[var(--color-primary)]/10"
+                            : "bg-white/80 text-[var(--color-dark-text)]/80 border-black/10 hover:border-black/30 hover:bg-white"
                             }`}
                         >
                           {v.variantAttributeValues_Only || `Variant ${v.varientId}`}
@@ -533,8 +548,8 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                         key={type}
                         onClick={() => setPackaging(type)}
                         className={`px-5 py-2.5 text-xs font-semibold rounded-full border transition-all duration-300 cursor-pointer ${isSelected
-                            ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-md shadow-[var(--color-primary)]/10"
-                            : "bg-white/80 text-[var(--color-dark-text)]/80 border-black/10 hover:border-black/30 hover:bg-white"
+                          ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-md shadow-[var(--color-primary)]/10"
+                          : "bg-white/80 text-[var(--color-dark-text)]/80 border-black/10 hover:border-black/30 hover:bg-white"
                           }`}
                       >
                         {type}
@@ -628,19 +643,8 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                 </motion.button>
               </div>
 
-              {/* Wishlist & Share */}
-              <div className="flex items-center justify-between sm:justify-start gap-8 pt-6 border-t border-[var(--color-primary)]/10 mt-6">
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setIsWishlisted(prev => !prev)}
-                  className="flex items-center gap-3 py-2 px-1 text-xs uppercase tracking-wider text-[var(--color-dark-text)]/70 hover:text-[var(--color-primary)] transition-colors cursor-pointer"
-                >
-                  <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-[var(--color-primary)] text-[var(--color-primary)] scale-110' : ''} transition-all`} />
-                  <span className="font-medium font-general">{isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}</span>
-                </motion.button>
-
-                <div className="hidden sm:block text-[var(--color-primary)]/20 text-lg">•</div>
-
+              {/* Share */}
+              <div className="flex items-center justify-start gap-8 pt-6 border-t border-[var(--color-primary)]/10 mt-6">
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={handleShare}

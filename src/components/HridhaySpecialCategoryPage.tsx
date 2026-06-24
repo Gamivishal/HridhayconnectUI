@@ -3,6 +3,7 @@ import { useRef, useEffect, useState } from "react";
 import { Award, Heart, Leaf, Star, Sparkle, Plus, ChevronDown, Check } from "lucide-react";
 import { products, syncProducts } from "../data/products";
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 import { InnerPageBanner } from "./InnerPageBanner";
 import { fetchProductsFromApi } from "../api/productService";
 
@@ -24,19 +25,16 @@ interface HridhaySpecialCardProps {
   };
   index: number;
   cartState: Record<string, boolean>;
-  wishlistState: Record<string, boolean>;
   handleAddToCart: (id: string) => void;
-  toggleWishlist: (id: string) => void;
 }
 
 function HridhaySpecialCard({
   product,
   index,
   cartState,
-  wishlistState,
-  handleAddToCart,
-  toggleWishlist
+  handleAddToCart
 }: HridhaySpecialCardProps) {
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const productRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: productRef,
@@ -80,14 +78,6 @@ function HridhaySpecialCard({
 
         {/* Floating Badges */}
         <div className="absolute top-5 left-5 flex flex-col gap-2 items-start">
-          {/*
-          // NOTE: To re-add the product tag (e.g. "Deep Purifying" or "Bestseller") in the future, uncomment this block:
-          {product.tag && (
-            <div className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-semibold tracking-widest uppercase text-[var(--color-primary)] border border-[var(--color-primary)]/5 z-10 shadow-sm">
-              {product.tag}
-            </div>
-          )}
-          */}
           {(() => {
             const sp = product.sellPrice ?? product.price;
             const op = product.originalPrice ?? product.price;
@@ -105,16 +95,18 @@ function HridhaySpecialCard({
         </div>
 
         {/* Wishlist Toggle Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleWishlist(product.id);
-          }}
-          className="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/80 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-sm text-black hover:text-[var(--color-primary)] hover:scale-105 transition-all duration-300 z-10 cursor-pointer"
-          aria-label="Add to Wishlist"
-        >
-          <Heart className={`w-4 h-4 transition-all duration-300 ${wishlistState[product.id] ? "fill-[var(--color-primary)] text-[var(--color-primary)] scale-110" : ""}`} />
-        </button>
+        {(!product.variants || product.variants.length <= 1) && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleWishlist(Number((product as any).productId || product.id), Number(product.variants?.[0]?.varientId || (product as any).variantId || 0));
+            }}
+            className="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/80 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-sm text-[var(--color-dark-text)] hover:text-[var(--color-primary)] hover:scale-105 transition-all duration-300 z-10 cursor-pointer"
+            aria-label="Add to Wishlist"
+          >
+            <Heart className={`w-4 h-4 transition-all duration-300 ${isInWishlist(Number((product as any).productId || product.id)) ? "fill-[var(--color-primary)] text-[var(--color-primary)] scale-110" : ""}`} />
+          </button>
+        )}
 
         {/* Quick Add To Cart overlay */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out z-20">
@@ -286,9 +278,8 @@ function HridhaySpecialCard({
     }
   ];
 
-  // Cart/Wishlist Interactions (for micro-interaction feedback)
+  // Cart Interactions (for micro-interaction feedback)
   const [cartState, setCartState] = useState<Record<string, boolean>>({});
-  const [wishlistState, setWishlistState] = useState<Record<string, boolean>>({});
 
   const { addToCart } = useCart();
 
@@ -301,10 +292,6 @@ function HridhaySpecialCard({
     setTimeout(() => {
       setCartState(prev => ({ ...prev, [id]: false }));
     }, 2000);
-  };
-
-  const toggleWishlist = (id: string) => {
-    setWishlistState(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   return (
@@ -357,9 +344,7 @@ function HridhaySpecialCard({
                 product={product}
                 index={index}
                 cartState={cartState}
-                wishlistState={wishlistState}
                 handleAddToCart={handleAddToCart}
-                toggleWishlist={toggleWishlist}
               />
             ))}
           </div>

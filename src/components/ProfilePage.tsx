@@ -732,43 +732,38 @@ export const ProfilePage = () => {
                         {/* Decorative glow */}
                         <div className="absolute -top-24 -right-24 w-64 h-64 bg-white rounded-full mix-blend-overlay filter blur-[80px] opacity-20 pointer-events-none"></div>
 
-                        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-8">
-                          <div className="flex items-center gap-6">
-                            <div className="relative">
-                              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white text-3xl font-serif shadow-inner border border-white/20">
-                                {profileData.FirstName ? profileData.FirstName[0].toUpperCase() : <User className="w-10 h-10" />}
-                              </div>
-                              <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full p-1.5 shadow-lg border-2 border-neutral-900">
-                                <Award className="w-4 h-4 text-white" />
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col">
-                              <p className="text-white/60 text-sm font-satoshi uppercase tracking-widest font-semibold mb-1">Welcome Back</p>
-                              <h2 className="text-3xl sm:text-4xl font-serif text-white mb-2 tracking-tight">
-                                {getPrefix(profileData.Gender)}
-                                {profileData.FirstName} {profileData.LastName}
-                              </h2>
-                              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md border border-white/10 rounded-full w-fit">
-                                <Sparkles className="w-3 h-3 text-amber-400" />
-                                <span className="text-white/90 text-[10px] font-bold tracking-wider uppercase">
-                                  Premium Member
-                                </span>
-                              </div>
+                        <div className="relative z-10 flex flex-col sm:flex-row gap-8 sm:items-center">
+                          <div className="relative shrink-0">
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white text-3xl font-serif shadow-inner border border-white/20">
+                              {profileData.FirstName ? profileData.FirstName[0].toUpperCase() : <User className="w-10 h-10" />}
                             </div>
                           </div>
 
-                          {/* Quick Stats */}
-                          <div className="flex gap-6 sm:gap-10 border-t sm:border-t-0 sm:border-l border-white/10 pt-6 sm:pt-0 sm:pl-10">
-                            <div className="flex flex-col gap-1">
-                              <span className="text-white/50 text-[10px] uppercase tracking-widest font-bold">Total Orders</span>
-                              <span className="text-3xl font-serif text-white">{orders.length}</span>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <span className="text-white/50 text-[10px] uppercase tracking-widest font-bold">Reward Coins</span>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-3xl font-serif text-amber-400">{profileData?.RewardCoins || 0}</span>
-                                <span className="text-amber-400/60 text-xs font-bold uppercase mt-1">Pts</span>
+                          <div className="flex flex-col justify-center min-w-0 w-full">
+                            <p className="text-white/60 text-sm font-satoshi uppercase tracking-widest font-semibold mb-2">Welcome Back</p>
+                            
+                            <h2 className="text-[32px] md:text-[36px] font-serif text-white mb-5 tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                              {getPrefix(profileData.Gender)}{profileData.FirstName} {profileData.LastName}
+                            </h2>
+                            
+                            {/* Quick Stats - Below Name */}
+                            <div className="flex flex-col sm:flex-row gap-4">
+                              {/* Total Orders Badge */}
+                              <div className="flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 w-max max-w-full overflow-hidden shadow-sm">
+                                <span className="text-lg shrink-0">📦</span>
+                                <span className="text-white/90 text-sm font-medium whitespace-nowrap shrink-0">Total Orders:</span>
+                                <span className="text-white font-bold text-base truncate ml-1">{orders.length}</span>
+                              </div>
+                              
+                              {/* Reward Coins Badge */}
+                              <div className="flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 relative overflow-hidden w-max max-w-full shadow-sm">
+                                {/* Subtle Glow */}
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                  <div className="w-20 h-20 bg-[#FFD54F]/20 blur-xl rounded-full"></div>
+                                </div>
+                                <span className="text-lg shrink-0 relative z-10">🪙</span>
+                                <span className="text-white/90 text-sm font-medium whitespace-nowrap shrink-0 relative z-10">Reward Coins:</span>
+                                <span className="text-[#FFD54F] font-bold text-base relative z-10 truncate ml-1">{profileData?.RewardCoins || 0}</span>
                               </div>
                             </div>
                           </div>

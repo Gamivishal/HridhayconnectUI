@@ -37,13 +37,14 @@ const ProductPage = lazy(() => import("./components/ProductPage").then(m => ({ d
 const CartPage = lazy(() => import("./components/CartPage").then(m => ({ default: m.CartPage })));
 const CheckoutPage = lazy(() => import("./components/CheckoutPage").then(m => ({ default: m.CheckoutPage })));
 const ProfilePage = lazy(() => import("./components/ProfilePage").then(m => ({ default: m.ProfilePage })));
+const WishlistPage = lazy(() => import("./components/WishlistPage").then(m => ({ default: m.WishlistPage })));
 import { useSignUp } from "./context/SignUpContext";
 import { products } from "./data/products";
 import { FloatingWhatsApp } from "./components/FloatingWhatsApp";
 import { GlobalToastProvider } from "./components/GlobalToastProvider";
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'about' | 'soap' | 'hair-oil' | 'mukhwas' | 'tea-masala' | 'hridhay-special' | 'product' | 'cart' | 'checkout' | 'profile'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'about' | 'soap' | 'hair-oil' | 'mukhwas' | 'tea-masala' | 'hridhay-special' | 'product' | 'cart' | 'checkout' | 'profile' | 'wishlist'>('home');
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [showLoader, setShowLoader] = useState(true);
   const { isSignUpOpen, closeSignUp } = useSignUp();
@@ -105,6 +106,11 @@ export default function App() {
           if (prev !== 'profile') window.scrollTo({ top: 0, behavior: "smooth" });
           return 'profile';
         });
+      } else if (hash.startsWith("#wishlist") || hash.startsWith("#/wishlist")) {
+        setCurrentPage(prev => {
+          if (prev !== 'wishlist') window.scrollTo({ top: 0, behavior: "smooth" });
+          return 'wishlist';
+        });
       } else if (hash === "#home" || hash === "#") {
         setCurrentPage(prev => {
           if (prev !== 'home') window.scrollTo({ top: 0, behavior: "smooth" });
@@ -156,6 +162,11 @@ export default function App() {
           setCurrentPage(prev => {
             if (prev !== 'profile') window.scrollTo({ top: 0, behavior: "smooth" });
             return 'profile';
+          });
+        } else if (path === "/wishlist") {
+          setCurrentPage(prev => {
+            if (prev !== 'wishlist') window.scrollTo({ top: 0, behavior: "smooth" });
+            return 'wishlist';
           });
         } else if (path.startsWith("/product/")) {
           const prodId = path.replace("/product/", "");
@@ -250,6 +261,8 @@ export default function App() {
           <CheckoutPage />
         ) : currentPage === 'profile' ? (
           <ProfilePage />
+        ) : currentPage === 'wishlist' ? (
+          <WishlistPage />
         ) : null}
 
         <Footer />

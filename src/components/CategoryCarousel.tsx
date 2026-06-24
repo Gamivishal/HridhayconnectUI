@@ -4,6 +4,7 @@ import { ShoppingBag, Loader2, Heart, ChevronLeft, ChevronRight } from "lucide-r
 import { fetchProductsFromApi } from "../api/productService";
 import { Product } from "../data/products";
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 
 const categories = [
   { id: 'all', label: 'All' },
@@ -19,7 +20,7 @@ export function CategoryCarousel() {
   const [activeTab, setActiveTab] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
   const { addToCart } = useCart();
-  const [wishlist, setWishlist] = useState<string[]>([]);
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const [itemsPerView, setItemsPerView] = useState(4);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -102,13 +103,6 @@ export function CategoryCarousel() {
   const extendedProducts = N > 0 
     ? [...filteredProducts, ...filteredProducts, ...filteredProducts, ...filteredProducts, ...filteredProducts]
     : [];
-
-  const toggleWishlist = (id: string) => {
-    setWishlist(prev =>
-      prev.includes(id) ? prev.filter(wId => wId !== id) : [...prev, id]
-    );
-  };
-  const isInWishlist = (id: string) => wishlist.includes(id);
 
   return (
     <section className="py-16 md:py-24 px-4 sm:px-6 md:px-12 max-w-[1600px] mx-auto bg-[var(--color-cream)] relative z-10">
@@ -212,21 +206,24 @@ export function CategoryCarousel() {
                       })()}
                     </div>
 
-                    {/* Wishlist Toggle Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleWishlist(String(product.id));
-                      }}
-                      className="absolute top-4 right-4 z-20 p-2 rounded-full bg-white/80 backdrop-blur-md shadow-sm hover:bg-white hover:scale-110 transition-all duration-300 group/wishlist"
-                    >
-                      <Heart
-                        className={`w-4 h-4 transition-colors duration-300 ${isInWishlist(String(product.id))
-                            ? 'fill-[var(--color-primary)] text-[var(--color-primary)]'
-                            : 'text-[var(--color-dark-text)]/60 group-hover/wishlist:text-[var(--color-primary)]'
-                          }`}
-                      />
-                    </button>
+                      {/* Wishlist Toggle Button */}
+                      {(!product.variants || product.variants.length <= 1) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleWishlist(Number(product.productId || 0), Number(product.variants?.[0]?.varientId || product.variantId || 0));
+                          }}
+                          aria-label={isInWishlist(Number(product.productId || 0)) ? "Remove from wishlist" : "Add to wishlist"}
+                          className="absolute top-4 right-4 z-[60] p-2 rounded-full bg-white/80 backdrop-blur-md shadow-sm hover:bg-white hover:scale-110 transition-all duration-300 group/wishlist"
+                        >
+                          <Heart
+                            className={`w-4 h-4 transition-colors duration-300 ${isInWishlist(Number(product.productId || 0))
+                              ? 'fill-[var(--color-primary)] text-[var(--color-primary)]'
+                              : 'text-[var(--color-dark-text)]/60 group-hover/wishlist:text-[var(--color-primary)]'
+                              }`}
+                          />
+                        </button>
+                      )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

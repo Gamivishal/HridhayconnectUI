@@ -2,6 +2,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
 import { useRef, useEffect, useState } from "react";
 import { Award, Heart, Leaf, Star, Sparkle, Plus, ChevronDown, Check } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 import { products, syncProducts } from "../data/products";
 import { InnerPageBanner } from "./InnerPageBanner";
 import { fetchProductsFromApi, normalizeSlug } from "../api/productService";
@@ -32,13 +33,12 @@ interface MukhwasCardProps {
 }
 
 function MukhwasCard({
-  mukhwas,
+  item,
   index,
   cartState,
-  wishlistState,
-  handleAddToCart,
-  toggleWishlist
+  handleAddToCart
 }: MukhwasCardProps) {
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const [packaging, setPackaging] = useState("Pouch");
   const productRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -48,14 +48,14 @@ function MukhwasCard({
   const y = useTransform(scrollYProgress, [0, 1], [40, -40]);
 
   const renderPrice = () => {
-    if (mukhwas.variants && mukhwas.variants.length > 1) {
-      const prices = mukhwas.variants.map(v => v.sellPrice ?? v.price);
+    if (item.variants && item.variants.length > 1) {
+      const prices = item.variants.map(v => v.sellPrice ?? v.price);
       const minPrice = Math.min(...prices);
       const maxPrice = Math.max(...prices);
       if (minPrice === maxPrice) return `₹${minPrice}`;
       return `₹${minPrice} - ₹${maxPrice}`;
     }
-    return `₹${mukhwas.sellPrice ?? mukhwas.price}`;
+    return `₹${item.sellPrice ?? item.price}`;
   };
 
   return (
@@ -67,7 +67,7 @@ function MukhwasCard({
       transition={{ duration: 1.2, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
       className="group cursor-pointer relative"
       onClick={() => {
-        window.location.hash = `#product-${mukhwas.id}`;
+        window.location.hash = `#product-${item.id}`;
       }}
     >
       <motion.div
@@ -75,8 +75,8 @@ function MukhwasCard({
         className="w-full aspect-[4/5] bg-[var(--color-beige)]/40 rounded-[2.5rem] overflow-hidden mb-6 relative shadow-md shadow-[var(--color-dark-text)]/5 border border-white/50 group-hover:shadow-xl group-hover:shadow-[var(--color-primary)]/10 transition-shadow duration-[1.2s]"
       >
         <img
-          src={mukhwas.img}
-          alt={mukhwas.name}
+          src={item.img}
+          alt={item.name}
           className="w-full h-full object-contain object-center group-hover:scale-[1.04] transition-transform duration-[2.2s] ease-out brightness-95 group-hover:brightness-[1.02]"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-dark-text)]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
@@ -85,16 +85,16 @@ function MukhwasCard({
         <div className="absolute top-5 left-5 flex flex-col gap-2 items-start">
           {/*
           // NOTE: To re-add the product tag (e.g. "Deep Purifying" or "Bestseller") in the future, uncomment this block:
-          {mukhwas.tag && (
+          {item.tag && (
             <div className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-semibold tracking-widest uppercase text-[var(--color-primary)] border border-[var(--color-primary)]/5 z-10 shadow-sm">
-              {mukhwas.tag}
+              {item.tag}
             </div>
           )}
           */}
           {(() => {
-            const sp = mukhwas.sellPrice ?? mukhwas.price;
-            const op = mukhwas.originalPrice ?? mukhwas.price;
-            const dp = mukhwas.discountPercent ?? 0;
+            const sp = item.sellPrice ?? item.price;
+            const op = item.originalPrice ?? item.price;
+            const dp = item.discountPercent ?? 0;
             if (sp === op) return null;
             if (dp > 0) {
               return (
@@ -108,27 +108,29 @@ function MukhwasCard({
         </div>
 
         {/* Wishlist Toggle Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleWishlist(mukhwas.id);
-          }}
-          className="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/80 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-sm text-black hover:text-[var(--color-primary)] hover:scale-105 transition-all duration-300 z-10 cursor-pointer"
-          aria-label="Add to Wishlist"
-        >
-          <Heart className={`w-4 h-4 transition-all duration-300 ${wishlistState[mukhwas.id] ? "fill-[var(--color-primary)] text-[var(--color-primary)] scale-110" : ""}`} />
-        </button>
+        {(!item.variants || item.variants.length <= 1) && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleWishlist(Number((item as any).productId || item.id), Number(item.variants?.[0]?.varientId || (item as any).variantId || 0), packaging);
+            }}
+            className="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/80 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-sm text-[var(--color-dark-text)] hover:text-[var(--color-primary)] hover:scale-105 transition-all duration-300 z-10 cursor-pointer"
+            aria-label="Add to Wishlist"
+          >
+            <Heart className={`w-4 h-4 transition-all duration-300 ${isInWishlist(Number((item as any).productId || item.id), Number(item.variants?.[0]?.varientId || (item as any).variantId || 0), packaging) ? "fill-[var(--color-primary)] text-[var(--color-primary)] scale-110" : ""}`} />
+          </button>
+        )}
 
         {/* Quick Add To Cart overlay */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out z-20">
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleAddToCart(mukhwas.id, packaging);
+              handleAddToCart(item.id, packaging);
             }}
             className="bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] backdrop-blur-md text-white px-8 py-3.5 rounded-full text-[10px] font-semibold uppercase tracking-wider transition-colors duration-300 flex items-center gap-2 shadow-lg cursor-pointer"
           >
-            {cartState[mukhwas.id] ? (
+            {cartState[item.id] ? (
               <>
                 <Check className="w-3.5 h-3.5 animate-bounce" />
                 <span>Added to Ritual</span>
@@ -147,13 +149,13 @@ function MukhwasCard({
       <div className="flex flex-col pt-3 border-t border-[var(--color-dark-text)]/10">
         <div className="flex justify-between items-start mb-2">
           <h3 className="text-xl md:text-2xl font-serif text-[var(--color-dark-text)] group-hover:text-[var(--color-primary)] transition-colors duration-300">
-            {mukhwas.name}
+            {item.name}
           </h3>
           <div className="flex items-center gap-2 font-serif text-lg">
             <span className="text-[var(--color-primary)] font-semibold">{renderPrice()}</span>
             {(() => {
-              const sp = mukhwas.sellPrice ?? mukhwas.price;
-              const op = mukhwas.originalPrice ?? mukhwas.price;
+              const sp = item.sellPrice ?? item.price;
+              const op = item.originalPrice ?? item.price;
               if (sp !== op) {
                 return <span className="text-xs text-[var(--color-dark-text)]/40 line-through">₹{op}</span>;
               }
@@ -163,7 +165,7 @@ function MukhwasCard({
         </div>
 
         <p className="text-[11.5px] text-[var(--color-dark-text)]/60 font-light font-satoshi mb-3 leading-relaxed line-clamp-2">
-          {mukhwas.desc}
+          {item.desc}
         </p>
 
         {/* Packaging Dropdown Selection */}
@@ -183,15 +185,15 @@ function MukhwasCard({
         </div>
 
 
-        {mukhwas.totalAvailableStock !== undefined && mukhwas.totalAvailableStock < 10 && (
+        {item.totalAvailableStock !== undefined && item.totalAvailableStock < 10 && (
           <div className="text-[10px] font-semibold text-red-600 mb-2.5 uppercase tracking-wider">
-            Available only: {mukhwas.totalAvailableStock}
+            Available only: {item.totalAvailableStock}
           </div>
         )}
 
         {/* Subtle benefit items list */}
         <ul className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2">
-          {mukhwas.benefits.slice(0, 2).map((benefit, idx) => (
+          {item.benefits.slice(0, 2).map((benefit, idx) => (
             <li key={idx} className="flex items-center gap-1.5 text-[9.5px] text-[var(--color-dark-text)]/50 font-satoshi font-light">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]/20" />
               <span>{benefit}</span>
@@ -355,25 +357,20 @@ export function MukhwasCategoryPage() {
     }
   ];
 
-  // Cart/Wishlist Interactions (for micro-interaction feedback)
+  // Cart Interactions (for micro-interaction feedback)
   const [cartState, setCartState] = useState<Record<string, boolean>>({});
-  const [wishlistState, setWishlistState] = useState<Record<string, boolean>>({});
 
   const { addToCart } = useCart();
 
-  const handleAddToCart = (id: string, packingType?: string) => {
+  const handleAddToCart = (id: string) => {
     const product = products.find(p => p.id === id);
     if (product) {
-      addToCart(product, 1, packingType);
+      addToCart(product, 1);
     }
     setCartState(prev => ({ ...prev, [id]: true }));
     setTimeout(() => {
       setCartState(prev => ({ ...prev, [id]: false }));
     }, 2000);
-  };
-
-  const toggleWishlist = (id: string) => {
-    setWishlistState(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   return (
@@ -420,15 +417,13 @@ export function MukhwasCategoryPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-8">
-            {mukhwasList.map((mukhwas, index) => (
+            {mukhwasList.map((item, index) => (
               <MukhwasCard
-                key={mukhwas.id}
-                mukhwas={mukhwas}
+                key={item.id}
+                item={item}
                 index={index}
                 cartState={cartState}
-                wishlistState={wishlistState}
                 handleAddToCart={handleAddToCart}
-                toggleWishlist={toggleWishlist}
               />
             ))}
           </div>
