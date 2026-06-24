@@ -101,7 +101,7 @@ export default function App() {
           if (prev !== 'checkout') window.scrollTo({ top: 0, behavior: "smooth" });
           return 'checkout';
         });
-      } else if (hash.startsWith("#profile") || hash.startsWith("#/profile") || hash === "#orders" || hash === "#addresses" || hash === "#rewards" || hash === "#notifications") {
+      } else if (hash.startsWith("#profile") || hash.startsWith("#/profile") || hash === "#orders" || hash === "#addresses" || hash === "#rewards" || hash === "#notifications" || hash === "#password") {
         setCurrentPage(prev => {
           if (prev !== 'profile') window.scrollTo({ top: 0, behavior: "smooth" });
           return 'profile';

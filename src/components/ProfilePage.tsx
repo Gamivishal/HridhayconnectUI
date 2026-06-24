@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Mail, Phone, Shield, ArrowLeft, ShoppingBag, LogOut, Edit2, Save, X, MapPin, Gift, Ticket, Award, ChevronRight, Plus, Truck, CheckCircle2, Calendar, Sparkles, Copy, Users, Bell, Check, RefreshCw, Clock, CheckSquare, Trash2 } from "lucide-react";
+import { User, Mail, Phone, Shield, ArrowLeft, ShoppingBag, LogOut, Edit2, Save, X, MapPin, Gift, Ticket, Award, ChevronRight, Plus, Truck, CheckCircle2, Calendar, Sparkles, Copy, Users, Bell, Check, RefreshCw, Clock, CheckSquare, Trash2, Eye, EyeOff } from "lucide-react";
 import { get, post } from "../api/BaseService";
 import { getCaseInsensitiveProperty } from "../api/productService";
 import { showApiResponseToast, showToast } from "../utils/toastService";
@@ -108,15 +108,25 @@ export const ProfilePage = () => {
     mobileNo: ""
   });
 
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [activeTab, setActiveTab] = useState(() => {
     const hash = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '';
-    return ['profile', 'orders', 'addresses', 'rewards', 'notifications'].includes(hash) ? hash : 'profile';
+    return ['profile', 'orders', 'addresses', 'rewards', 'notifications', 'password'].includes(hash) ? hash : 'profile';
   });
 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
-      if (['profile', 'orders', 'addresses', 'rewards', 'notifications'].includes(hash)) {
+      if (['profile', 'orders', 'addresses', 'rewards', 'notifications', 'password'].includes(hash)) {
         setActiveTab(hash);
       }
     };
@@ -539,6 +549,31 @@ export const ProfilePage = () => {
     }
   };
 
+  const handleChangePassword = async () => {
+    try {
+      setIsChangingPassword(true);
+      const payload = {
+        oldPassword: passwordForm.oldPassword,
+        newPassword: passwordForm.newPassword,
+        confirmPassword: passwordForm.confirmPassword
+      };
+      
+      const result: any = await post("/CustomerAuth/ChangePassword", payload);
+      showApiResponseToast(result);
+      if (result.isSuccess || result.statusCode === 1 || result.StatusCode === 1) {
+        setPasswordForm({
+          oldPassword: "",
+          newPassword: "",
+          confirmPassword: ""
+        });
+      }
+    } catch (err: any) {
+      showToast("error", err?.response?.data?.message || err.message || "Failed to change password");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   // Fetch Countries
   useEffect(() => {
     if (isAddressModalOpen && countries.length === 0) {
@@ -620,7 +655,8 @@ export const ProfilePage = () => {
     { id: 'orders', label: 'Order History', icon: ShoppingBag },
     { id: 'addresses', label: 'Addresses', icon: MapPin },
     { id: 'rewards', label: 'Rewards', icon: Gift },
-    { id: 'notifications', label: 'Notifications', icon: Bell }
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'password', label: 'Change Password', icon: Shield }
   ];
 
   return (
@@ -918,6 +954,102 @@ export const ProfilePage = () => {
                     </div>
                   ) : null}
                 </>
+              )}
+
+              {/* Password Tab */}
+              {activeTab === 'password' && (
+                <div className="p-6 sm:p-12 space-y-12">
+                  <div className="flex items-center justify-between border-b border-neutral-100/80 pb-6">
+                    <h2 className="text-3xl font-serif text-neutral-900 tracking-tight">Change Password</h2>
+                  </div>
+
+                  <div className="bg-white rounded-[1.5rem] p-6 sm:p-8 shadow-[0_4px_24px_rgb(0,0,0,0.02)] border border-neutral-100/60 max-w-2xl">
+                    <div className="grid grid-cols-1 gap-6 mb-8">
+                      {/* Old Password */}
+                      <div>
+                        <div className="flex items-center gap-3 mb-3 text-neutral-400">
+                          <Shield className="w-4 h-4 text-[var(--color-primary)]" />
+                          <span className="font-satoshi text-[10px] uppercase tracking-[0.2em] font-bold">Old Password</span>
+                        </div>
+                        <div className="relative">
+                          <input
+                            type={showOldPassword ? "text" : "password"}
+                            value={passwordForm.oldPassword}
+                            onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
+                            className="w-full bg-neutral-50/50 border border-neutral-200 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--color-primary)]/10 text-neutral-900 font-medium transition-all text-sm pr-12"
+                            placeholder="Enter old password"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowOldPassword(!showOldPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[var(--color-primary)] transition-colors"
+                          >
+                            {showOldPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* New Password */}
+                      <div>
+                        <div className="flex items-center gap-3 mb-3 text-neutral-400">
+                          <Shield className="w-4 h-4 text-[var(--color-primary)]" />
+                          <span className="font-satoshi text-[10px] uppercase tracking-[0.2em] font-bold">New Password</span>
+                        </div>
+                        <div className="relative">
+                          <input
+                            type={showNewPassword ? "text" : "password"}
+                            value={passwordForm.newPassword}
+                            onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                            className="w-full bg-neutral-50/50 border border-neutral-200 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--color-primary)]/10 text-neutral-900 font-medium transition-all text-sm pr-12"
+                            placeholder="Enter new password"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[var(--color-primary)] transition-colors"
+                          >
+                            {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Confirm Password */}
+                      <div>
+                        <div className="flex items-center gap-3 mb-3 text-neutral-400">
+                          <Shield className="w-4 h-4 text-[var(--color-primary)]" />
+                          <span className="font-satoshi text-[10px] uppercase tracking-[0.2em] font-bold">Confirm Password</span>
+                        </div>
+                        <div className="relative">
+                          <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            value={passwordForm.confirmPassword}
+                            onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                            className="w-full bg-neutral-50/50 border border-neutral-200 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--color-primary)]/10 text-neutral-900 font-medium transition-all text-sm pr-12"
+                            placeholder="Confirm new password"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[var(--color-primary)] transition-colors"
+                          >
+                            {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-end border-t border-neutral-100/80 pt-6">
+                      <button 
+                        onClick={handleChangePassword} 
+                        disabled={isChangingPassword} 
+                        className="w-full sm:w-auto px-8 py-3 rounded-xl bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)] transition-all font-medium text-[15px] flex items-center justify-center gap-2 disabled:opacity-70 shadow-sm"
+                      >
+                        {isChangingPassword ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-5 h-5" />}
+                        Update Password
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )}
 
               {/* Addresses Tab */}
