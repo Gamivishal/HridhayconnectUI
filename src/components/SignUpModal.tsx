@@ -32,11 +32,12 @@ interface FloatingInputProps {
   onBlur: () => void;
   autoComplete?: string;
   max?: string;
+  maxLength?: number;
 }
 
 function FloatingInput({
   label, type = "text", value, onChange, error, icon, rightElement,
-  name, focusedField, onFocus, onBlur, autoComplete, max
+  name, focusedField, onFocus, onBlur, autoComplete, max, maxLength
 }: FloatingInputProps) {
   const isFocused = focusedField === name;
   const hasValue = value.length > 0;
@@ -81,11 +82,11 @@ function FloatingInput({
           {label}
         </label>
 
-        {/* Input */}
         <input
           type={isDate ? "text" : type}
           value={displayValue}
           autoComplete={autoComplete}
+          maxLength={maxLength}
           onChange={isDate ? undefined : (e) => onChange(e.target.value)}
           onFocus={() => onFocus(name)}
           onBlur={onBlur}
@@ -806,6 +807,7 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
                               onFocus={setFocusedField}
                               onBlur={() => setFocusedField(null)}
                               autoComplete="given-name"
+                              maxLength={50}
                             />
                             <FloatingInput
                               label="Last Name"
@@ -819,6 +821,7 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
                               onFocus={setFocusedField}
                               onBlur={() => setFocusedField(null)}
                               autoComplete="family-name"
+                              maxLength={50}
                             />
                           </div>
 
@@ -834,19 +837,21 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
                             onFocus={setFocusedField}
                             onBlur={() => setFocusedField(null)}
                             autoComplete="email"
+                            maxLength={100}
                           />
 
                           <FloatingInput
                             label="Phone Number (optional)"
                             type="tel"
                             value={form.phone}
-                            onChange={(v) => setField("phone")(v)}
+                            onChange={(v) => setField("phone")(v.replace(/[^0-9]/g, ''))}
                             icon={<Phone className="w-4 h-4" />}
                             name="phone"
                             focusedField={focusedField}
                             onFocus={setFocusedField}
                             onBlur={() => setFocusedField(null)}
                             autoComplete="tel"
+                            maxLength={10}
                           />
 
                           <FloatingInput
@@ -859,6 +864,7 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
                             focusedField={focusedField}
                             onFocus={setFocusedField}
                             onBlur={() => setFocusedField(null)}
+                            maxLength={25}
                           />
 
                           <div className="flex flex-col sm:flex-row gap-4">
@@ -901,6 +907,7 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
                             onFocus={setFocusedField}
                             onBlur={() => setFocusedField(null)}
                             autoComplete="new-password"
+                            maxLength={50}
                             rightElement={
                               <button
                                 type="button"
@@ -925,6 +932,7 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
                             onFocus={setFocusedField}
                             onBlur={() => setFocusedField(null)}
                             autoComplete="new-password"
+                            maxLength={50}
                             rightElement={
                               <button
                                 type="button"
@@ -951,13 +959,13 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
                             type="email"
                             value={form.email}
                             onChange={(v) => setField("email")(v)}
-                            error={errors.email}
                             icon={<Mail className="w-4 h-4" />}
                             name="email"
                             focusedField={focusedField}
                             onFocus={setFocusedField}
                             onBlur={() => setFocusedField(null)}
                             autoComplete="email"
+                            maxLength={100}
                           />
 
                           <FloatingInput
@@ -965,13 +973,13 @@ export function SignUpModal({ isOpen, onClose, initialMode = 'signup' }: SignUpM
                             type={showPassword ? "text" : "password"}
                             value={form.password}
                             onChange={(v) => setField("password")(v)}
-                            error={errors.password}
                             icon={<Lock className="w-4 h-4" />}
                             name="password"
                             focusedField={focusedField}
                             onFocus={setFocusedField}
                             onBlur={() => setFocusedField(null)}
                             autoComplete="current-password"
+                            maxLength={50}
                             rightElement={
                               <button
                                 type="button"

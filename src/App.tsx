@@ -38,13 +38,14 @@ const CartPage = lazy(() => import("./components/CartPage").then(m => ({ default
 const CheckoutPage = lazy(() => import("./components/CheckoutPage").then(m => ({ default: m.CheckoutPage })));
 const ProfilePage = lazy(() => import("./components/ProfilePage").then(m => ({ default: m.ProfilePage })));
 const WishlistPage = lazy(() => import("./components/WishlistPage").then(m => ({ default: m.WishlistPage })));
+const ContactPage = lazy(() => import("./components/ContactPage").then(m => ({ default: m.ContactPage })));
 import { useSignUp } from "./context/SignUpContext";
 import { products } from "./data/products";
 import { FloatingWhatsApp } from "./components/FloatingWhatsApp";
 import { GlobalToastProvider } from "./components/GlobalToastProvider";
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'about' | 'soap' | 'hair-oil' | 'mukhwas' | 'tea-masala' | 'hridhay-special' | 'product' | 'cart' | 'checkout' | 'profile' | 'wishlist'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'about' | 'soap' | 'hair-oil' | 'mukhwas' | 'tea-masala' | 'hridhay-special' | 'product' | 'cart' | 'checkout' | 'profile' | 'wishlist' | 'contact'>('home');
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [showLoader, setShowLoader] = useState(true);
   const { isSignUpOpen, closeSignUp } = useSignUp();
@@ -111,12 +112,12 @@ export default function App() {
           if (prev !== 'wishlist') window.scrollTo({ top: 0, behavior: "smooth" });
           return 'wishlist';
         });
-      } else if (hash === "#home" || hash === "#") {
+      } else if (hash.startsWith("#contact") || hash.startsWith("#/contact")) {
         setCurrentPage(prev => {
-          if (prev !== 'home') window.scrollTo({ top: 0, behavior: "smooth" });
-          return 'home';
+          if (prev !== 'contact') window.scrollTo({ top: 0, behavior: "smooth" });
+          return 'contact';
         });
-      } else {
+      } else if (!hash || hash === "#" || hash === "#home") {
         // Fallback to pathname checking when no hash routing is requested
         if (path === "/about") {
           setCurrentPage(prev => {
@@ -167,6 +168,11 @@ export default function App() {
           setCurrentPage(prev => {
             if (prev !== 'wishlist') window.scrollTo({ top: 0, behavior: "smooth" });
             return 'wishlist';
+          });
+        } else if (path === "/contact") {
+          setCurrentPage(prev => {
+            if (prev !== 'contact') window.scrollTo({ top: 0, behavior: "smooth" });
+            return 'contact';
           });
         } else if (path.startsWith("/product/")) {
           const prodId = path.replace("/product/", "");
@@ -236,6 +242,8 @@ export default function App() {
           </>
         ) : currentPage === 'about' ? (
           <AboutPage />
+        ) : currentPage === 'contact' ? (
+          <ContactPage />
         ) : currentPage === 'soap' ? (
           <SoapCategoryPage />
         ) : currentPage === 'hair-oil' ? (

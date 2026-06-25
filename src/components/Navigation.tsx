@@ -9,7 +9,7 @@ import { get, post } from "../api/BaseService";
 import { showToast } from "../utils/toastService";
 
 interface NavigationProps {
-  currentPage?: 'home' | 'about' | 'soap' | 'hair-oil' | 'mukhwas' | 'tea-masala' | 'hridhay-special' | 'product' | 'cart';
+  currentPage?: 'home' | 'about' | 'soap' | 'hair-oil' | 'mukhwas' | 'tea-masala' | 'hridhay-special' | 'product' | 'cart' | 'checkout' | 'profile' | 'wishlist' | 'contact';
 }
 
 export function Navigation({ currentPage = 'home' }: NavigationProps) {
@@ -287,6 +287,12 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
               className={`text-xs font-semibold uppercase tracking-wider transition-colors ${currentPage === 'hridhay-special' ? 'text-[#5B2A86] font-bold' : 'text-[#1B1720] hover:text-[#7A49A5]'}`}
             >
               Hridhay Special
+            </a>
+            <a
+              href="#contact"
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${currentPage === 'contact' ? 'text-[#5B2A86] font-bold' : 'text-[#1B1720] hover:text-[#7A49A5]'}`}
+            >
+              Contact
             </a>
           </div>
 
@@ -746,15 +752,8 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
 
                 {/* Contact Link */}
                 <motion.a
-                  href="#footer"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setMobileMenuOpen(false);
-                    setTimeout(() => {
-                      const footer = document.querySelector("footer");
-                      if (footer) footer.scrollIntoView({ behavior: "smooth" });
-                    }, 200);
-                  }}
+                  href="#contact"
+                  onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center justify-between w-full py-3.5 px-1 border-b border-[#5B2A86]/6"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}

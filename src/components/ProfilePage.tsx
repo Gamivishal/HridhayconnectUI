@@ -1424,7 +1424,7 @@ export const ProfilePage = () => {
                                           <div className="w-24 h-24 bg-neutral-50 rounded-2xl border border-neutral-100 flex items-center justify-center shrink-0 overflow-hidden relative group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all">
                                             {item.ImagePath && typeof item.ImagePath === 'string' && item.ImagePath.trim() !== '' ? (
                                               <img
-                                                src={`https://localhost:7103${item.ImagePath}`}
+                                                src={`https://hridhayconnectreact.bsite.net${item.ImagePath}`}
                                                 alt={safeRender(item.ProductName)}
                                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                                                 onError={(e) => {
@@ -2245,7 +2245,7 @@ export const ProfilePage = () => {
                       <div key={item.Id} className="flex items-center gap-4">
                         <div className="w-16 h-16 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-center shrink-0 overflow-hidden relative">
                           {item.ImagePath && typeof item.ImagePath === 'string' && item.ImagePath.trim() !== '' ? (
-                            <img src={`https://localhost:7103${item.ImagePath}`} alt={safeRender(item.ProductName)} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; if (e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.classList.remove('hidden'); }} />
+                            <img src={`https://hridhayconnectreact.bsite.net${item.ImagePath}`} alt={safeRender(item.ProductName)} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; if (e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.classList.remove('hidden'); }} />
                           ) : null}
                           <ShoppingBag className={`w-6 h-6 text-neutral-300 ${item.ImagePath && typeof item.ImagePath === 'string' && item.ImagePath.trim() !== '' ? 'hidden' : ''}`} />
                         </div>

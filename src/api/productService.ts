@@ -122,7 +122,7 @@ export function resolveImageUrl(rawPath: string | undefined | null): string {
       return pathStr;
     } else {
       const cleanPath = pathStr.replace(/\\/g, "/").replace(/^\/+/, "");
-      return `https://localhost:7103/${cleanPath}`;
+      return `https://hridhayconnectreact.bsite.net/${cleanPath}`;
     }
   }
   return "/Image/Noimage.jpg";
@@ -168,9 +168,13 @@ function extractImagesFromVariant(apiVar: any): string[] {
  */
 export async function fetchProductsFromApi(categoryId: number): Promise<Product[]> {
   const body = {
-    id: -2,
-    categoryId: categoryId,
-    search: ""
+    Id: -2,
+    CategoryId: categoryId,
+    Search: "",
+    Start: 0,
+    Length: 9999,
+    SortColumnIndex: 0,
+    SortDirection: "DESC"
   };
   console.log(`[API Request] Fetching from /Product/GetAll`, body);
 
@@ -303,6 +307,7 @@ export function parseApiProductGroup(group: any[]): Product {
 
   return {
     id: localProduct?.id || apiSlug || apiSkuSlug || String(prodId),
+    productId: prodId,
     name: prodName || (localProduct?.name ?? ""),
     price: resolvedSellPrice,
     originalPrice: computedOriginalPrice,

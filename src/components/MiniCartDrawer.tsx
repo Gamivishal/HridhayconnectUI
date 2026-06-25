@@ -144,6 +144,20 @@ export function MiniCartDrawer() {
                             </span>
                           </div>
                         )}
+                        {(() => {
+                          const remaining = item.product.totalAvailableStock !== undefined ? Math.max(0, item.product.totalAvailableStock - item.quantity) : undefined;
+                          if (remaining !== undefined && remaining <= 10) {
+                            return (
+                              <div className="mt-1">
+                                <span className="text-[9px] text-red-600 font-satoshi font-semibold bg-red-50 border border-red-100 px-2 py-0.5 rounded-md inline-flex items-center gap-1 uppercase tracking-wider">
+                                  <span className="w-1 h-1 rounded-full bg-red-600 animate-pulse" />
+                                  Only {remaining} left!
+                                </span>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
 
                       {/* Quantity Controls & Price */}
@@ -160,9 +174,9 @@ export function MiniCartDrawer() {
                             {item.quantity}
                           </span>
                           <button 
-                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                            disabled={isCartLoading}
-                            className={`w-5 h-5 rounded-full flex items-center justify-center hover:bg-black/5 transition-all ${isCartLoading ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                            onClick={() => updateQuantity(item.product.id, Math.min(item.quantity + 1, item.product.totalAvailableStock ?? Infinity))}
+                            disabled={isCartLoading || item.quantity >= (item.product.totalAvailableStock ?? Infinity)}
+                            className={`w-5 h-5 rounded-full flex items-center justify-center hover:bg-black/5 transition-all ${(isCartLoading || item.quantity >= (item.product.totalAvailableStock ?? Infinity)) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                           >
                             <Plus className="w-2 h-2 text-[var(--color-dark-text)]" />
                           </button>

@@ -1,5 +1,7 @@
 // Centralized API configuration for Hridhay Connect
-export const API_BASE_URL = "https://localhost:7103/api";
+//export const API_BASE_URL = "https://localhost:7103/api";
+
+export const API_BASE_URL = "https://hridhayconnectreact.bsite.net/api";
 
 // Mapping of category page slugs to their respective API category IDs
 export const CATEGORY_IDS = {
@@ -38,7 +40,7 @@ async function fetchApi(url: string, options: RequestInit = {}) {
 
   try {
     const response = await fetch(`${API_BASE_URL}${url}`, config);
-    
+
     // Attempt to parse response body
     let responseData = null;
     const contentType = response.headers.get("content-type");
@@ -81,17 +83,17 @@ export async function del(url: string, config: RequestInit = {}) {
 export async function getBlob(url: string, config: RequestInit = {}) {
   const token = localStorage.getItem("authToken");
   const headers = new Headers(config.headers || {});
-  
+
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
-  
+
   const response = await fetch(`${API_BASE_URL}${url}`, {
     ...config,
     method: "GET",
     headers,
   });
-  
+
   if (!response.ok) {
     return Promise.reject(new Error(`Error fetching blob: ${response.statusText}`));
   }

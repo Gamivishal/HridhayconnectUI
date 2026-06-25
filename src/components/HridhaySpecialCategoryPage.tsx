@@ -186,42 +186,83 @@ function HridhaySpecialCard({
     async function loadProducts() {
       try {
         setIsLoading(true);
-        const fetched = await fetchProductsFromApi(19);
+        const fetched = await fetchProductsFromApi(0);
         if (isMounted) {
-          if (fetched.length > 0 && fetched[0].categoryName) {
-            setCategoryName(fetched[0].categoryName);
-          }
-          const cardSpecials = fetched.map(p => ({
-            id: p.id,
-            name: p.name,
-            price: p.originalPrice ?? p.price,
-            sellPrice: p.sellPrice ?? p.price,
-            discountPercent: p.discountPercent ?? 0,
-            originalPrice: p.originalPrice ?? p.price,
-            images: p.images,
-            desc: p.desc,
-            benefits: p.benefits || [
-              "Cellular healing & soothing benefits",
-              "100% clean & chemical-free"
-            ],
-            tag: p.tag || "",
-            discount: p.discount,
-            variants: p.variants
-          }));
+
+          const targetCombos = [
+            { productId: 54, variantId: 187 },
+            { productId: 59, variantId: 194 },
+            { productId: 65, variantId: 205 },
+            { productId: 62, variantId: 197 },
+            { productId: 64, variantId: 201 }
+          ];
+
+          const filteredFetched = fetched.filter(p => {
+            const pid = (p as any).productId || Number(p.id);
+            return targetCombos.some(c => c.productId === pid);
+          }).map(p => {
+            const pid = (p as any).productId || Number(p.id);
+            const targetVariantIds = targetCombos.filter(c => c.productId === pid).map(c => c.variantId);
+            return {
+              ...p,
+              variants: p.variants?.filter(v => targetVariantIds.includes(Number(v.varientId) || Number((v as any).variantId))) || []
+            };
+          }).filter(p => p.variants && p.variants.length > 0);
+
+          const cardSpecials = filteredFetched.map(p => {
+            // Use the target variant's price if available
+            const variant = p.variants?.[0];
+            return {
+              id: p.id,
+              name: p.name,
+              price: variant ? (variant.sellPrice ?? variant.price) : (p.originalPrice ?? p.price),
+              sellPrice: variant ? (variant.sellPrice ?? variant.price) : (p.sellPrice ?? p.price),
+              discountPercent: p.discountPercent ?? 0,
+              originalPrice: variant ? variant.price : (p.originalPrice ?? p.price),
+              images: p.images,
+              desc: p.desc,
+              benefits: p.benefits || [
+                "Cellular healing & soothing benefits",
+                "100% clean & chemical-free"
+              ],
+              tag: p.tag || "",
+              discount: p.discount,
+              variants: p.variants
+            };
+          });
           setSpecialsList(cardSpecials);
-          syncProducts(fetched);
+          syncProducts(filteredFetched);
         }
       } catch (error) {
         console.error("[HridhaySpecialPage API Error] Failed to load reserve products from API:", error);
         if (isMounted) {
-          const filtered = products.filter(p => p.category === 'hridhay-special');
+          const targetCombos = [
+            { productId: 54, variantId: 187 },
+            { productId: 59, variantId: 194 },
+            { productId: 65, variantId: 205 },
+            { productId: 62, variantId: 197 },
+            { productId: 64, variantId: 201 }
+          ];
+
+          const filtered = products.filter(p => {
+            // Usually local products have string IDs that might contain hyphens, but we try parsing
+            const pidStr = p.id.replace(/-.*/, "");
+            return targetCombos.some(c => c.productId.toString() === pidStr);
+          });
+          
           const enriched = filtered.map(spec => {
+            const pidStr = spec.id.replace(/-.*/, "");
+            const targetVariantIds = targetCombos.filter(c => c.productId.toString() === pidStr).map(c => c.variantId);
+
             const matchingProduct = products.find(p => p.id === spec.id || p.id.replace(/-100|-200/g, "") === spec.id.replace(/-100|-200/g, ""));
+            const allVariants = matchingProduct?.variants || spec.variants || [];
+            
             return {
               ...spec,
-              variants: matchingProduct?.variants || spec.variants
+              variants: allVariants.filter(v => targetVariantIds.includes(Number(v.varientId) || Number((v as any).variantId)))
             };
-          });
+          }).filter(p => p.variants && p.variants.length > 0);
+
           setSpecialsList(enriched);
         }
       } finally {

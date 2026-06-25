@@ -65,6 +65,13 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
     }
   }, [selectedVariant]);
 
+  useEffect(() => {
+    const maxStock = selectedVariant?.totalAvailableStock ?? currentProduct.totalAvailableStock ?? Infinity;
+    if (quantity > maxStock) {
+      setQuantity(Math.max(1, maxStock));
+    }
+  }, [selectedVariant, currentProduct, quantity]);
+
   const handleAttrSelect = (name: string, value: string) => {
     const newAttrs = { ...selectedAttrs, [name]: value };
     setSelectedAttrs(newAttrs);
@@ -292,7 +299,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
         {/* Navigation & Breadcrumbs */}
         <div className="flex justify-between items-center py-6 border-b border-[var(--color-primary)]/5 mb-10">
           <button
-            onClick={onBack || (() => { window.location.hash = `#${currentProduct.category}` })}
+            onClick={onBack || (() => { window.location.hash = `#${currentProduct.category || ''}` })}
             className="group flex items-center gap-2 text-xs font-semibold uppercase tracking-widest hover:text-[var(--color-primary)] transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -302,8 +309,12 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
           <div className="hidden sm:flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-[var(--color-dark-text)]/40">
             <a href="#" className="hover:text-[var(--color-primary)] transition-colors">Home</a>
             <span>/</span>
-            <a href={`#${currentProduct.category}`} className="hover:text-[var(--color-primary)] transition-colors capitalize">{currentProduct.category.replace("-", " ")}</a>
-            <span>/</span>
+            {currentProduct.category && (
+              <>
+                <a href={`#${currentProduct.category}`} className="hover:text-[var(--color-primary)] transition-colors capitalize">{currentProduct.category.replace("-", " ")}</a>
+                <span>/</span>
+              </>
+            )}
             <span className="text-[var(--color-primary)] font-semibold">{currentProduct.name}</span>
           </div>
         </div>
@@ -315,7 +326,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
           <div className="w-full lg:col-span-7 flex flex-col lg:grid lg:grid-cols-12 gap-4">
 
             {/* Main Interactive Zoom Box */}
-            <div className={`w-full ${currentProduct.images.length > 1 ? 'lg:col-span-10' : 'lg:col-span-12'} order-1 lg:order-2 relative aspect-[4/5] bg-[var(--color-beige)]/30 rounded-[2.5rem] overflow-hidden border border-white/50 shadow-md group`}>
+            <div className={`w-full ${(currentProduct.images || []).length > 1 ? 'lg:col-span-10' : 'lg:col-span-12'} order-1 lg:order-2 relative aspect-[4/5] bg-[var(--color-beige)]/30 rounded-[2.5rem] overflow-hidden border border-white/50 shadow-md group`}>
 
               <div
                 className="w-full h-full overflow-hidden cursor-zoom-in relative"
@@ -323,7 +334,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                 onMouseLeave={handleMouseLeave}
               >
                 <img
-                  src={currentProduct.images[activeImageIdx]}
+                  src={(currentProduct.images || [])[activeImageIdx] || currentProduct.img || "/Image/Noimage.jpg"}
                   alt={currentProduct.name}
                   className="w-full h-full object-contain object-center transition-transform duration-300"
                 />
@@ -332,7 +343,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                 <div
                   className="absolute inset-0 bg-no-repeat pointer-events-none scale-150 transition-transform duration-75"
                   style={{
-                    backgroundImage: `url(${currentProduct.images[activeImageIdx]})`,
+                    backgroundImage: `url(${(currentProduct.images || [])[activeImageIdx] || currentProduct.img || "/Image/Noimage.jpg"})`,
                     backgroundPosition: "center center",
                     backgroundSize: "200%",
                     ...zoomStyle
@@ -371,9 +382,9 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
             </div>
 
             {/* Horizontal or Vertical Thumbnails */}
-            {currentProduct.images.length > 1 && (
+            {(currentProduct.images || []).length > 1 && (
               <div className="w-full lg:col-span-2 order-2 lg:order-1 flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-none">
-                {currentProduct.images.map((img, idx) => (
+                {(currentProduct.images || []).map((img: string, idx: number) => (
                   <button
                     key={idx}
                     onClick={() => setActiveImageIdx(idx)}
@@ -561,21 +572,23 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
             )}
 
             {/* Stock status indicator */}
-            {((selectedVariant ? selectedVariant.totalAvailableStock : currentProduct.totalAvailableStock) !== undefined) && (
-              <div className="mb-8">
-                {(selectedVariant ? selectedVariant.totalAvailableStock : currentProduct.totalAvailableStock) < 10 ? (
+            {(() => {
+              const baseStock = selectedVariant?.totalAvailableStock ?? currentProduct.totalAvailableStock;
+              if (baseStock === undefined) return null;
+              
+              const displayStock = Math.max(0, baseStock - quantity);
+              
+              if (displayStock > 10) return null;
+              
+              return (
+                <div className="mb-8">
                   <div className="inline-flex items-center gap-1.5 text-red-600 font-semibold text-xs uppercase tracking-wider bg-red-50 px-4 py-2.5 rounded-2xl border border-red-100">
                     <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
-                    <span>Available only: {selectedVariant ? selectedVariant.totalAvailableStock : currentProduct.totalAvailableStock}</span>
+                    <span>Available only: {displayStock}</span>
                   </div>
-                ) : (
-                  <div className="inline-flex items-center gap-1.5 text-emerald-700 text-xs font-semibold uppercase tracking-wider bg-emerald-50 px-4 py-2.5 rounded-2xl border border-emerald-100">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-700" />
-                    <span>In Stock ({selectedVariant ? selectedVariant.totalAvailableStock : currentProduct.totalAvailableStock} available)</span>
-                  </div>
-                )}
-              </div>
-            )}
+                </div>
+              );
+            })()}
 
             {/* Quantity Selector & CTAs */}
             <div className="space-y-6 mb-8">
@@ -597,9 +610,10 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                     {quantity}
                   </span>
                   <motion.button
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setQuantity(prev => prev + 1)}
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--color-dark-text)] hover:bg-[var(--color-primary)]/5 transition-all cursor-pointer"
+                    whileTap={quantity >= (selectedVariant?.totalAvailableStock ?? currentProduct.totalAvailableStock ?? Infinity) ? {} : { scale: 0.9 }}
+                    onClick={() => setQuantity(prev => Math.min(prev + 1, selectedVariant?.totalAvailableStock ?? currentProduct.totalAvailableStock ?? Infinity))}
+                    disabled={quantity >= (selectedVariant?.totalAvailableStock ?? currentProduct.totalAvailableStock ?? Infinity)}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-[var(--color-dark-text)] transition-all cursor-pointer ${quantity >= (selectedVariant?.totalAvailableStock ?? currentProduct.totalAvailableStock ?? Infinity) ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[var(--color-primary)]/5'}`}
                   >
                     <Plus className="w-4 h-4 text-[#5B2A86]" />
                   </motion.button>
@@ -752,7 +766,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                     <div className="bg-white/40 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-sm">
                       <h4 className="text-xs uppercase tracking-widest font-semibold text-[var(--color-primary)] mb-4">Application Ritual</h4>
                       <ol className="space-y-4 font-satoshi text-xs text-[var(--color-dark-text)]/80">
-                        {currentProduct.usage.map((step, idx) => (
+                        {currentProduct.usage?.map((step: string, idx: number) => (
                           <li key={idx} className="flex gap-4">
                             <span className="w-5 h-5 rounded-full bg-[var(--color-primary)]/10 text-[var(--color-primary)] flex items-center justify-center font-bold font-general flex-shrink-0">
                               {idx + 1}
@@ -775,7 +789,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                   transition={{ duration: 0.4 }}
                   className="grid grid-cols-1 md:grid-cols-2 gap-8"
                 >
-                  {currentProduct.ingredients.map((ing, idx) => (
+                  {currentProduct.ingredients?.map((ing: any, idx: number) => (
                     <div key={idx} className="bg-white/40 border border-white/60 p-6 rounded-[2rem] shadow-sm flex flex-col justify-between group/card">
                       <div>
                         <div className="w-full aspect-[16/9] rounded-2xl overflow-hidden mb-6 relative">
@@ -807,7 +821,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                   transition={{ duration: 0.4 }}
                   className="grid grid-cols-1 sm:grid-cols-3 gap-6"
                 >
-                  {currentProduct.benefits.map((benefit, idx) => (
+                  {currentProduct.benefits?.map((benefit: string, idx: number) => (
                     <div key={idx} className="bg-white/40 border border-white/60 p-8 rounded-[2rem] shadow-sm backdrop-blur-md flex flex-col items-start gap-4">
                       <div className="w-10 h-10 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
                         <Award className="w-5 h-5" />
@@ -830,7 +844,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                   transition={{ duration: 0.4 }}
                   className="max-w-3xl mx-auto space-y-4 font-satoshi w-full"
                 >
-                  {currentProduct.faqs.map((faq, idx) => {
+                  {currentProduct.faqs?.map((faq: any, idx: number) => {
                     const isOpen = openFaqIdx === idx;
                     return (
                       <div key={idx} className="bg-white/40 border border-white/50 rounded-2xl overflow-hidden shadow-sm">
@@ -890,7 +904,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
             </div>
 
             <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {currentProduct.reviews.map((rev, idx) => (
+              {currentProduct.reviews?.map((rev: any, idx: number) => (
                 <div key={idx} className="bg-white/60 border border-white/80 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-center mb-4">

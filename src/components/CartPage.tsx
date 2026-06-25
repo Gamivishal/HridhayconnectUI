@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ShieldCheck, 
-  Truck, HelpCircle, Tag, Check, CreditCard, Sparkles 
+import {
+  ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ShieldCheck,
+  Truck, HelpCircle, Tag, Check, CreditCard, Sparkles
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
 
 export function CartPage() {
-  const { 
-    cartItems, 
-    updateQuantity, 
-    removeFromCart, 
-    cartSubtotal, 
+  const {
+    cartItems,
+    updateQuantity,
+    removeFromCart,
+    cartSubtotal,
     cartCount,
     clearCart,
     prepareCheckout,
@@ -72,17 +72,17 @@ export function CartPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
-        
+
         {/* Navigation & Breadcrumbs */}
         <div className="flex justify-between items-center py-6 border-b border-[var(--color-primary)]/5 mb-10">
-          <button 
+          <button
             onClick={() => window.history.back()}
             className="group flex items-center gap-2 text-xs font-semibold uppercase tracking-widest hover:text-[var(--color-primary)] transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             <span>Continue Shopping</span>
           </button>
-          
+
           <div className="hidden sm:flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-[var(--color-dark-text)]/40">
             <a href="#" className="hover:text-[var(--color-primary)] transition-colors">Home</a>
             <span>/</span>
@@ -96,7 +96,7 @@ export function CartPage() {
 
         {orderCompleted ? (
           /* Order Complete Confirmation Page */
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             className="max-w-xl mx-auto bg-white/70 backdrop-blur-xl border border-white p-8 sm:p-12 rounded-[3.5rem] shadow-xl text-center space-y-6"
@@ -111,7 +111,7 @@ export function CartPage() {
             </span>
 
             <h2 className="text-3xl font-serif font-light text-black">Your Wellness Journey Begins</h2>
-            
+
             <p className="text-sm text-[var(--color-dark-text)]/70 font-light font-satoshi leading-relaxed">
               Thank you for choosing Hridhay Connect. We are preparing your handcrafted organic items with care. Your order details and tracking link have been dispatched.
             </p>
@@ -122,7 +122,7 @@ export function CartPage() {
             </div>
 
             <div className="pt-6">
-              <a 
+              <a
                 href="#"
                 className="inline-flex justify-center bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white text-xs font-semibold uppercase tracking-widest px-10 py-4 rounded-full transition-all shadow-md cursor-pointer"
               >
@@ -141,7 +141,7 @@ export function CartPage() {
               It seems you haven't added any products to your cart yet. Discover our ranges of handcrafted cold-pressed soaps, copper-boiled hair oils, and raw forest spice blends to begin.
             </p>
             <div className="pt-4">
-              <a 
+              <a
                 href="#"
                 className="bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white text-xs font-semibold uppercase tracking-widest px-10 py-4 rounded-full transition-all shadow-md cursor-pointer"
               >
@@ -152,10 +152,10 @@ export function CartPage() {
         ) : (
           /* Active Cart List & Summary Grid */
           <div className="flex flex-col lg:grid lg:grid-cols-12 gap-12 items-start w-full">
-            
+
             {/* Left Column: Items List */}
             <div className="w-full lg:col-span-8 space-y-6">
-              
+
               {/* Shipping Progress Meter */}
               <div className="bg-white/50 backdrop-blur-md border border-white p-5 rounded-3xl shadow-sm space-y-3">
                 <div className="flex items-center justify-between text-xs">
@@ -170,11 +170,11 @@ export function CartPage() {
                   <span className="font-semibold text-[var(--color-dark-text)]/40">₹{cartSubtotal} / ₹{shippingThreshold}</span>
                 </div>
                 <div className="w-full h-1.5 bg-black/5 rounded-full overflow-hidden">
-                  <motion.div 
+                  <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${progressToFreeShipping}%` }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="h-full bg-[var(--color-primary)]" 
+                    className="h-full bg-[var(--color-primary)]"
                   />
                 </div>
               </div>
@@ -182,7 +182,7 @@ export function CartPage() {
               {/* Items Card List */}
               <div className="space-y-4">
                 {cartItems.map((item) => (
-                  <motion.div 
+                  <motion.div
                     layout
                     key={item.product.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -202,7 +202,7 @@ export function CartPage() {
                           <h3 className="font-serif text-lg sm:text-xl text-black font-semibold line-clamp-1 group-hover:text-[var(--color-primary)] transition-colors">
                             {item.product.name}
                           </h3>
-                          <button 
+                          <button
                             onClick={() => removeFromCart(item.product.id)}
                             disabled={isCartLoading}
                             className={`text-[var(--color-dark-text)]/30 hover:text-red-500 transition-colors p-1 rounded ${isCartLoading ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
@@ -211,11 +211,11 @@ export function CartPage() {
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-                        
+
                         <span className="text-[10px] uppercase tracking-widest text-[var(--color-primary)] font-semibold block">
                           {item.product.category.replace("-", " ")}
                         </span>
-                        
+
                         <p className="text-[11.5px] text-[var(--color-dark-text)]/50 font-light font-satoshi line-clamp-2 leading-relaxed">
                           {item.product.tagline}
                         </p>
@@ -226,11 +226,25 @@ export function CartPage() {
                             </span>
                           </div>
                         )}
+                        {(() => {
+                          const remaining = item.product.totalAvailableStock !== undefined ? Math.max(0, item.product.totalAvailableStock - item.quantity) : undefined;
+                          if (remaining !== undefined && remaining <= 10) {
+                            return (
+                              <div className="mt-1.5">
+                                <span className="text-[10px] text-red-600 font-satoshi font-semibold bg-red-50 border border-red-100 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1.5 uppercase tracking-wider">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                                  Only {remaining} left!
+                                </span>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                       {/* Quantity & Pricing details */}
                       <div className="flex justify-between items-center mt-4 pt-3 border-t border-black/5">
                         <div className="flex items-center bg-black/5 rounded-full p-1 scale-95 origin-left">
-                          <button 
+                          <button
                             onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                             disabled={isCartLoading || item.quantity <= 1}
                             className={`w-7 h-7 rounded-full flex items-center justify-center hover:bg-black/5 transition-all ${(isCartLoading || item.quantity <= 1) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
@@ -240,15 +254,15 @@ export function CartPage() {
                           <span className="w-8 text-center text-xs font-semibold font-general">
                             {item.quantity}
                           </span>
-                          <button 
-                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                            disabled={isCartLoading}
-                            className={`w-7 h-7 rounded-full flex items-center justify-center hover:bg-black/5 transition-all ${isCartLoading ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                          <button
+                            onClick={() => updateQuantity(item.product.id, Math.min(item.quantity + 1, item.product.totalAvailableStock ?? Infinity))}
+                            disabled={isCartLoading || item.quantity >= (item.product.totalAvailableStock ?? Infinity)}
+                            className={`w-7 h-7 rounded-full flex items-center justify-center hover:bg-black/5 transition-all ${(isCartLoading || item.quantity >= (item.product.totalAvailableStock ?? Infinity)) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                           >
                             <Plus className="w-3.5 h-3.5 text-[var(--color-dark-text)]" />
                           </button>
                         </div>
-                        
+
                         <div className="text-right">
                           <span className="text-[10px] text-[var(--color-dark-text)]/40 block">Total</span>
                           <span className="text-base sm:text-lg font-serif font-bold text-[var(--color-primary)]">
@@ -265,7 +279,7 @@ export function CartPage() {
 
             {/* Right Column: Sticky Summary */}
             <div className="w-full lg:col-span-4 lg:sticky lg:top-[110px] space-y-6">
-              
+
               {/* Summary card */}
               <div className="bg-white/70 backdrop-blur-xl border border-white p-6 sm:p-8 rounded-[3rem] shadow-md space-y-6">
                 <h3 className="font-serif text-xl font-semibold text-black border-b border-black/5 pb-4">
@@ -278,7 +292,7 @@ export function CartPage() {
                     <span>Subtotal ({cartCount} items)</span>
                     <span className="font-serif font-medium text-black">₹{cartSubtotal}</span>
                   </div>
-                  
+
                   {discountAmount > 0 && (
                     <div className="flex justify-between items-center text-emerald-600">
                       <span>Discount ({discountPercent}%)</span>
@@ -305,7 +319,7 @@ export function CartPage() {
                 </div>
 
                 {/* Promo Code Input Form */}
-                <form onSubmit={handleApplyPromo} className="border-t border-black/5 pt-6 mt-2 space-y-3">
+                {/* <form onSubmit={handleApplyPromo} className="border-t border-black/5 pt-6 mt-2 space-y-3">
                   <span className="text-[10px] uppercase tracking-wider text-[var(--color-dark-text)]/40 font-semibold block">
                     Promo Code
                   </span>
@@ -339,11 +353,11 @@ export function CartPage() {
                       {promoSuccess}
                     </span>
                   )}
-                </form>
+                </form> */}
 
                 {/* Checkout CTA */}
                 <div className="pt-2">
-                  <button 
+                  <button
                     onClick={handlePlaceOrder}
                     className="w-full bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white text-xs font-semibold uppercase tracking-widest py-4.5 rounded-full transition-all shadow-md flex items-center justify-center gap-2.5 cursor-pointer font-sans"
                   >

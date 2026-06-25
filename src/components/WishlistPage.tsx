@@ -129,7 +129,7 @@ export function WishlistPage() {
 
                     <div className="w-full aspect-square rounded-[16px] overflow-hidden bg-[var(--color-cream)] relative mb-4">
                       <img 
-                        src={`https://localhost:7103${item.ImagePath}`} 
+                        src={`https://hridhayconnectreact.bsite.net${item.ImagePath}`} 
                         alt={typeof item.ProductName === 'string' ? item.ProductName : 'Product'}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         onError={(e) => {
@@ -206,8 +206,8 @@ export function WishlistPage() {
                                 sellPrice: typeof item.SellPrice === 'number' ? item.SellPrice : 0,
                                 originalPrice: typeof item.Price === 'number' ? item.Price : 0,
                                 discountPercent: typeof item.DiscountPercent === 'number' ? item.DiscountPercent : 0,
-                                image: `https://localhost:7103${item.ImagePath}`,
-                                images: [`https://localhost:7103${item.ImagePath}`],
+                                image: `https://hridhayconnectreact.bsite.net${item.ImagePath}`,
+                                images: [`https://hridhayconnectreact.bsite.net${item.ImagePath}`],
                                 category: typeof item.CategoryName === 'string' ? item.CategoryName.toLowerCase().replace(/ /g, '-') : 'category',
                                 productId: item.ProductId,
                                 variantId: item.VariantId,

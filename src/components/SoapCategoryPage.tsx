@@ -27,9 +27,7 @@ interface SoapCardProps {
   };
   index: number;
   cartState: Record<string, boolean>;
-  wishlistState: Record<string, boolean>;
   handleAddToCart: (id: string) => void;
-  toggleWishlist: (id: string) => void;
 }
 
 function SoapCard({
@@ -182,69 +180,6 @@ function SoapCard({
   );
 }
 
-const staticSoaps = [
-  {
-    id: "beet-radiance",
-    name: "Beet Radiance Soap",
-    price: 85,
-    originalPrice: 160,
-    img: "https://images.unsplash.com/photo-1607006342411-92f1f5449174?q=80&w=800&auto=format&fit=crop",
-    desc: "Cold-pressed beetroot extracts blended with nourishing botanical oils for an organic, radiant glow.",
-    benefits: ["Deeply nourishes & brightens skin", "Antioxidant-rich to even out skin tone", "Keeps skin soft, plump & hydrated"],
-    tag: "Best Seller",
-    ingredient: "Organic Beetroot Extract",
-    discount: "47% OFF"
-  },
-  {
-    id: "kesudo-radiance",
-    name: "Kesudo Radiance Soap",
-    price: 70,
-    originalPrice: 130,
-    img: "https://images.unsplash.com/photo-1546554137-f86b9593a222?q=80&w=800&auto=format&fit=crop",
-    desc: "Infused with premium Kesudo (Saffron flower) nectars, honoring traditional Ayurvedic skin rejuvenation.",
-    benefits: ["Enhances natural skin complexion", "Soothes and smooths skin texture", "Protects with bio-active antioxidants"],
-    tag: "Ayurvedic Heritage",
-    ingredient: "Flame of the Forest (Kesudo)",
-    discount: "46% OFF"
-  },
-  {
-    id: "neem-aloe-fresh",
-    name: "Neem Aloe Fresh Soap",
-    price: 70,
-    originalPrice: 130,
-    img: "https://images.unsplash.com/photo-1607006482945-aa1a1827402c?q=80&w=800&auto=format&fit=crop",
-    desc: "A purifying, anti-bacterial blend of wild-harvested neem leaf essence and freshly extracted organic aloe vera.",
-    benefits: ["Deep pore detoxification & cleansing", "Soothes acne, irritation & dry patches", "Regulates sebum without drying skin"],
-    tag: "Deep Purifying",
-    ingredient: "Wild Neem & Aloe Vera",
-    discount: "46% OFF"
-  },
-  {
-    id: "glow-craft-detan",
-    name: "Glow Craft Detan Soap",
-    price: 90,
-    originalPrice: 190,
-    img: "https://images.unsplash.com/photo-1605264964528-06403738d6df?q=80&w=800&auto=format&fit=crop",
-    desc: "Dermatologically audited detanning soap formulated to pull out sun damage and restore your skin's natural tone.",
-    benefits: ["Gently exfoliates sun-damaged layers", "Reverses tan lines & pollution buildup", "Cooling botanical relief post-sun"],
-    tag: "Skin Restorative",
-    ingredient: "Detanning Botanical Actives",
-    discount: "52% OFF"
-  },
-  {
-    id: "rice-potato-bliss",
-    name: "Rice & Potato Bliss Soap",
-    price: 90,
-    originalPrice: 190,
-    img: "https://images.unsplash.com/photo-1607006483224-b1523f2ec8c9?q=80&w=800&auto=format&fit=crop",
-    desc: "Rich starch cream from organic rice water and active potato enzymes for fading spots and smoothing textures.",
-    benefits: ["Fades dark spots & hyperpigmentation", "Aids micro-exfoliation for smooth texture", "Provides a creamy, hydrating lather"],
-    tag: "Pigmentation Correcting",
-    ingredient: "Rice Starch & Potato Enzymes",
-    discount: "52% OFF"
-  }
-];
-
 export function SoapCategoryPage() {
   const pageRef = useRef<HTMLDivElement>(null);
   const [soaps, setSoaps] = useState<any[]>([]);
@@ -263,7 +198,7 @@ export function SoapCategoryPage() {
     async function loadProducts() {
       try {
         setIsLoading(true);
-        const url = "https://localhost:7103/api/Product/GetAll";
+        const url = "https://hridhayconnectreact.bsite.net/api/Product/GetAll";
         const body = {
           id: -2,
           categoryId: 15,
@@ -283,78 +218,60 @@ export function SoapCategoryPage() {
           }
         }
 
-        // Match and overwrite only image, price, and description for the static soaps
-        const updatedSoaps = staticSoaps.map(staticSoap => {
-          // Find matching API product by name or SKU
-          const match = apiProducts.find((apiProd: any) => {
-            const prodName = getCaseInsensitiveProperty<string>(apiProd, "ProductName") || "";
-            const prodSku = getCaseInsensitiveProperty<string>(apiProd, "SKU") || "";
+        const updatedSoaps = apiProducts.map((apiProd: any) => {
+          let resolvedImg = "/Image/Noimage.jpg";
+          let allResolvedImages: string[] = [];
+          const imagesArray = getCaseInsensitiveProperty<any[]>(apiProd, "Images");
 
-            if (!prodName && !prodSku) return false;
-
-            const staticNormalized = staticSoap.name.toLowerCase().replace(/soap/g, "").replace(/[^a-z0-9]/g, "").trim();
-            const apiNormalizedName = prodName.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
-            const apiNormalizedSku = prodSku.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
-            
-            return (
-              (apiNormalizedName && (staticNormalized.includes(apiNormalizedName) || apiNormalizedName.includes(staticNormalized))) ||
-              (apiNormalizedSku && (staticNormalized.includes(apiNormalizedSku) || apiNormalizedSku.includes(staticNormalized)))
-            );
-          });
-
-          if (match) {
-            console.log(`[SoapPage Matching] Matched static soap "${staticSoap.name}" with API product:`, match);
-            
-            // Resolve image path from the new Images array (primary first)
-            let resolvedImg = "/Image/Noimage.jpg";
-            const imagesArray = getCaseInsensitiveProperty<any[]>(match, "Images");
-
-            if (Array.isArray(imagesArray) && imagesArray.length > 0) {
-              // Find the primary image first, fallback to first image
-              const primaryImg = imagesArray.find((img: any) => img.isPrimary || img.IsPrimary) || imagesArray[0];
-              const primaryPath = primaryImg?.imagePath || primaryImg?.ImagePath || "";
-              resolvedImg = resolveImageUrl(primaryPath);
-            } else {
-              // Fallback to legacy single ImagePath field
-              const imagePathRaw = getCaseInsensitiveProperty<string>(match, "ImagePath");
-              resolvedImg = resolveImageUrl(imagePathRaw);
-            }
-
-            const matchProductName = getCaseInsensitiveProperty<string>(match, "ProductName") || staticSoap.name;
-            const matchProductId = getCaseInsensitiveProperty<number>(match, "ProductId");
-            const matchVariantId = getCaseInsensitiveProperty<number>(match, "VarientId");
-            const matchPrice = getCaseInsensitiveProperty<number>(match, "Price") || staticSoap.price;
-            const matchSellPrice = getCaseInsensitiveProperty<number>(match, "SellPrice");
-            const matchDiscountPercent = getCaseInsensitiveProperty<number>(match, "DiscountPercent");
-            const matchDesc = getCaseInsensitiveProperty<string>(match, "ProductDescription") || staticSoap.desc;
-
-            const resolvedSellPrice = matchSellPrice ?? matchPrice;
-            const resolvedDiscountPercent = matchDiscountPercent ?? 0;
-
-            const matchingProduct = products.find(p => p.id === staticSoap.id);
-            return {
-              ...staticSoap,
-              name: matchProductName,
-              price: matchPrice,
-              sellPrice: resolvedSellPrice,
-              discountPercent: resolvedDiscountPercent,
-              originalPrice: matchPrice,
-              discount: resolvedDiscountPercent > 0 ? `${Math.round(resolvedDiscountPercent)}% OFF` : (matchPrice !== resolvedSellPrice ? `${Math.round((1 - resolvedSellPrice / matchPrice) * 100)}% OFF` : ""),
-              desc: matchDesc,
-              img: resolvedImg,
-              productId: matchProductId ? Number(matchProductId) : undefined,
-              variantId: matchVariantId ? Number(matchVariantId) : undefined,
-              variants: matchingProduct?.variants
-            };
+          if (Array.isArray(imagesArray) && imagesArray.length > 0) {
+            // Find the primary image first, fallback to first image
+            const primaryImg = imagesArray.find((img: any) => img.isPrimary || img.IsPrimary) || imagesArray[0];
+            const primaryPath = primaryImg?.imagePath || primaryImg?.ImagePath || "";
+            resolvedImg = resolveImageUrl(primaryPath);
+            allResolvedImages = imagesArray.map((img: any) => resolveImageUrl(img.imagePath || img.ImagePath || ""));
           } else {
-            console.log(`[SoapPage Matching] No API match found for static soap "${staticSoap.name}". Using static data.`);
-            return staticSoap;
+            // Fallback to legacy single ImagePath field
+            const imagePathRaw = getCaseInsensitiveProperty<string>(apiProd, "ImagePath");
+            resolvedImg = resolveImageUrl(imagePathRaw);
+            allResolvedImages = [resolvedImg];
           }
+
+          const matchProductName = getCaseInsensitiveProperty<string>(apiProd, "ProductName") || "";
+          const matchProductId = getCaseInsensitiveProperty<number>(apiProd, "ProductId");
+          const matchVariantId = getCaseInsensitiveProperty<number>(apiProd, "VarientId");
+          const matchPrice = getCaseInsensitiveProperty<number>(apiProd, "Price") || 0;
+          const matchSellPrice = getCaseInsensitiveProperty<number>(apiProd, "SellPrice");
+          const matchDiscountPercent = getCaseInsensitiveProperty<number>(apiProd, "DiscountPercent");
+          const matchDesc = getCaseInsensitiveProperty<string>(apiProd, "ProductDescription") || "";
+
+          const resolvedSellPrice = matchSellPrice ?? matchPrice;
+          const resolvedDiscountPercent = matchDiscountPercent ?? 0;
+
+          const matchingProduct = products.find(p => String(p.productId) === String(matchProductId) || p.id === String(matchProductId));
+
+          return {
+            id: matchProductId ? String(matchProductId) : String(Math.random()),
+            name: matchProductName,
+            price: matchPrice,
+            sellPrice: resolvedSellPrice,
+            discountPercent: resolvedDiscountPercent,
+            originalPrice: matchPrice,
+            discount: resolvedDiscountPercent > 0 ? `${Math.round(resolvedDiscountPercent)}% OFF` : (matchPrice !== resolvedSellPrice ? `${Math.round((1 - resolvedSellPrice / matchPrice) * 100)}% OFF` : ""),
+            desc: matchDesc,
+            img: resolvedImg,
+            apiImages: allResolvedImages,
+            productId: matchProductId ? Number(matchProductId) : undefined,
+            variantId: matchVariantId ? Number(matchVariantId) : undefined,
+            variants: matchingProduct?.variants || [],
+            benefits: ["Deeply nourishes & brightens skin", "Keeps skin soft, plump & hydrated"],
+            tag: "",
+            ingredient: ""
+          };
         });
 
         if (isMounted) {
           setSoaps(updatedSoaps);
-          
+
           // Sync updated soaps back into the global products database
           const syncableProducts = updatedSoaps.map((s: any) => {
             const originalProduct = products.find(p => p.id === s.id);
@@ -364,7 +281,15 @@ export function SoapCategoryPage() {
               name: s.name,
               price: s.price,
               desc: s.desc,
-              images: [s.img, ...(originalProduct?.images?.slice(1) || [])],
+              longDesc: originalProduct?.longDesc || s.desc || "Experience skincare elevated into a sacred daily ritual. Hand-stirred using nutrient-dense cold-pressed vegetable oils and raw therapeutic botanicals, our soap gently clarifies the dermis without stripping protective natural lipids.",
+              images: (s.apiImages && s.apiImages.length > 1) 
+                 ? s.apiImages 
+                 : (originalProduct?.images || [
+                    s.img,
+                    "https://images.unsplash.com/photo-1590483736622-39da8af75bba?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1607006482945-aa1a1827402c?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=800&auto=format&fit=crop"
+                 ]),
               productId: s.productId,
               variantId: s.variantId
             } as any;
@@ -374,7 +299,7 @@ export function SoapCategoryPage() {
       } catch (error) {
         console.error("[SoapPage API Error] Failed to load soaps from API:", error);
         if (isMounted) {
-          setSoaps(staticSoaps);
+          setSoaps([]);
         }
       } finally {
         if (isMounted) setIsLoading(false);
@@ -430,7 +355,7 @@ export function SoapCategoryPage() {
     }
   ];
 
-// Cart Interactions (for micro-interaction feedback)
+  // Cart Interactions (for micro-interaction feedback)
   const [cartState, setCartState] = useState<Record<string, boolean>>({});
 
   const { addToCart } = useCart();
