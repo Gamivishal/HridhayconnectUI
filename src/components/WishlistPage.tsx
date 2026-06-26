@@ -127,11 +127,11 @@ export function WishlistPage() {
                       <Heart className="w-5 h-5 text-red-500 fill-red-500 group-hover/btn:scale-110 transition-transform" />
                     </button>
 
-                    <div className="w-full aspect-square rounded-[16px] overflow-hidden bg-[var(--color-cream)] relative mb-4">
+                    <div className="w-full aspect-square rounded-[16px] overflow-hidden bg-[var(--color-beige)]/20 relative mb-4">
                       <img 
                         src={`https://hridhayconnectreact.bsite.net${item.ImagePath}`} 
                         alt={typeof item.ProductName === 'string' ? item.ProductName : 'Product'}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = '/placeholder.png'; // fallback if image fails
                         }}

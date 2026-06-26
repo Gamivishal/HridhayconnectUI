@@ -39,12 +39,12 @@ export function Ingredients() {
     <section ref={ref} className="relative py-16 md:py-24 px-6 md:px-12 max-w-[1600px] mx-auto overflow-hidden">
       {/* Background Soft Blobs */}
       <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
-         <motion.div style={{ y: y1 }} className="absolute top-[20%] left-[-10%] w-[50vw] aspect-square bg-[var(--color-secondary)]/5 rounded-full blur-[100px]" />
-         <motion.div style={{ y: y2 }} className="absolute bottom-[20%] right-[-10%] w-[40vw] aspect-square bg-[var(--color-accent)]/5 rounded-full blur-[120px]" />
+        <motion.div style={{ y: y1 }} className="absolute top-[20%] left-[-10%] w-[50vw] aspect-square bg-[var(--color-secondary)]/5 rounded-full blur-[100px]" />
+        <motion.div style={{ y: y2 }} className="absolute bottom-[20%] right-[-10%] w-[40vw] aspect-square bg-[var(--color-accent)]/5 rounded-full blur-[120px]" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-        
+
         {/* Left Side: Editorial Typography & Features */}
         <div className="flex flex-col relative z-10">
           <motion.div
@@ -88,27 +88,31 @@ export function Ingredients() {
 
         {/* Right Side: Floating Composition */}
         <div className="relative h-[60vh] md:h-[80vh] w-full flex items-center justify-center">
-            <motion.div 
-              style={{ y: y1 }}
-              className="absolute z-20 w-[60%] aspect-[3/4] right-[0%] top-[10%] rounded-t-[10rem] rounded-b-[2rem] overflow-hidden border border-white/50 shadow-2xl backdrop-blur-sm"
-            >
-              <img 
-                src="/HomePageimage/LargeNeem.png" 
-                alt="Botanical extracts" 
-                className="w-full h-full object-cover scale-110"
-              />
-            </motion.div>
+          <motion.div
+            style={{ y: y1 }}
+            className="absolute z-20 w-[60%] aspect-[3/4] right-[0%] top-[10%] rounded-t-[10rem] rounded-b-[2rem] overflow-hidden border border-white/50 shadow-2xl backdrop-blur-sm"
+          >
+            <img
+              src="/HomePageimage/LargeNeem.png"
+              alt="Botanical extracts"
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover scale-110"
+            />
+          </motion.div>
 
-            <motion.div 
-              style={{ y: y2 }}
-              className="absolute z-30 w-[45%] aspect-square left-[5%] bottom-[15%] rounded-full overflow-hidden border-8 border-[var(--color-background)] shadow-2xl"
-            >
-              <img 
-                src="/HomePageimage/TeaIngredientscircle.png" 
-                alt="Texture" 
-                className="w-full h-full object-cover mix-blend-overlay opacity-80"
-              />
-            </motion.div>
+          <motion.div
+            style={{ y: y2 }}
+            className="absolute z-30 w-[45%] aspect-square left-[5%] bottom-[15%] rounded-full overflow-hidden border-8 border-[var(--color-background)] shadow-2xl"
+          >
+            <img
+              src="/HomePageimage/TeaIngredientscircle.png"
+              alt="Texture"
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover mix-blend-overlay opacity-80"
+            />
+          </motion.div>
         </div>
 
       </div>

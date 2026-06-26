@@ -36,7 +36,7 @@ function CollectionProductCard({ p, i }: CollectionProductCardProps) {
         else if (i === 2) window.location.hash = "#product-plum-essence-toner";
       }}
     >
-      <motion.div style={{ y: i === 1 ? (typeof window !== 'undefined' && window.innerWidth < 768 ? 0 : y) : 0 }} className="w-full aspect-[3/4] bg-[var(--color-beige)] rounded-[2rem] overflow-hidden mb-8 relative shadow-lg shadow-[var(--color-dark-text)]/5 hover:shadow-2xl hover:shadow-[var(--color-primary)]/20 transition-shadow duration-[1s]">
+      <motion.div style={{ y: i === 1 ? (typeof window !== 'undefined' && window.innerWidth < 768 ? 0 : y) : 0 }} className="w-full aspect-square bg-[var(--color-beige)]/40 rounded-[2rem] overflow-hidden mb-8 relative shadow-lg shadow-[var(--color-dark-text)]/5 hover:shadow-2xl hover:shadow-[var(--color-primary)]/20 transition-shadow duration-[1s]">
         <img 
           src={p.img} 
           alt={p.name} 

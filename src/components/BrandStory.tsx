@@ -37,7 +37,7 @@ export function BrandStory() {
             Every ingredient is ethically harvested, ensuring we give back to the earth as much as we receive. This is more than skincare—it's a daily ritual of reverence.
           </p>
           <div className="flex items-center gap-6">
-            <img src="/Image/CEO.jpg" className="w-20 h-20 rounded-full object-cover grayscale opacity-90 border-[3px] border-[var(--color-beige)]" alt="Founder Portrait" />
+            <img src="/Image/CEO.jpg" className="w-20 h-20 rounded-full object-cover grayscale opacity-90 border-[3px] border-[var(--color-beige)]" alt="Founder Portrait" loading="lazy" decoding="async" />
             <div>
               <p className="font-serif text-2xl text-[var(--color-dark-text)]">Ashish Shah</p>
               <p className="text-xs font-medium tracking-[0.2em] uppercase text-[var(--color-primary)] mt-1">Founding Director</p>
@@ -58,6 +58,8 @@ export function BrandStory() {
               style={{ y: imgY, scale: 1.2 }}
               src="/HomePageimage/Ayurvedic.png"
               alt="Botanical setup"
+              loading="lazy"
+              decoding="async"
               className="absolute inset-0 w-full h-full object-cover"
             />
             {/* Soft inner glow gradient */}
@@ -74,6 +76,8 @@ export function BrandStory() {
             <img
               src="/Instagram/MangoSlice.webp"
               alt="Lavender field texture"
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover mix-blend-luminosity brightness-90 saturate-50 hover:mix-blend-normal transition-all duration-700"
             />
           </motion.div>

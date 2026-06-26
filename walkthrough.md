@@ -1,52 +1,35 @@
-# Walkthrough - Updates & Integration
+# Walkthrough - Mobile "My Account" Redesign (Flipkart/Amazon/Myntra Style)
 
-## 1. Infinite Autoplay Carousel for Home Sections
+Successfully redesigned the mobile view of the "My Account" page to hide the desktop navigation sidebar and replace it with a premium, sliding left drawer navigation panel.
 
-I have updated the homepage product lists (New Arrivals and Best Sellers via `SectionCarousel.tsx`) to use the infinite-scroll autoplaying slider structure matching `CategoryCarousel.tsx`.
+## Changes Made
 
-### Changes Made
-- **[SectionCarousel.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/SectionCarousel.tsx)**:
-  - Replaced the static grid layout with a `framer-motion` container (`motion.div`) using a custom animation controller (`useAnimation`).
-  - Added dynamic resizing logic for card counts (`itemsPerView` dynamic state).
-  - Array duplication logic (duplicating 5 times) to ensure smooth infinite loop wraps.
-  - Setup hover pauses and drag support.
-  - Added back manual arrow click handlers.
+### Profile Page
 
----
-
-## 2. New Static Instagram Section
-
-I have created and placed a premium, responsive static Instagram Section at the bottom of the Home Page, immediately above the Footer.
-
-### Changes Made
-- **[InstagramSection.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/InstagramSection.tsx)**:
-  - Created a static component containing the 4 specified posts with their respective local images under `/Instagram/` and exact redirection URLs.
-  - Integrated an Instagram icon near the main heading.
-  - Styled with Hridhay Connect's brand colors and typography.
-  - Applied rounded corners (`rounded-3xl`), smooth shadow transitions, and hover scale animations (`group-hover:scale-110`).
-  - Designed a premium hover overlay displaying a white blur and the Instagram icon.
-  - Responsive configuration:
-    - **Desktop**: 4 columns in a single row
-    - **Tablet**: 2 columns (2 per row)
-    - **Mobile**: 2 columns (2 per row)
-  - Added a centered primary call-to-action button linking directly to `https://www.instagram.com/hridhayconnect/`.
-- **[App.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/App.tsx)**:
-  - Imported and placed the `InstagramSection` immediately above the `Footer` on the Home Page.
+#### [ProfilePage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ProfilePage.tsx)
+- **Imports & State**:
+  - Imported `Heart` and `Menu` icons from `lucide-react`.
+  - Added `isDrawerOpen` state to handle opening and closing of the mobile navigation drawer.
+  - Added a reusable `handleLogout` utility function to log the user out and clean local cache items.
+- **Hamburger Button**:
+  - Implemented a hamburger menu icon (visible only on mobile screen sizes, `lg:hidden`) right beside the "My Account" header to toggle the drawer state.
+- **Left-Side Sliding Drawer (Mobile only)**:
+  - Constructed a sliding menu drawer using Framer Motion (`AnimatePresence` and `motion.div`).
+  - Added a dark backdrop overlay (`bg-black/40 backdrop-blur-sm`) that closes the drawer when tapped.
+  - Set the drawer panel width to `w-[80%]` (max-width `320px`) and enabled independent scroll (`overflow-y-auto`).
+  - **Drawer Top Area**: Large circular profile avatar showcasing the user's first letter, Customer Name, Welcome Back message, Reward Coins, and Total Orders count.
+  - **Drawer Navigation List**: Rendered menu items (Profile Details, Order History, Addresses, Wishlist, Rewards, Notifications, Change Password, Logout) matching the exact specs:
+    - 56px height
+    - 18px text size
+    - Modern outline icon
+    - Soft hover background states
+    - Active item indicator (purple background, white text/icon, and left vertical white bar).
+- **Layout Toggles**:
+  - Hid the traditional vertical sidebar on mobile screens (`hidden lg:block`), leaving only the primary welcome and profile card content sections visible.
 
 ---
 
-## How to Verify
+## Verification Results
 
-1. **Start the local server**:
-   ```bash
-   npm run dev
-   ```
-2. **Verify Instagram Section**:
-   - Scroll down to the bottom of the Home Page, right before the Footer.
-   - Confirm that the Instagram section is present with the title: **Follow Us On Instagram**.
-   - Check the layout on different screen sizes:
-     - On desktop, you should see 4 images in a single row.
-     - On tablet/mobile, you should see 2 images per row.
-   - Hover over any image to verify the smooth zoom-in scale and the Instagram overlay icon.
-   - Click an image to verify it opens the corresponding Instagram post in a new tab.
-   - Click the **Follow @hridhayconnect** CTA button to verify it successfully redirects to the Instagram profile page.
+- Verified layout compilation and states inside [ProfilePage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ProfilePage.tsx).
+- Confirmed type declarations for icons and state variables match expectations.

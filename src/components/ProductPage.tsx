@@ -336,6 +336,9 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                 <img
                   src={(currentProduct.images || [])[activeImageIdx] || currentProduct.img || "/Image/Noimage.jpg"}
                   alt={currentProduct.name}
+                  loading="eager"
+                  decoding="sync"
+                  fetchPriority="high"
                   className="w-full h-full object-contain object-center transition-transform duration-300"
                 />
 
@@ -390,7 +393,13 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                     onClick={() => setActiveImageIdx(idx)}
                     className={`w-16 h-16 sm:w-20 sm:h-20 lg:w-full lg:h-auto lg:aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300 flex-shrink-0 ${activeImageIdx === idx ? 'border-[var(--color-primary)] scale-[1.02] shadow-sm' : 'border-black/5 hover:border-black/20 opacity-80 hover:opacity-100'}`}
                   >
-                    <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-contain" />
+                    <img
+                      src={img}
+                      alt={`Thumbnail ${idx}`}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-contain"
+                    />
                   </button>
                 ))}
               </div>
@@ -602,6 +611,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                     whileTap={quantity <= 1 ? {} : { scale: 0.9 }}
                     onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
                     disabled={quantity <= 1}
+                    aria-label="Decrease quantity"
                     className={`w-10 h-10 rounded-full flex items-center justify-center text-[var(--color-dark-text)] transition-all ${quantity <= 1 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[var(--color-primary)]/5 cursor-pointer'}`}
                   >
                     <Minus className="w-4 h-4 text-[#5B2A86]" />
@@ -613,6 +623,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                     whileTap={quantity >= (selectedVariant?.totalAvailableStock ?? currentProduct.totalAvailableStock ?? Infinity) ? {} : { scale: 0.9 }}
                     onClick={() => setQuantity(prev => Math.min(prev + 1, selectedVariant?.totalAvailableStock ?? currentProduct.totalAvailableStock ?? Infinity))}
                     disabled={quantity >= (selectedVariant?.totalAvailableStock ?? currentProduct.totalAvailableStock ?? Infinity)}
+                    aria-label="Increase quantity"
                     className={`w-10 h-10 rounded-full flex items-center justify-center text-[var(--color-dark-text)] transition-all cursor-pointer ${quantity >= (selectedVariant?.totalAvailableStock ?? currentProduct.totalAvailableStock ?? Infinity) ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[var(--color-primary)]/5'}`}
                   >
                     <Plus className="w-4 h-4 text-[#5B2A86]" />
@@ -793,7 +804,13 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                     <div key={idx} className="bg-white/40 border border-white/60 p-6 rounded-[2rem] shadow-sm flex flex-col justify-between group/card">
                       <div>
                         <div className="w-full aspect-[16/9] rounded-2xl overflow-hidden mb-6 relative">
-                          <img src={ing.img} alt={ing.name} className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-[1s]" />
+                          <img
+                            src={ing.img}
+                            alt={ing.name}
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-[1s]"
+                          />
                         </div>
                         <div className="flex items-center justify-between gap-2 mb-3">
                           <h4 className="text-lg font-serif font-medium text-black">{ing.name}</h4>
@@ -958,7 +975,13 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                 >
                   <div>
                     <div className="w-full aspect-[4/5] bg-[var(--color-beige)]/20 rounded-2xl overflow-hidden mb-5">
-                      <img src={p.images[0]} alt={p.name} className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-[1.5s]" />
+                      <img 
+                        src={p.images[0]} 
+                        alt={p.name} 
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-[1.5s]" 
+                      />
                     </div>
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-serif text-base font-semibold text-black group-hover:text-[var(--color-primary)] transition-colors line-clamp-1">{p.name}</h4>
@@ -992,7 +1015,13 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
             <div className="max-w-7xl mx-auto px-8 flex justify-between items-center w-full">
 
               <div className="flex items-center gap-3">
-                <img src={selectedVariant ? selectedVariant.imagePath : currentProduct.images[0]} alt={currentProduct.name} className="w-10 h-10 rounded-lg object-contain" />
+                <img
+                  src={selectedVariant ? selectedVariant.imagePath : currentProduct.images[0]}
+                  alt={currentProduct.name}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-10 h-10 rounded-lg object-contain"
+                />
                 <div>
                   <h4 className="text-xs font-serif font-bold text-black">
                     {selectedVariant ? `${currentProduct.name} (${selectedVariant.variantAttributeValues_Only})` : currentProduct.name}
@@ -1009,6 +1038,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                 <div className="flex items-center bg-black/5 rounded-full p-1 shadow-sm scale-90">
                   <button
                     onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
+                    aria-label="Decrease quantity"
                     className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--color-dark-text)] hover:bg-black/5 transition-all cursor-pointer"
                   >
                     <Minus className="w-2.5 h-2.5" />
@@ -1018,6 +1048,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                   </span>
                   <button
                     onClick={() => setQuantity(prev => prev + 1)}
+                    aria-label="Increase quantity"
                     className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--color-dark-text)] hover:bg-black/5 transition-all cursor-pointer"
                   >
                     <Plus className="w-2.5 h-2.5" />

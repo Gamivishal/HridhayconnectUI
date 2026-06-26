@@ -1,4 +1,4 @@
-import { ChevronDown, Sparkles, ArrowRight, ShoppingBag, User, LogOut, MapPin, Gift, Bell, X, Check, Heart } from "lucide-react";
+import { ChevronDown, Sparkles, ArrowRight, ShoppingBag, User, LogOut, MapPin, Gift, Bell, X, Check, Heart, Shield } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCart } from "../context/CartContext";
@@ -17,6 +17,7 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileCategoryOpen, setMobileCategoryOpen] = useState(false);
+  const [mobileProfileOpen, setMobileProfileOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const { cartCount, setIsCartOpen, clearCart } = useCart();
@@ -360,6 +361,21 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
             {/* Desktop Sign Up CTA or Profile Dropdown */}
             {isLoggedIn ? (
               <div className="flex items-center gap-1 md:gap-3">
+                {/* Mobile Profile Icon */}
+                <motion.a
+                  href="#profile"
+                  onClick={() => {
+                    setIsOpen(false);
+                    window.dispatchEvent(new HashChangeEvent('hashchange'));
+                  }}
+                  className="md:hidden relative flex items-center justify-center w-10 h-10 rounded-full text-[#1B1720] cursor-pointer z-10 transition-colors hover:bg-[#5B2A86]/6"
+                  aria-label="User Profile"
+                  whileTap={{ scale: 0.92 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <User className="w-[19px] h-[19px] stroke-[1.6]" />
+                </motion.a>
+
                 {/* Notification Bell */}
                 <div
                   className="relative hidden md:block"
@@ -433,7 +449,8 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                                   <button
                                     onClick={(e) => handleDeleteNotification(notif.Id, e)}
                                     className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-1.5 bg-white shadow-sm border border-neutral-100 text-neutral-400 hover:text-red-500 hover:border-red-100 rounded-lg transition-all z-10"
-                                    title="Delete"
+                                    title="Delete notification"
+                                    aria-label="Delete notification"
                                   >
                                     <X className="w-3.5 h-3.5" />
                                   </button>
@@ -765,6 +782,71 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                     Contact
                   </span>
                 </motion.a>
+
+                {/* My Profile Accordion (Mobile) */}
+                {isLoggedIn && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.28, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    className="border-b border-[#5B2A86]/6"
+                  >
+                    <button
+                      onClick={() => setMobileProfileOpen(!mobileProfileOpen)}
+                      className="flex items-center justify-between w-full py-3.5 px-1 cursor-pointer text-left"
+                    >
+                      <span className="font-serif text-base tracking-wide text-[#1B1720] font-medium flex items-center gap-2">
+                        <User className="w-[18px] h-[18px] text-[#5B2A86]" />
+                        My Profile
+                      </span>
+                      <motion.span
+                        animate={{ rotate: mobileProfileOpen ? 180 : 0 }}
+                        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                      >
+                        <ChevronDown className="w-4 h-4 text-[#5B2A86]" />
+                      </motion.span>
+                    </button>
+
+                    <AnimatePresence>
+                      {mobileProfileOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pb-4 space-y-1 pl-4 pt-1">
+                            {[
+                              { label: "Profile Details", hash: "profile", icon: User },
+                              { label: "Order History", hash: "orders", icon: ShoppingBag },
+                              { label: "Addresses", hash: "addresses", icon: MapPin },
+                              { label: "Rewards", hash: "rewards", icon: Gift },
+                              { label: "Notifications", hash: "notifications", icon: Bell },
+                              { label: "Change Password", hash: "password", icon: Shield },
+                            ].map((subItem, subIdx) => {
+                              const SubIcon = subItem.icon;
+                              return (
+                                <button
+                                  key={subIdx}
+                                  onClick={() => {
+                                    setMobileMenuOpen(false);
+                                    window.location.hash = subItem.hash;
+                                    window.dispatchEvent(new HashChangeEvent("hashchange"));
+                                  }}
+                                  className="flex items-center gap-3 w-full py-2.5 px-3 rounded-xl transition-all duration-200 hover:bg-[#5B2A86]/6 text-[#1B1720]/80 hover:text-[#5B2A86] text-xs font-semibold text-left"
+                                >
+                                  <SubIcon className="w-4 h-4 opacity-70" />
+                                  <span>{subItem.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                )}
 
                 {/* Sign Up / Login or Logout */}
                 {isLoggedIn ? (

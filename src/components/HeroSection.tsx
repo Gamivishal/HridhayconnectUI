@@ -64,6 +64,9 @@ export function HeroSection() {
           ref={videoRef}
           muted
           playsInline
+          preload="none"
+          aria-hidden="true"
+          tabIndex={-1}
           className="w-full h-full object-cover"
           style={{ opacity: 0, transition: 'opacity 0.1s linear' }}
           src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_083109_283f3553-e28f-428b-a723-d639c617eb2b.mp4"
@@ -83,7 +86,7 @@ export function HeroSection() {
         </h1>
 
         {/* Description */}
-        <p 
+        <p
           className="text-sm sm:text-base text-[#1B1720]/90 max-w-xl mt-6 leading-relaxed font-light font-satoshi animate-fade-rise-delay"
           style={{ textShadow: "0 2px 10px rgba(255, 255, 255, 0.95), 0 1px 3px rgba(255, 255, 255, 0.9)" }}
         >
@@ -91,7 +94,7 @@ export function HeroSection() {
         </p>
 
         {/* Hero CTA Button */}
-        <button 
+        <button
           onClick={() => {
             const el = document.getElementById("featured");
             if (el) {

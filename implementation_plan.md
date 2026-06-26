@@ -1,31 +1,38 @@
-# Infinite Autoplay Carousel for Home Sections (New Arrivals, Best Sellers, etc.)
+# Mobile "My Account" Redesign Plan (Flipkart/Amazon Style)
 
-Convert `SectionCarousel` to have the same infinite-autoplay carousel layout as `CategoryCarousel`.
-
-## User Review Required
-
-No critical breaking changes are expected. Visual behavior on the homepage will change from a static grid to an infinite horizontal carousel for:
-- Top Categories (Component 2)
-- New Arrivals (Component 4)
-- Best Sellers (Component 6)
+Redesign the mobile view of the "My Account" page to hide the sidebar/menu by default and replace it with a smooth left-sliding drawer, matching modern premium e-commerce UX (like Flipkart, Amazon, and Myntra).
 
 ## Proposed Changes
 
-### Component: SectionCarousel
+### Profile Page
 
-#### [MODIFY] [SectionCarousel.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/SectionCarousel.tsx)
-- Replicate `framer-motion` infinite autoplay carousel logic from [CategoryCarousel.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/CategoryCarousel.tsx).
-- Adjust item width based on `itemsPerView` (calculated responsively: >= 1024px: 4, >= 768px: 3, >= 640px: 2, else 1.5).
-- Auto slide every 3 seconds unless hovered or dragged.
-- Render both category sections and product sections in the slider seamlessly.
-- Add back manual slide navigation arrows (ChevronLeft / ChevronRight).
+#### [MODIFY] [ProfilePage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ProfilePage.tsx)
+- **Imports**: Add `Heart` and `Menu` to the icons imported from `lucide-react` on line 3.
+- **State**:
+  - Add `isDrawerOpen` (Boolean) to track mobile drawer open/close status.
+  - Define `handleLogout` to encapsulate the log out operations.
+- **Left Sliding Drawer (Mobile-only)**:
+  - Add a `<AnimatePresence>`-wrapped sidebar drawer.
+  - Show a dark blurred backdrop covering the screen, closing the drawer when tapped.
+  - Implement a `motion.div` drawer sliding from the left (`x: "-100%"` to `0`) over 300ms.
+  - **Drawer Top**: Circular profile avatar with initial letter, Customer Name, "Welcome Back", Reward Coins, and Total Orders.
+  - **Drawer Navigation**: Expose outline menu items (Profile Details, Order History, Addresses, Wishlist, Rewards, Notifications, Change Password, Logout) styled at `56px` height, `18px` text size, `16px` border-radius, and purple highlighting for active states.
+- **Header Section**:
+  - Add a hamburger `Menu` button beside the "My Account" title (visible only on mobile, `lg:hidden`).
+- **Main Page Content**:
+  - Keep the desktop sidebar visible under `lg:block`, but hide it on mobile using the `hidden lg:block` Tailwind classes.
+  - Ensure the main content section spans full width on mobile devices and renders only the Welcome Card, Personal Details, Referral Card, and Edit Profile screens without any inner menu duplication.
+
+---
 
 ## Verification Plan
 
+### Automated Tests
+- Run `npm run lint` (`tsc --noEmit`) to verify compiling safety.
+
 ### Manual Verification
-- Run the dev server using `npm run dev` and navigate to the homepage.
-- Observe "New Arrivals" and "Best Sellers" auto-sliding.
-- Verify they loop infinitely without flicker/jump when wrapping around.
-- Hover over them to confirm sliding pauses.
-- Drag them on mobile and desktop to confirm touch/swipe works.
-- Click a product/category card to ensure navigation still works if they are not dragging.
+- Render the profile page in mobile responsive simulation.
+- Verify the desktop-only vertical sidebar is hidden.
+- Click the hamburger button to trigger the drawer.
+- Test closing the drawer by clicking the close button and the blurred backdrop overlay.
+- Navigate between tabs (Profile, Orders, Addresses, etc.) and check that drawer auto-closes, page content loads, and the active menu item highlights in purple.

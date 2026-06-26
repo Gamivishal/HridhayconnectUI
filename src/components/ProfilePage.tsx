@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Mail, Phone, Shield, ArrowLeft, ShoppingBag, LogOut, Edit2, Save, X, MapPin, Gift, Ticket, Award, ChevronRight, Plus, Truck, CheckCircle2, Calendar, Sparkles, Copy, Users, Bell, Check, RefreshCw, Clock, CheckSquare, Trash2, Eye, EyeOff } from "lucide-react";
+import { User, Mail, Phone, Shield, ArrowLeft, ShoppingBag, LogOut, Edit2, Save, X, MapPin, Gift, Ticket, Award, ChevronRight, Plus, Truck, CheckCircle2, Calendar, Sparkles, Copy, Users, Bell, Check, RefreshCw, Clock, CheckSquare, Trash2, Eye, EyeOff, Heart, Menu } from "lucide-react";
 import { get, post } from "../api/BaseService";
 import { getCaseInsensitiveProperty } from "../api/productService";
 import { showApiResponseToast, showToast } from "../utils/toastService";
@@ -98,6 +98,15 @@ export const ProfilePage = () => {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("customerId");
+    localStorage.removeItem("customerProfile");
+    window.location.hash = "#home";
+    window.location.reload();
+  };
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -661,6 +670,117 @@ export const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-[var(--color-cream)] pt-32 pb-24 relative overflow-hidden">
+      {/* Left Drawer (Mobile-only) */}
+      <AnimatePresence>
+        {isDrawerOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              onClick={() => setIsDrawerOpen(false)}
+              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm lg:hidden"
+            />
+
+            {/* Sliding Drawer Panel */}
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "tween", duration: 0.3, ease: "easeOut" }}
+              className="fixed top-0 left-0 bottom-0 z-50 w-[80%] max-w-[320px] bg-white shadow-[8px_0_30px_rgba(0,0,0,0.15)] flex flex-col lg:hidden border-r border-neutral-100 overflow-hidden"
+            >
+              {/* Profile Top Header */}
+              <div className="p-6 border-b border-neutral-100 flex flex-col items-center text-center bg-neutral-50/50 relative">
+                <button
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-neutral-100 text-neutral-400 hover:text-neutral-600 transition-colors"
+                  aria-label="Close menu"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#5B2A86] to-[#A678D6] text-white text-3xl font-serif flex items-center justify-center shadow-lg shadow-[#5B2A86]/20">
+                  {profileData?.FirstName ? profileData.FirstName[0].toUpperCase() : <User className="w-10 h-10" />}
+                </div>
+
+                <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-widest mt-4">
+                  Welcome Back
+                </span>
+                <h3 className="font-serif text-xl font-light text-neutral-900 mt-1 truncate max-w-full px-2">
+                  {profileData?.FirstName} {profileData?.LastName}
+                </h3>
+
+                <div className="grid grid-cols-2 gap-4 mt-6 w-full">
+                  <div className="bg-white rounded-2xl p-3 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-neutral-100 flex flex-col items-center">
+                    <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Coins</span>
+                    <span className="text-lg font-extrabold text-[#5B2A86] mt-0.5">{profileData?.RewardCoins || 0}</span>
+                  </div>
+                  <div className="bg-white rounded-2xl p-3 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-neutral-100 flex flex-col items-center">
+                    <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Orders</span>
+                    <span className="text-lg font-extrabold text-[#5B2A86] mt-0.5">{orders.length}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Menu Navigation Items */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-1">
+                {[
+                  { id: "profile", label: "Profile Details", icon: User, hash: "#profile" },
+                  { id: "orders", label: "Order History", icon: ShoppingBag, hash: "#orders" },
+                  { id: "addresses", label: "Addresses", icon: MapPin, hash: "#addresses" },
+                  { id: "wishlist", label: "Wishlist", icon: Heart, hash: "#wishlist" },
+                  { id: "rewards", label: "Rewards", icon: Gift, hash: "#rewards" },
+                  { id: "notifications", label: "Notifications", icon: Bell, hash: "#notifications" },
+                  { id: "password", label: "Change Password", icon: Shield, hash: "#password" },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setIsDrawerOpen(false);
+                        if (item.id !== "wishlist") {
+                          setActiveTab(item.id);
+                        }
+                        window.location.hash = item.hash;
+                      }}
+                      className={`relative w-full flex items-center gap-4 px-4 h-[56px] rounded-2xl transition-all duration-200 font-satoshi font-semibold text-left ${
+                        isActive
+                          ? "bg-[#5B2A86] text-white shadow-md shadow-[#5B2A86]/20"
+                          : "text-neutral-700 hover:bg-neutral-50"
+                      }`}
+                    >
+                      {isActive && (
+                        <span className="absolute left-2 w-1.5 h-6 rounded-full bg-white" />
+                      )}
+                      <Icon className={`w-[22px] h-[22px] ${isActive ? "text-white" : "text-neutral-400"}`} />
+                      <span className="text-[18px]">{item.label}</span>
+                    </button>
+                  );
+                })}
+
+                <div className="h-px bg-neutral-100 my-4" />
+
+                <button
+                  onClick={() => {
+                    setIsDrawerOpen(false);
+                    handleLogout();
+                  }}
+                  className="w-full flex items-center gap-4 px-4 h-[56px] rounded-2xl text-red-600 hover:bg-red-50 transition-all duration-200 font-satoshi font-semibold text-left"
+                >
+                  <LogOut className="w-[22px] h-[22px] text-red-400" />
+                  <span className="text-[18px]">Log Out</span>
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Background decoration for glassmorphism context */}
       <div className="absolute top-40 -left-20 w-72 h-72 bg-[var(--color-primary)] rounded-full mix-blend-multiply filter blur-[128px] opacity-20 pointer-events-none"></div>
       <div className="absolute top-80 -right-20 w-96 h-96 bg-[var(--color-accent)] rounded-full mix-blend-multiply filter blur-[128px] opacity-20 pointer-events-none"></div>
@@ -673,9 +793,18 @@ export const ProfilePage = () => {
             <a href="#home" className="inline-flex items-center gap-2 text-[var(--color-primary)] hover:opacity-80 transition-opacity text-sm font-medium mb-4">
               <ArrowLeft className="w-4 h-4" /> Back to Home
             </a>
-            <h1 className="text-4xl md:text-5xl font-serif font-light text-neutral-900 tracking-tight">
-              My Account
-            </h1>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsDrawerOpen(true)}
+                className="lg:hidden p-2 -ml-2 rounded-xl text-neutral-600 hover:bg-neutral-100 transition-colors"
+                aria-label="Open Account Menu"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              <h1 className="text-3xl md:text-5xl font-serif font-light text-neutral-900 tracking-tight">
+                My Account
+              </h1>
+            </div>
             <p className="text-neutral-500 mt-2 font-satoshi text-base">
               Manage your personal information, orders, and preferences.
             </p>
@@ -686,7 +815,7 @@ export const ProfilePage = () => {
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
 
           {/* Sidebar Navigation */}
-          <div className="w-full lg:w-72 shrink-0">
+          <div className="hidden lg:block w-72 shrink-0">
             <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 p-4 lg:sticky lg:top-32">
               <nav className="flex flex-col gap-2">
                 {navItems.map((item) => {
@@ -716,13 +845,7 @@ export const ProfilePage = () => {
                 <div className="h-px bg-neutral-100 my-2"></div>
 
                 <button
-                  onClick={() => {
-                    localStorage.removeItem("authToken");
-                    localStorage.removeItem("customerId");
-                    localStorage.removeItem("customerProfile");
-                    window.location.hash = "#home";
-                    window.location.reload();
-                  }}
+                  onClick={handleLogout}
                   className="flex items-center gap-4 w-full px-5 py-4 rounded-2xl text-red-600 hover:bg-red-50/80 transition-all duration-300 group"
                 >
                   <LogOut className="w-5 h-5 text-red-400 group-hover:text-red-600 transition-colors" />

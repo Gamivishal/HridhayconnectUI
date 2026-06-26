@@ -122,6 +122,16 @@ export function resolveImageUrl(rawPath: string | undefined | null): string {
       return pathStr;
     } else {
       const cleanPath = pathStr.replace(/\\/g, "/").replace(/^\/+/, "");
+      
+      // If it's a local static asset folder, keep it relative to the frontend host
+      if (
+        cleanPath.startsWith("Image/") ||
+        cleanPath.startsWith("HomePageimage/") ||
+        cleanPath.startsWith("Instagram/")
+      ) {
+        return `/${cleanPath}`;
+      }
+      
       return `https://hridhayconnectreact.bsite.net/${cleanPath}`;
     }
   }

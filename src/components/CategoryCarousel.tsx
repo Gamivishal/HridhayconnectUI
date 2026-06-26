@@ -181,11 +181,13 @@ export function CategoryCarousel() {
                     }
                   }}
                 >
-                  <div className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-[var(--color-primary)]/10 transition-all duration-700 relative aspect-[4/5] mb-5">
+                  <div className="bg-[var(--color-beige)]/40 rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-[var(--color-primary)]/10 transition-all duration-700 relative aspect-square mb-5">
                     <img
                       src={product.images[0]}
                       alt={product.name}
-                      className="w-full h-full object-contain transition-transform duration-[1.5s] group-hover:scale-110"
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
@@ -229,6 +231,7 @@ export function CategoryCarousel() {
                         e.stopPropagation();
                         addToCart(product, 1, product.category === 'mukhwas' ? 'Pouch' : undefined);
                       }}
+                      aria-label={`Add ${product.name} to cart`}
                       className="absolute bottom-5 right-5 z-20 bg-white/95 backdrop-blur-md p-3.5 rounded-full shadow-xl opacity-0 group-hover:opacity-100 translate-y-6 group-hover:translate-y-0 transition-all duration-500 hover:bg-[var(--color-primary)] hover:text-white text-[var(--color-dark-text)]"
                     >
                       <ShoppingBag className="w-5 h-5" />
@@ -260,12 +263,14 @@ export function CategoryCarousel() {
           <>
             <button
               onClick={() => setCurrentIndex(prev => prev - 1)}
+              aria-label="Previous slide"
               className="absolute -left-2 md:-left-6 top-[40%] -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-white/90 backdrop-blur-md rounded-full shadow-xl flex items-center justify-center text-[var(--color-dark-text)] hover:text-white hover:bg-[var(--color-primary)] hover:scale-110 transition-all z-30 opacity-0 group-hover/carousel:opacity-100 -translate-x-4 group-hover/carousel:translate-x-0"
             >
               <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
             </button>
             <button
               onClick={() => setCurrentIndex(prev => prev + 1)}
+              aria-label="Next slide"
               className="absolute -right-2 md:-right-6 top-[40%] -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-white/90 backdrop-blur-md rounded-full shadow-xl flex items-center justify-center text-[var(--color-dark-text)] hover:text-white hover:bg-[var(--color-primary)] hover:scale-110 transition-all z-30 opacity-0 group-hover/carousel:opacity-100 translate-x-4 group-hover/carousel:translate-x-0"
             >
               <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />

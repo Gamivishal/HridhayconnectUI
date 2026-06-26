@@ -34,7 +34,7 @@ export function Footer() {
              {/* <a href="#" className="text-2xl font-serif font-medium tracking-tight mb-6 block hover:opacity-80 transition-opacity">
                Hridhay<span className="italic text-[var(--color-accent)]">Connect</span>
              </a> */}
-             <a href="#" className="block hover:opacity-80 transition-opacity mb-6">
+             <a href="#" aria-label="Hridhay Connect Home" className="block hover:opacity-80 transition-opacity mb-6">
                <img src="/logo.webp" alt="HridhayConnect Logo" className="h-12 w-auto" />
              </a>
             <p className="text-sm text-[var(--color-cream)]/50 font-light">

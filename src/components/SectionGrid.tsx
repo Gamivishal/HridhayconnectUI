@@ -28,13 +28,13 @@ export function SectionGrid({ section }: { section: HomeSection }) {
               className="group cursor-pointer"
               onClick={() => window.location.hash = `#product-${product.id}`}
             >
-              <div className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-[var(--color-primary)]/10 transition-all duration-700 relative aspect-[4/5] mb-5">
+              <div className="bg-[var(--color-beige)]/40 rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-[var(--color-primary)]/10 transition-all duration-700 relative aspect-square mb-5">
                 <img
                   src={product.images[0]}
                   alt={product.name}
                   loading="lazy"
                   decoding="async"
-                  className="w-full h-full object-contain transition-transform duration-[1.5s] group-hover:scale-110"
+                  className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
