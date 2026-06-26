@@ -55,8 +55,8 @@ export function AboutPage() {
               Crafted for the <br /> <span className="italic font-normal text-[var(--color-primary)]">mindful,</span> nurtured by the earth.
             </motion.h2>
             <motion.div variants={fadeUpItem} className="space-y-6 text-base md:text-lg text-[var(--color-dark-text)]/75 font-light leading-relaxed max-w-xl font-satoshi">
-              <p>At Hridhay Connect, we believe that true luxury lies in absolute purity. Our formulations seamlessly blend ancient holistic traditions with modern, meticulous botanical science.</p>
-              <p>Every botanical active is ethically sourced, ensuring we respect and replenish the earth just as much as we receive. This is more than skincare—it is a daily ritual of reverence, designed to awaken your skin's natural radiance.</p>
+              <p className="text-justify">At Hridhay Connect, we believe that true luxury lies in absolute purity. Our formulations seamlessly blend ancient holistic traditions with modern, meticulous botanical science.</p>
+              <p className="text-justify">Every botanical active is ethically sourced, ensuring we respect and replenish the earth just as much as we receive. This is more than skincare—it is a daily ritual of reverence, designed to awaken your skin's natural radiance.</p>
             </motion.div>
           </motion.div>
 
@@ -150,7 +150,7 @@ export function AboutPage() {
               <motion.h2 variants={fadeUpItem} className="text-4xl sm:text-5xl md:text-6xl font-serif text-black leading-tight mb-8 font-light tracking-tight font-clash">
                 Purity as the <br /> <span className="italic font-normal text-[var(--color-primary)]">Only Standard.</span>
               </motion.h2>
-              <motion.p variants={fadeUpItem} className="text-base sm:text-lg text-[var(--color-dark-text)]/75 font-light font-satoshi leading-relaxed mb-10">
+              <motion.p variants={fadeUpItem} className="text-base sm:text-lg text-[var(--color-dark-text)]/75 font-light font-satoshi leading-relaxed mb-10 text-justify">
                 We believe that cosmetic formulas should never compromise the health of your body. Our products are crafted using pure, raw plant nectars, completely omitting chemical fillers, silicones, sulfates, or artificial fragrances.
               </motion.p>
 
@@ -228,7 +228,7 @@ export function AboutPage() {
               <motion.h2 variants={fadeUpItem} className="text-4xl sm:text-5xl md:text-6xl font-serif text-black leading-tight mb-8 font-light tracking-tight font-clash">
                 Elevating Daily <br /> <span className="italic font-normal text-[var(--color-primary)]">Rituals Into Art.</span>
               </motion.h2>
-              <motion.p variants={fadeUpItem} className="text-base md:text-lg text-[var(--color-dark-text)]/75 font-light font-satoshi leading-relaxed mb-6">
+              <motion.p variants={fadeUpItem} className="text-base md:text-lg text-[var(--color-dark-text)]/75 font-light font-satoshi leading-relaxed mb-6 text-justify">
                 Skincare is not merely a task; it is the ultimate expression of kindness to yourself. In a loud and busy world, Hridhay Connect offers a calm space—a simple, slow, and completely organic experience that nurtures both your physical skin and your inner peace.
               </motion.p>
             </motion.div>
@@ -267,7 +267,7 @@ export function AboutPage() {
                 <div className="pl-12 md:pl-0 md:w-1/2 md:pr-16 md:text-right">
                   <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)] font-general">2023 • The Conception</span>
                   <h4 className="text-2xl md:text-3xl font-serif font-light text-[var(--color-dark-text)] mt-2 mb-3">Honoring Ancient Wisdom</h4>
-                  <p className="text-sm md:text-base text-[var(--color-dark-text)]/70 font-light leading-relaxed font-satoshi md:ml-auto max-w-md">
+                  <p className="text-sm md:text-base text-[var(--color-dark-text)]/70 font-light leading-relaxed font-satoshi md:ml-auto max-w-md text-justify">
                     Hridhay Connect was founded by botanical alchemists and dermatological scientists to discover pure skincare formulas using certified organic, wild-harvested raw extracts.
                   </p>
                 </div>
@@ -290,7 +290,7 @@ export function AboutPage() {
                 <div className="pl-12 md:pl-0 md:w-1/2 md:pl-16 md:text-left">
                   <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)] font-general">2024 • Organic Audits</span>
                   <h4 className="text-2xl md:text-3xl font-serif font-light text-[var(--color-dark-text)] mt-2 mb-3">Achieving Cruelty-Free Status</h4>
-                  <p className="text-sm md:text-base text-[var(--color-dark-text)]/70 font-light leading-relaxed font-satoshi md:mr-auto max-w-md">
+                  <p className="text-sm md:text-base text-[var(--color-dark-text)]/70 font-light leading-relaxed font-satoshi md:mr-auto max-w-md text-justify">
                     We built our extraction lab and secured rigorous certifications, proving that zero synthetic fillers or chemical additives are ever present in our product list.
                   </p>
                 </div>
@@ -313,7 +313,7 @@ export function AboutPage() {
                 <div className="pl-12 md:pl-0 md:w-1/2 md:pr-16 md:text-right">
                   <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)] font-general">2025 • National Launch</span>
                   <h4 className="text-2xl md:text-3xl font-serif font-light text-[var(--color-dark-text)] mt-2 mb-3">Pioneering Organic Wellness</h4>
-                  <p className="text-sm md:text-base text-[var(--color-dark-text)]/70 font-light leading-relaxed font-satoshi md:ml-auto max-w-md">
+                  <p className="text-sm md:text-base text-[var(--color-dark-text)]/70 font-light leading-relaxed font-satoshi md:ml-auto max-w-md text-justify">
                     Officially launched Hridhay Connect website, delivering our signature serums to thousands of customers looking to restore harmony and natural skin radiance.
                   </p>
                 </div>
@@ -336,7 +336,7 @@ export function AboutPage() {
                 <div className="pl-12 md:pl-0 md:w-1/2 md:pl-16 md:text-left">
                   <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)] font-general">2026 • Global Evolution</span>
                   <h4 className="text-2xl md:text-3xl font-serif font-light text-[var(--color-dark-text)] mt-2 mb-3">Expanding to Deep Skincare Devotion</h4>
-                  <p className="text-sm md:text-base text-[var(--color-dark-text)]/70 font-light leading-relaxed font-satoshi md:mr-auto max-w-md">
+                  <p className="text-sm md:text-base text-[var(--color-dark-text)]/70 font-light leading-relaxed font-satoshi md:mr-auto max-w-md text-justify">
                     Unveiling new high-potency toners and masks, continuing our commitment to sustainable packaging, clean trade, and luxury wellness.
                   </p>
                 </div>

@@ -805,7 +805,7 @@ export const ProfilePage = () => {
                 My Account
               </h1>
             </div>
-            <p className="text-neutral-500 mt-2 font-satoshi text-base">
+            <p className="text-neutral-500 mt-2 font-satoshi text-base text-justify">
               Manage your personal information, orders, and preferences.
             </p>
           </motion.div>
@@ -1038,7 +1038,7 @@ export const ProfilePage = () => {
                                 <p className="text-neutral-900 font-serif text-2xl tracking-tight">
                                   {profileData.ReferralCode}
                                 </p>
-                                <p className="text-xs text-neutral-500 mt-1 font-satoshi">Share this link with your friends to earn rewards when they sign up!</p>
+                                <p className="text-xs text-neutral-500 mt-1 font-satoshi text-justify">Share this link with your friends to earn rewards when they sign up!</p>
                               </div>
                               <button
                                 onClick={() => {
@@ -1913,7 +1913,7 @@ export const ProfilePage = () => {
                               <p className="text-neutral-900 font-serif text-3xl tracking-tight">
                                 {profileData.ReferralCode}
                               </p>
-                              <p className="text-sm text-neutral-500 mt-2 font-satoshi">Share this link with your friends to earn <strong className="text-[var(--color-primary)]">{rewardSettings?.ReferralCoins || 0} 🪙</strong> when they sign up!</p>
+                              <p className="text-sm text-neutral-500 mt-2 font-satoshi text-justify">Share this link with your friends to earn <strong className="text-[var(--color-primary)]">{rewardSettings?.ReferralCoins || 0} 🪙</strong> when they sign up!</p>
                             </div>
                             <button
                               onClick={() => {

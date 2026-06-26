@@ -47,7 +47,7 @@ export function Testimonials() {
                 <Star key={j} className="w-4 h-4 fill-[var(--color-secondary)] text-[var(--color-secondary)]" />
               ))}
             </div>
-            <p className="text-lg text-[var(--color-dark-text)]/80 leading-relaxed font-light mb-8">
+            <p className="text-lg text-[var(--color-dark-text)]/80 leading-relaxed font-light mb-8 text-justify">
               "{r.txt}"
             </p>
             <div className="mt-auto">

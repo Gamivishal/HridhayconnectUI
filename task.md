@@ -7,6 +7,15 @@
   - [x] Render hamburger button beside heading on mobile screens
   - [x] Implement Framer Motion Left Drawer for mobile users (including header & menu items list)
   - [x] Hide vertical sidebar on mobile screen size (`hidden lg:block`)
+- [x] Paragraph Text Justification
+  - [x] Justify BrandStory paragraphs in `BrandStory.tsx`
+  - [x] Justify Ingredients paragraph in `Ingredients.tsx`
+  - [x] Justify WellnessExperience paragraph in `WellnessExperience.tsx`
+  - [x] Justify AboutPage paragraphs (Origin, Formulation, Living Devotion) in `AboutPage.tsx`
+  - [x] Justify ContactPage paragraph in `ContactPage.tsx`
+  - [x] Justify Footer address in `Footer.tsx`
+  - [x] Justify Timeline of Growth milestone paragraphs in `AboutPage.tsx`
+  - [x] Justify Testimonial text paragraphs in `Testimonials.tsx`
 - [x] Verification
   - [x] Review TypeScript compiling safety
   - [x] Verify functionality

@@ -1,35 +1,34 @@
-# Walkthrough - Mobile "My Account" Redesign (Flipkart/Amazon/Myntra Style)
+# Walkthrough - Mobile "My Account" Redesign & Paragraph Justification
 
-Successfully redesigned the mobile view of the "My Account" page to hide the desktop navigation sidebar and replace it with a premium, sliding left drawer navigation panel.
+Successfully completed the mobile view redesign of the "My Account" page and applied text justification to key editorial paragraphs across the application.
 
 ## Changes Made
 
-### Profile Page
+### Mobile "My Account" Redesign
+- Redesigned [ProfilePage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ProfilePage.tsx) to hide the sidebar menu on mobile layouts (`hidden lg:block`).
+- Integrated a custom sliding drawer menu triggered via a hamburger button beside the "My Account" title on mobile view.
+- Added a dark backdrop blur backdrop overlay (`bg-black/40 backdrop-blur-sm`) which collapses the drawer when tapped.
+- Exposed high-fidelity outline navigation items (Profile Details, Order History, Addresses, Wishlist, Rewards, Notifications, Change Password, and Logout) inside the mobile drawer.
+- Structured drawer headers to showcase profile avatar, customer name, Welcome Back text, Reward Coins, and Total Orders count.
 
-#### [ProfilePage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ProfilePage.tsx)
-- **Imports & State**:
-  - Imported `Heart` and `Menu` icons from `lucide-react`.
-  - Added `isDrawerOpen` state to handle opening and closing of the mobile navigation drawer.
-  - Added a reusable `handleLogout` utility function to log the user out and clean local cache items.
-- **Hamburger Button**:
-  - Implemented a hamburger menu icon (visible only on mobile screen sizes, `lg:hidden`) right beside the "My Account" header to toggle the drawer state.
-- **Left-Side Sliding Drawer (Mobile only)**:
-  - Constructed a sliding menu drawer using Framer Motion (`AnimatePresence` and `motion.div`).
-  - Added a dark backdrop overlay (`bg-black/40 backdrop-blur-sm`) that closes the drawer when tapped.
-  - Set the drawer panel width to `w-[80%]` (max-width `320px`) and enabled independent scroll (`overflow-y-auto`).
-  - **Drawer Top Area**: Large circular profile avatar showcasing the user's first letter, Customer Name, Welcome Back message, Reward Coins, and Total Orders count.
-  - **Drawer Navigation List**: Rendered menu items (Profile Details, Order History, Addresses, Wishlist, Rewards, Notifications, Change Password, Logout) matching the exact specs:
-    - 56px height
-    - 18px text size
-    - Modern outline icon
-    - Soft hover background states
-    - Active item indicator (purple background, white text/icon, and left vertical white bar).
-- **Layout Toggles**:
-  - Hid the traditional vertical sidebar on mobile screens (`hidden lg:block`), leaving only the primary welcome and profile card content sections visible.
+### Paragraph Text Justification
+Implemented the `text-justify` layout class for descriptive, multi-line typography blocks inside:
+1. **Home Page**:
+   - Both philosophy paragraphs inside [BrandStory.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/BrandStory.tsx) to align left and right borders evenly.
+   - Ingredient alchemy paragraph inside [Ingredients.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/Ingredients.tsx).
+   - Routine ritual transformation paragraph inside [WellnessExperience.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/WellnessExperience.tsx).
+   - Testimonial feedback paragraphs in the "Words from our Community" section inside [Testimonials.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/Testimonials.tsx).
+2. **About Page** ([AboutPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/AboutPage.tsx)):
+   - Immersive Origin text blocks.
+   - Purity formulation text block in "The Formulation" section.
+   - Mindful self-care text block in "The Living Devotion" section.
+   - Milestone description text blocks (2023, 2024, 2025, 2026 milestones) in the "Timeline of Growth" section.
+3. **Contact Page** ([ContactPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ContactPage.tsx)):
+   - Help / assistance introductory text.
+4. **Footer** ([Footer.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/Footer.tsx)):
+   - Studio physical address text.
 
 ---
 
 ## Verification Results
-
-- Verified layout compilation and states inside [ProfilePage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ProfilePage.tsx).
-- Confirmed type declarations for icons and state variables match expectations.
+- All files verified for proper import syntax and formatting structure.

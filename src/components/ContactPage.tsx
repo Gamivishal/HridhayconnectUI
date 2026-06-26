@@ -60,7 +60,7 @@ export function ContactPage() {
               We are here to <span className="italic text-[var(--color-primary)]">assist you.</span>
             </motion.h2>
             
-            <motion.p variants={fadeUpItem} className="text-base text-[var(--color-dark-text)]/70 font-light font-satoshi mb-12 leading-relaxed">
+            <motion.p variants={fadeUpItem} className="text-base text-[var(--color-dark-text)]/70 font-light font-satoshi mb-12 leading-relaxed text-justify">
               Whether you have a question about our botanical ingredients, need assistance with your order, or simply want skincare advice, our dedicated team is always ready to help.
             </motion.p>
 

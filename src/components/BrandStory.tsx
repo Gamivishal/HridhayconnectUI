@@ -30,10 +30,10 @@ export function BrandStory() {
             Crafted for the <br /> mindful, nurtured <br />
             by <span className="text-[var(--color-primary)] italic font-medium">nature.</span>
           </h2>
-          <p className="text-lg md:text-xl text-[var(--color-dark-text)]/70 font-light leading-relaxed mb-8 max-w-lg">
+          <p className="text-lg md:text-xl text-[var(--color-dark-text)]/70 font-light leading-relaxed mb-8 max-w-lg text-justify">
             At Hridhay Connect, we believe that true luxury lies in absolute purity. Our formulations seamlessly blend ancient holistic traditions with modern meticulous botanical science.
           </p>
-          <p className="text-lg md:text-xl text-[var(--color-dark-text)]/70 font-light leading-relaxed mb-12 max-w-lg">
+          <p className="text-lg md:text-xl text-[var(--color-dark-text)]/70 font-light leading-relaxed mb-12 max-w-lg text-justify">
             Every ingredient is ethically harvested, ensuring we give back to the earth as much as we receive. This is more than skincare—it's a daily ritual of reverence.
           </p>
           <div className="flex items-center gap-6">

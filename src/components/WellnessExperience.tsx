@@ -48,7 +48,7 @@ export function WellnessExperience() {
             More than skincare. <br />
             An invitation to <span className="text-[var(--color-primary)] italic font-medium">pause.</span>
           </h2>
-          <p className="text-lg md:text-xl text-[var(--color-dark-text)]/70 font-light leading-relaxed mb-12 max-w-lg">
+          <p className="text-lg md:text-xl text-[var(--color-dark-text)]/70 font-light leading-relaxed mb-12 max-w-lg text-justify">
             Transform your daily routine into a moment of mindful connection. Our textures and botanical aromas are designed to ease the mind as they repair the skin.
           </p>
 

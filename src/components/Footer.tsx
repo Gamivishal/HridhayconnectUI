@@ -78,7 +78,7 @@ export function Footer() {
               </li>
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-[var(--color-accent)] shrink-0 mt-0.5" />
-                <span className="text-[var(--color-cream)]/70 text-sm font-light leading-relaxed">
+                <span className="text-[var(--color-cream)]/70 text-sm font-light leading-relaxed text-justify block">
                   303, APM Mall Complex, Near Bharat Petrol Pump, Sattadhar Cross Road, Ghatlodiya Ahmedabad 380061, Gujarat, India
                 </span>
               </li>

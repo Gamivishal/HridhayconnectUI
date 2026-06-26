@@ -61,7 +61,7 @@ export function Ingredients() {
               Purity in <br />
               <span className="italic text-[var(--color-primary)]">Every Element.</span>
             </h2>
-            <p className="text-lg md:text-xl text-[var(--color-dark-text)]/70 font-light max-w-lg leading-relaxed mb-16">
+            <p className="text-lg md:text-xl text-[var(--color-dark-text)]/70 font-light max-w-lg leading-relaxed mb-16 text-justify">
               We meticulously select ingredients that harmonize with your body's natural ecosystem. No compromises, only nature's finest extracts.
             </p>
           </motion.div>
