@@ -16,6 +16,14 @@
   - [x] Justify Footer address in `Footer.tsx`
   - [x] Justify Timeline of Growth milestone paragraphs in `AboutPage.tsx`
   - [x] Justify Testimonial text paragraphs in `Testimonials.tsx`
+- [x] Hover Product Image Alternate Feature
+  - [x] Modify `SectionGrid.tsx` to add alternate hover image
+  - [x] Modify `SoapCategoryPage.tsx` to map secondary images and render hover alternate image
+  - [x] Modify `HairOilCategoryPage.tsx` to map secondary images and render hover alternate image
+  - [x] Modify `MukhwasCategoryPage.tsx` to map secondary images and render hover alternate image
+  - [x] Modify `TeaMasalaCategoryPage.tsx` to render hover alternate image
+  - [x] Modify `HridhaySpecialCategoryPage.tsx` to render hover alternate image
+  - [x] Modify `ProductPage.tsx` to render hover alternate image in Related Products grid
 - [x] Verification
-  - [x] Review TypeScript compiling safety
-  - [x] Verify functionality
+  - [x] Run typescript checks/compilations
+  - [x] Verify functionality on UI

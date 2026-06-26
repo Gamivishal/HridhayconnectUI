@@ -1,38 +1,63 @@
-# Mobile "My Account" Redesign Plan (Flipkart/Amazon Style)
+# Hover Product Image Alternate Feature Plan
 
-Redesign the mobile view of the "My Account" page to hide the sidebar/menu by default and replace it with a smooth left-sliding drawer, matching modern premium e-commerce UX (like Flipkart, Amazon, and Myntra).
+Add a hover image effect to all product cards across product sections, category pages, and related products lists. When the cursor hovers over a product card, it should transition to the secondary product image (using `images[1]` or `images?.[1]`) with a smooth cross-fade animation.
 
 ## Proposed Changes
 
-### Profile Page
+---
 
-#### [MODIFY] [ProfilePage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ProfilePage.tsx)
-- **Imports**: Add `Heart` and `Menu` to the icons imported from `lucide-react` on line 3.
-- **State**:
-  - Add `isDrawerOpen` (Boolean) to track mobile drawer open/close status.
-  - Define `handleLogout` to encapsulate the log out operations.
-- **Left Sliding Drawer (Mobile-only)**:
-  - Add a `<AnimatePresence>`-wrapped sidebar drawer.
-  - Show a dark blurred backdrop covering the screen, closing the drawer when tapped.
-  - Implement a `motion.div` drawer sliding from the left (`x: "-100%"` to `0`) over 300ms.
-  - **Drawer Top**: Circular profile avatar with initial letter, Customer Name, "Welcome Back", Reward Coins, and Total Orders.
-  - **Drawer Navigation**: Expose outline menu items (Profile Details, Order History, Addresses, Wishlist, Rewards, Notifications, Change Password, Logout) styled at `56px` height, `18px` text size, `16px` border-radius, and purple highlighting for active states.
-- **Header Section**:
-  - Add a hamburger `Menu` button beside the "My Account" title (visible only on mobile, `lg:hidden`).
-- **Main Page Content**:
-  - Keep the desktop sidebar visible under `lg:block`, but hide it on mobile using the `hidden lg:block` Tailwind classes.
-  - Ensure the main content section spans full width on mobile devices and renders only the Welcome Card, Personal Details, Referral Card, and Edit Profile screens without any inner menu duplication.
+### Product Card Components & Pages
+
+#### [MODIFY] [SectionGrid.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/SectionGrid.tsx)
+- Inside the product item loop:
+  - Add `group-hover:opacity-0` and `transition-all duration-700 ease-out` classes to the primary image.
+  - Render the alternate image `product.images[1]` absolute overlay with `opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out` classes.
+
+#### [MODIFY] [SoapCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/SoapCategoryPage.tsx)
+- **Mapping API Data**: In `loadProducts()`, populate the `images` property in the mapped soap objects (extracting all images resolved from the API's `Images` array).
+- **Interface Update**: Add `images?: string[]` to the `SoapCardProps` `soap` object interface.
+- **Card Rendering**:
+  - Add `group-hover:opacity-0` and `transition-all duration-700 ease-out` to the primary image.
+  - Render the alternate image `soap.images?.[1]` with `opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out absolute inset-0` layout.
+
+#### [MODIFY] [HairOilCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/HairOilCategoryPage.tsx)
+- **Mapping API Data**: In `loadProducts()`, populate the `images` property in the mapped oil objects.
+- **Interface Update**: Add `images?: string[]` to the `HairOilCardProps` `oil` object interface.
+- **Card Rendering**:
+  - Add `group-hover:opacity-0` and `transition-all duration-700 ease-out` to the primary image.
+  - Render the alternate image `oil.images?.[1]` absolute overlay with `opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out`.
+
+#### [MODIFY] [MukhwasCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/MukhwasCategoryPage.tsx)
+- **Mapping API Data**: In `loadProducts()`, map `images: p.images` to the card objects.
+- **Card Rendering**:
+  - Add `group-hover:opacity-0` and `transition-all duration-700 ease-out` to the primary image.
+  - Render the alternate image `item.images?.[1]` absolute overlay with `opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out`.
+
+#### [MODIFY] [TeaMasalaCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/TeaMasalaCategoryPage.tsx)
+- **Card Rendering**:
+  - Change primary image to transition scale and opacity (`group-hover:opacity-0 transition-all duration-700 ease-out`).
+  - Render the alternate image `item.images?.[1]` absolute overlay with `opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out`.
+
+#### [MODIFY] [HridhaySpecialCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/HridhaySpecialCategoryPage.tsx)
+- **Card Rendering**:
+  - Change primary image to transition scale and opacity (`group-hover:opacity-0 transition-all duration-700 ease-out`).
+  - Render the alternate image `product.images?.[1]` absolute overlay with `opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out`.
+
+#### [MODIFY] [ProductPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ProductPage.tsx)
+- **Related Products Card Rendering**:
+  - Wrap the primary image container in a relative wrapper if needed.
+  - Change primary image to fade out on hover (`group-hover:opacity-0 transition-all duration-700 ease-out group-hover:scale-110`).
+  - Render the alternate image `p.images?.[1]` absolute overlay with `opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out`.
 
 ---
 
 ## Verification Plan
 
 ### Automated Tests
-- Run `npm run lint` (`tsc --noEmit`) to verify compiling safety.
+- Run `npm run lint` (`tsc --noEmit`) to verify TypeScript compilability and check for missing fields or type mismatches.
 
 ### Manual Verification
-- Render the profile page in mobile responsive simulation.
-- Verify the desktop-only vertical sidebar is hidden.
-- Click the hamburger button to trigger the drawer.
-- Test closing the drawer by clicking the close button and the blurred backdrop overlay.
-- Navigate between tabs (Profile, Orders, Addresses, etc.) and check that drawer auto-closes, page content loads, and the active menu item highlights in purple.
+- Verify image transition animations:
+  - Go to the Home Page and hover over items in both grid lists and carousels.
+  - Go to Soap Category, Hair Oil Category, Mukhwas Category, Tea Masala Category, and Hridhay Special Category pages. Hover over cards and observe smooth cross-fading to secondary images.
+  - Open a Product page, scroll to "Complete Your Botanical Set" (Related Products), hover over those cards, and verify they cross-fade correctly.

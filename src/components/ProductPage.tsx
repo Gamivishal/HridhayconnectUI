@@ -974,14 +974,23 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                   className="group cursor-pointer bg-white/40 border border-white/60 rounded-[2.2rem] p-5 shadow-sm hover:shadow-lg transition-all duration-500 flex flex-col justify-between"
                 >
                   <div>
-                    <div className="w-full aspect-[4/5] bg-[var(--color-beige)]/20 rounded-2xl overflow-hidden mb-5">
+                    <div className="w-full aspect-[4/5] bg-[var(--color-beige)]/20 rounded-2xl overflow-hidden mb-5 relative">
                       <img 
                         src={p.images[0]} 
                         alt={p.name} 
                         loading="lazy"
                         decoding="async"
-                        className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-[1.5s]" 
+                        className={`w-full h-full object-contain object-center transition-all duration-700 ease-out group-hover:scale-110 ${p.images?.[1] ? 'group-hover:opacity-0' : ''}`} 
                       />
+                      {p.images?.[1] && (
+                        <img 
+                          src={p.images[1]} 
+                          alt={`${p.name} alternate`} 
+                          loading="lazy"
+                          decoding="async"
+                          className="absolute inset-0 w-full h-full object-contain object-center opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out" 
+                        />
+                      )}
                     </div>
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-serif text-base font-semibold text-black group-hover:text-[var(--color-primary)] transition-colors line-clamp-1">{p.name}</h4>

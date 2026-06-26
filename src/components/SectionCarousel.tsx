@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, useAnimation } from "motion/react";
 import { ShoppingBag, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { HomeSection } from "../api/productService";
-import { Product } from "../data/products";
+import { products, Product } from "../data/products";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 
@@ -147,7 +147,8 @@ export function SectionCarousel({ section }: { section: HomeSection }) {
                     </div>
                   );
                 } else {
-                  const product = item as Product;
+                  const localProd = item as Product;
+                  const product = products.find(p => p.id === localProd.id) || localProd;
                   return (
                     <div
                       key={`prod-${product.id}-${idx}`}
@@ -166,8 +167,17 @@ export function SectionCarousel({ section }: { section: HomeSection }) {
                             alt={product.name}
                             loading="lazy"
                             decoding="async"
-                            className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                            className={`w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-110 ${product.images[1] ? 'group-hover:opacity-0' : ''}`}
                           />
+                          {product.images[1] && (
+                            <img
+                              src={product.images[1]}
+                              alt={`${product.name} alternate`}
+                              loading="lazy"
+                              decoding="async"
+                              className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out"
+                            />
+                          )}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                           {/* Floating Badges */}

@@ -51,6 +51,32 @@ export default function App() {
   const { isSignUpOpen, closeSignUp } = useSignUp();
 
   useEffect(() => {
+    // Pre-fetch category products in the background to populate the images cache for the homepage
+    const prefetchCategories = async () => {
+      try {
+        const { fetchProductsFromApi } = await import("./api/productService");
+        const { syncProducts } = await import("./data/products");
+        
+        // Load in background
+        const categories = [15, 16, 17, 18, 0];
+        for (const catId of categories) {
+          fetchProductsFromApi(catId).then(fetched => {
+            if (fetched && fetched.length > 0) {
+              syncProducts(fetched);
+            }
+          }).catch(() => {});
+        }
+      } catch (err) {
+        console.error("Failed to prefetch categories", err);
+      }
+    };
+    
+    // Delay slightly to prioritize critical page load
+    const timer = setTimeout(prefetchCategories, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
       const path = window.location.pathname;

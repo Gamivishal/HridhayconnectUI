@@ -213,7 +213,7 @@ export function AboutPage() {
 
 
       {/* 8. Daily Rituals Into Art Section */}
-      <section className="relative py-28 md:py-48 bg-white/20">
+      {/* <section className="relative py-28 md:py-48 bg-white/20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-center">
             <div className="lg:col-span-7 relative h-[50vh] md:h-[70vh] w-full order-last lg:order-first mt-12 lg:mt-0">
@@ -234,7 +234,7 @@ export function AboutPage() {
             </motion.div>
           </div>
         </div>
-      </section>
+      </section> */}
 
 
 
@@ -262,7 +262,7 @@ export function AboutPage() {
               >
                 {/* Dot */}
                 <div className="absolute left-3.5 md:left-1/2 top-2 md:top-1/2 w-4 h-4 rounded-full bg-[var(--color-primary)] border-[3px] border-[var(--color-cream)] shadow-md md:-translate-x-1/2 md:-translate-y-1/2 z-10 transition-transform duration-500 group-hover:scale-125" />
-                
+
                 {/* Content - Left side */}
                 <div className="pl-12 md:pl-0 md:w-1/2 md:pr-16 md:text-right">
                   <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)] font-general">2023 • The Conception</span>
@@ -271,7 +271,7 @@ export function AboutPage() {
                     Hridhay Connect was founded by botanical alchemists and dermatological scientists to discover pure skincare formulas using certified organic, wild-harvested raw extracts.
                   </p>
                 </div>
-                
+
                 <div className="hidden md:block md:w-1/2" />
               </motion.div>
 
@@ -285,7 +285,7 @@ export function AboutPage() {
               >
                 {/* Dot */}
                 <div className="absolute left-3.5 md:left-1/2 top-2 md:top-1/2 w-4 h-4 rounded-full bg-[var(--color-primary)] border-[3px] border-[var(--color-cream)] shadow-md md:-translate-x-1/2 md:-translate-y-1/2 z-10 transition-transform duration-500 group-hover:scale-125" />
-                
+
                 {/* Content - Right side */}
                 <div className="pl-12 md:pl-0 md:w-1/2 md:pl-16 md:text-left">
                   <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)] font-general">2024 • Organic Audits</span>
@@ -294,7 +294,7 @@ export function AboutPage() {
                     We built our extraction lab and secured rigorous certifications, proving that zero synthetic fillers or chemical additives are ever present in our product list.
                   </p>
                 </div>
-                
+
                 <div className="hidden md:block md:w-1/2" />
               </motion.div>
 
@@ -308,7 +308,7 @@ export function AboutPage() {
               >
                 {/* Dot */}
                 <div className="absolute left-3.5 md:left-1/2 top-2 md:top-1/2 w-4 h-4 rounded-full bg-[var(--color-primary)] border-[3px] border-[var(--color-cream)] shadow-md md:-translate-x-1/2 md:-translate-y-1/2 z-10 transition-transform duration-500 group-hover:scale-125" />
-                
+
                 {/* Content - Left side */}
                 <div className="pl-12 md:pl-0 md:w-1/2 md:pr-16 md:text-right">
                   <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)] font-general">2025 • National Launch</span>
@@ -317,7 +317,7 @@ export function AboutPage() {
                     Officially launched Hridhay Connect website, delivering our signature serums to thousands of customers looking to restore harmony and natural skin radiance.
                   </p>
                 </div>
-                
+
                 <div className="hidden md:block md:w-1/2" />
               </motion.div>
 
@@ -331,7 +331,7 @@ export function AboutPage() {
               >
                 {/* Dot */}
                 <div className="absolute left-3.5 md:left-1/2 top-2 md:top-1/2 w-4 h-4 rounded-full bg-[var(--color-primary)] border-[3px] border-[var(--color-cream)] shadow-md md:-translate-x-1/2 md:-translate-y-1/2 z-10 transition-transform duration-500 group-hover:scale-125" />
-                
+
                 {/* Content - Right side */}
                 <div className="pl-12 md:pl-0 md:w-1/2 md:pl-16 md:text-left">
                   <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)] font-general">2026 • Global Evolution</span>
@@ -340,7 +340,7 @@ export function AboutPage() {
                     Unveiling new high-potency toners and masks, continuing our commitment to sustainable packaging, clean trade, and luxury wellness.
                   </p>
                 </div>
-                
+
                 <div className="hidden md:block md:w-1/2" />
               </motion.div>
 

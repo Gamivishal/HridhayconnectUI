@@ -173,7 +173,7 @@ export function CategoryCarousel() {
               {extendedProducts.map((product, idx) => (
                 <div
                   key={`${product.id}-${idx}`}
-                  className="shrink-0 px-2 sm:px-3"
+                  className="shrink-0 px-2 sm:px-3 group cursor-pointer"
                   style={{ width: `${100 / itemsPerView}%` }}
                   onClick={() => {
                     if (!isDragging) {
@@ -187,8 +187,17 @@ export function CategoryCarousel() {
                       alt={product.name}
                       loading="lazy"
                       decoding="async"
-                      className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                      className={`w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-110 ${product.images[1] ? 'group-hover:opacity-0' : ''}`}
                     />
+                    {product.images[1] && (
+                      <img
+                        src={product.images[1]}
+                        alt={`${product.name} alternate`}
+                        loading="lazy"
+                        decoding="async"
+                        className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out"
+                      />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                     {/* Floating Badges */}

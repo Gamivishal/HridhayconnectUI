@@ -18,6 +18,7 @@ interface HairOilCardProps {
     sellPrice?: number;
     discountPercent?: number;
     img: string;
+    images?: string[];
     desc: string;
     benefits: string[];
     tag: string;
@@ -79,8 +80,17 @@ function HairOilCard({
           loading={index < 2 ? "eager" : "lazy"}
           decoding={index < 2 ? "sync" : "async"}
           {...(index === 0 ? { fetchPriority: "high" } : {})}
-          className="w-full h-full object-cover object-center group-hover:scale-[1.04] transition-transform duration-[2.2s] ease-out brightness-95 group-hover:brightness-[1.02]"
+          className={`w-full h-full object-cover object-center transition-all duration-700 ease-out group-hover:scale-110 ${oil.images?.[1] ? 'group-hover:opacity-0' : ''} brightness-95 group-hover:brightness-[1.02]`}
         />
+        {oil.images?.[1] && (
+          <img
+            src={oil.images[1]}
+            alt={`${oil.name} alternate`}
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-dark-text)]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
         <div className="absolute top-5 left-5 flex flex-col gap-2 items-start">
@@ -210,6 +220,7 @@ export function HairOilCategoryPage() {
             discountPercent: p.discountPercent ?? 0,
             originalPrice: p.originalPrice ?? p.price,
             img: p.images?.[0] || "/Image/Noimage.jpg",
+            images: p.images,
             desc: p.desc,
             benefits: p.benefits || ["Nourishes the scalp & strengthens roots"],
             tag: p.tag || "",

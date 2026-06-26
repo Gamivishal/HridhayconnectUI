@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ShoppingBag, Heart } from "lucide-react";
 import { HomeSection } from "../api/productService";
-import { Product } from "../data/products";
+import { products, Product } from "../data/products";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 
@@ -21,7 +21,8 @@ export function SectionGrid({ section }: { section: HomeSection }) {
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-8">
         {items.map((item, idx) => {
-          const product = item as Product;
+          const localProd = item as Product;
+          const product = products.find(p => p.id === localProd.id) || localProd;
           return (
             <div
               key={product.id || idx}
@@ -34,8 +35,17 @@ export function SectionGrid({ section }: { section: HomeSection }) {
                   alt={product.name}
                   loading="lazy"
                   decoding="async"
-                  className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                  className={`w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-110 ${product.images[1] ? 'group-hover:opacity-0' : ''}`}
                 />
+                {product.images[1] && (
+                  <img
+                    src={product.images[1]}
+                    alt={`${product.name} alternate`}
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-out opacity-0 group-hover:opacity-100 group-hover:scale-110"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                 {/* Floating Badges */}

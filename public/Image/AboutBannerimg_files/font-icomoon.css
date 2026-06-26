@@ -1,0 +1,108 @@
+@font-face {
+  font-family: 'ecosoap';
+  src:  url('../fonts/ecosoap.eot?jlovyf');
+  src:  url('../fonts/ecosoap.eot?jlovyf#iefix') format('embedded-opentype'),
+    url('../fonts/ecosoap.ttf?jlovyf') format('truetype'),
+    url('../fonts/ecosoap.woff?jlovyf') format('woff'),
+    url('../fonts/ecosoap.svg?jlovyf#ecosoap') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'ecosoap' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-Non-GMO:before {
+  content: "\e91a";
+}
+.icon-animal-cruelty:before {
+  content: "\e900";
+}
+.icon-arrow-left:before {
+  content: "\e901";
+}
+.icon-arrow-left-2:before {
+  content: "\e902";
+}
+.icon-arrow-right:before {
+  content: "\e903";
+}
+.icon-arrow-right-2:before {
+  content: "\e904";
+}
+.icon-arrow-right-3:before {
+  content: "\e905";
+}
+.icon-essential-oils:before {
+  content: "\e906";
+}
+.icon-free-shipping:before {
+  content: "\e907";
+}
+.icon-harvest:before {
+  content: "\e908";
+}
+.icon-heart:before {
+  content: "\e909";
+}
+.icon-leaf:before {
+  content: "\e90a";
+}
+.icon-message:before {
+  content: "\e90b";
+}
+.icon-natural-ingredients:before {
+  content: "\e90c";
+}
+.icon-phone:before {
+  content: "\e90d";
+}
+.icon-play:before {
+  content: "\e90e";
+}
+.icon-quote:before {
+  content: "\e90f";
+}
+.icon-return:before {
+  content: "\e910";
+}
+.icon-search:before {
+  content: "\e911";
+}
+.icon-shopping-bag:before {
+  content: "\e912";
+}
+.icon-shopping-cart:before {
+  content: "\e913";
+}
+.icon-star:before {
+  content: "\e914";
+}
+.icon-support:before {
+  content: "\e915";
+}
+.icon-twitter:before {
+  content: "\e916";
+}
+.icon-twitter-2:before {
+  content: "\e917";
+}
+.icon-user:before {
+  content: "\e918";
+}
+.icon-warranty:before {
+  content: "\e919";
+}
