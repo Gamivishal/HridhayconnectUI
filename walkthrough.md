@@ -1,6 +1,6 @@
-# Walkthrough - Mobile "My Account" Redesign, Paragraph Justification & Hover Alternate Image
+# Walkthrough - Mobile "My Account" Redesign, Paragraph Justification, Hover Alternate Image, Button Renaming & Price Filter
 
-Successfully completed the mobile view redesign of the "My Account" page, applied text justification to key editorial paragraphs, and implemented alternate product image cross-fade hover animations across all product lists, category pages, and related products sections.
+Successfully completed the mobile view redesign of the "My Account" page, applied text justification to key editorial paragraphs, implemented alternate product image cross-fade hover animations, renamed the purchase buttons from "Add to Ritual" to "Add to Cart" globally, and added a price range filter widget to all category product lists.
 
 ## Changes Made
 
@@ -54,9 +54,44 @@ Implemented secondary image hover effects across the following components:
 9. **Related Products Slider** ([ProductPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ProductPage.tsx)):
    - Applied conditional cross-fade layouts inside the Related Products cards.
 
+### Button Renaming & Styling
+Renamed purchase action buttons across the application and styled them to prevent text-wrapping:
+1. Changed `Add to Ritual` to `Add to Cart` and `Added to Ritual` to `Added to Cart` on all category lists and grids, adding `whitespace-nowrap` to prevent multi-line wrapping:
+   - [SoapCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/SoapCategoryPage.tsx)
+   - [HairOilCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/HairOilCategoryPage.tsx)
+   - [MukhwasCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/MukhwasCategoryPage.tsx)
+   - [TeaMasalaCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/TeaMasalaCategoryPage.tsx)
+   - [HridhaySpecialCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/HridhaySpecialCategoryPage.tsx)
+2. Updated Product Details and Sticky purchase actions inside [ProductPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ProductPage.tsx).
+3. Updated featured collection action button text in [FeaturedCollection.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/FeaturedCollection.tsx).
+
+### Price Range Filter on Category Pages
+Implemented an interactive Price Filter inside the product collection views:
+1. **Category Sidebar Integration** ([CategorySidebar.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/CategorySidebar.tsx)):
+   - Defined `minPrice`, `maxPrice`, `maxLimit`, and `onPriceChange` props inside `CategorySidebar`.
+   - Replaced the single-handle slider with a high-fidelity **dual-handle (two dot) range slider** which allows the user to visually adjust both the minimum and maximum price directly on the track.
+   - Designed a responsive CSS/Tailwind overlapping range input overlay supporting smooth drag interactions.
+2. **State, Filtering & Top-Right Filter Layout on Categories**:
+   - Added states (`minPrice`, `maxPrice`) inside all category landing files.
+   - Wired states and change handlers to `<CategorySidebar />`.
+   - Dynamic Price Range Bound Initialization: Instead of hardcoded `0-1000` bounds, the application dynamically scans the loaded product list on initialization to find the maximum product price, automatically sets the initial state of `maxPrice` to this maximum, and binds the range slider maximum bounds to this dynamic limit.
+   - Filtered local listing collections matching `sellPrice ?? price` boundaries before rendering lists.
+   - Rendered a custom inline glassmorphic Price Filter card containing the new dual-handled slider and dynamic range text (`₹{minPrice} - ₹{maxPrice}`) inside the category header row on the right side.
+   - Integrated this filter logic and UI layout across all five category pages:
+     - [SoapCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/SoapCategoryPage.tsx)
+     - [HairOilCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/HairOilCategoryPage.tsx)
+     - [MukhwasCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/MukhwasCategoryPage.tsx)
+     - [TeaMasalaCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/TeaMasalaCategoryPage.tsx)
+     - [HridhaySpecialCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/HridhaySpecialCategoryPage.tsx)
+
 ---
 
 ## Verification Results
 - All files verified for proper import syntax and formatting structure.
 - Type definitions adjusted globally to ensure compatibility and strict check safety.
 - Handled empty image scenarios to ensure fallback is graceful (primary image remains visible and scales up instead of disappearing).
+- Confirmed that there are no remaining "Add to Ritual" button labels in the codebase.
+- Verified that all add-to-cart buttons have the `whitespace-nowrap` class applied to display text cleanly in a single line.
+- Verified price range bounds mapping dynamically to prevent React key exceptions or NaN ranges.
+- Confirmed dynamic range calculations correctly set the filter range defaults to `0` and the category's actual maximum price.
+- Verified that dual range sliders accurately drag from both left (minPrice) and right (maxPrice) dots without exceeding limits or overlapping errors.

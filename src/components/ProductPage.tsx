@@ -644,7 +644,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                   {cartAdded ? (
                     <>
                       <Check className="w-4 h-4 animate-bounce text-[var(--color-primary)]" />
-                      <span>Added to Ritual</span>
+                      <span>Added to Cart</span>
                     </>
                   ) : (
                     <>
@@ -1068,7 +1068,7 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
                   onClick={handleAddToCart}
                   className="bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white text-[10px] font-semibold uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-sm cursor-pointer"
                 >
-                  {cartAdded ? 'Added' : 'Add to Ritual'}
+                  {cartAdded ? 'Added to Cart' : 'Add to Cart'}
                 </button>
               </div>
 

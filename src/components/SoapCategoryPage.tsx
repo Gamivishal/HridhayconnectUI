@@ -131,17 +131,17 @@ function SoapCard({
               e.stopPropagation();
               handleAddToCart(soap.id);
             }}
-            className="bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] backdrop-blur-md text-white px-8 py-3.5 rounded-full text-[10px] font-semibold uppercase tracking-wider transition-colors duration-300 flex items-center gap-2 shadow-lg cursor-pointer"
+            className="bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] backdrop-blur-md text-white px-8 py-3.5 rounded-full text-[10px] font-semibold uppercase tracking-wider transition-colors duration-300 flex items-center gap-2 shadow-lg cursor-pointer whitespace-nowrap"
           >
             {cartState[soap.id] ? (
               <>
                 <Check className="w-3.5 h-3.5 animate-bounce" />
-                <span>Added to Ritual</span>
+                <span>Added to Cart</span>
               </>
             ) : (
               <>
                 <Plus className="w-3.5 h-3.5" />
-                <span>Add to Ritual</span>
+                <span>Add to Cart</span>
               </>
             )}
           </button>
@@ -238,7 +238,13 @@ export function SoapCategoryPage() {
             ingredient: ""
           };
         });
-        if (isMounted) setSoaps(updatedSoaps);
+        if (isMounted) {
+          setSoaps(updatedSoaps);
+          if (updatedSoaps.length > 0) {
+            const maxVal = Math.max(100, Math.ceil(Math.max(...updatedSoaps.map(s => Number(s.sellPrice ?? s.price) || 0))));
+            setMaxPrice(maxVal);
+          }
+        }
       } catch (error) {
         console.error(error);
       } finally {
@@ -250,6 +256,8 @@ export function SoapCategoryPage() {
   }, []);
 
   const [cartState, setCartState] = useState<Record<string, boolean>>({});
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(1000);
   const { addToCart } = useCart();
   const handleAddToCart = (id: string) => {
     const product = products.find(p => p.id === id);
@@ -257,6 +265,13 @@ export function SoapCategoryPage() {
     setCartState(prev => ({ ...prev, [id]: true }));
     setTimeout(() => setCartState(prev => ({ ...prev, [id]: false })), 2000);
   };
+
+  const maxLimit = soaps.length > 0 ? Math.max(100, Math.ceil(Math.max(...soaps.map(s => Number(s.sellPrice ?? s.price) || 0)))) : 1000;
+
+  const filteredSoaps = soaps.filter(soap => {
+    const price = soap.sellPrice ?? soap.price;
+    return price >= minPrice && price <= maxPrice;
+  });
 
   return (
     <div ref={pageRef} className="relative w-full bg-[var(--color-cream)] text-[var(--color-dark-text)] overflow-hidden font-sans">
@@ -273,19 +288,103 @@ export function SoapCategoryPage() {
       <section id="products-grid" className="py-16 md:py-24 px-2 sm:px-4 md:px-12 max-w-[1600px] mx-auto z-20 relative border-t border-[var(--color-primary)]/5">
         <div className="flex flex-col lg:flex-row gap-12">
           <div className="w-full lg:w-1/4 xl:w-1/5">
-            <CategorySidebar />
+            <CategorySidebar 
+              minPrice={minPrice} 
+              maxPrice={maxPrice} 
+              maxLimit={maxLimit}
+              onPriceChange={(min, max) => {
+                setMinPrice(min);
+                setMaxPrice(max);
+              }}
+            />
           </div>
           <div className="w-full lg:w-3/4 xl:w-4/5">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-12">
+            <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
               <div>
                 <span className="text-[var(--color-primary)] font-medium tracking-[0.2em] uppercase text-xs mb-4 flex items-center gap-4">
                   <span className="w-12 h-[1px] bg-[var(--color-primary)]"></span>
                   Slow Batch Formulation
                 </span>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-black leading-tight font-light">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-black leading-tight font-light font-light">
                   Hand-Poured <br />
                   <span className="italic text-[var(--color-secondary)]">Apothecary Masterpieces</span>
                 </h2>
+              </div>
+
+              {/* Top Right Price Filter */}
+              <div className="flex items-center gap-4 bg-white/60 p-4 rounded-3xl border border-white/80 shadow-sm backdrop-blur-md w-full md:max-w-xs shrink-0 z-[60]">
+                <div className="flex-1 space-y-2">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-[var(--color-primary)]">
+                    <span>Filter Price</span>
+                    <span>₹{minPrice} - ₹{maxPrice}</span>
+                  </div>
+                  <div className="relative w-full h-4 flex items-center">
+                    {/* Track background */}
+                    <div className="absolute left-0 right-0 h-1 bg-black/5 rounded-lg pointer-events-none" />
+                    
+                    {/* Selected range highlight */}
+                    <div 
+                      className="absolute h-1 bg-[var(--color-primary)] rounded-lg pointer-events-none"
+                      style={{
+                        left: `${maxLimit > 0 ? (minPrice / maxLimit) * 100 : 0}%`,
+                        right: `${maxLimit > 0 ? 100 - (maxPrice / maxLimit) * 100 : 0}%`
+                      }}
+                    />
+
+                    {/* Min range input */}
+                    <input
+                      type="range"
+                      min="0"
+                      max={maxLimit}
+                      step="10"
+                      value={minPrice}
+                      onChange={(e) => {
+                        const val = Math.min(Number(e.target.value), maxPrice);
+                        setMinPrice(val);
+                      }}
+                      className="absolute w-full appearance-none h-1 bg-transparent pointer-events-none focus:outline-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--color-primary)] [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[var(--color-primary)] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer z-10"
+                    />
+
+                    {/* Max range input */}
+                    <input
+                      type="range"
+                      min="0"
+                      max={maxLimit}
+                      step="10"
+                      value={maxPrice}
+                      onChange={(e) => {
+                        const val = Math.max(Number(e.target.value), minPrice);
+                        setMaxPrice(val);
+                      }}
+                      className="absolute w-full appearance-none h-1 bg-transparent pointer-events-none focus:outline-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--color-primary)] [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[var(--color-primary)] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer z-20"
+                    />
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="number"
+                      placeholder="Min"
+                      value={minPrice || ""}
+                      onChange={(e) => {
+                        const val = Number(e.target.value) || 0;
+                        setMinPrice(val);
+                        if (val > maxPrice) setMaxPrice(val);
+                      }}
+                      className="w-full bg-white border border-black/10 rounded-xl px-2.5 py-1.5 text-[11px] text-center focus:border-[var(--color-primary)] focus:outline-none font-medium"
+                    />
+                    <span className="text-[var(--color-dark-text)]/30 text-xs">-</span>
+                    <input
+                      type="number"
+                      placeholder="Max"
+                      value={maxPrice === maxLimit ? "" : maxPrice}
+                      onChange={(e) => {
+                        const val = Number(e.target.value) || maxLimit;
+                        setMaxPrice(val);
+                        if (val < minPrice) setMinPrice(val);
+                      }}
+                      className="w-full bg-white border border-black/10 rounded-xl px-2.5 py-1.5 text-[11px] text-center focus:border-[var(--color-primary)] focus:outline-none font-medium"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -296,7 +395,7 @@ export function SoapCategoryPage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-                {soaps.map((soap, index) => (
+                {filteredSoaps.map((soap, index) => (
                   <SoapCard
                     key={soap.id}
                     soap={soap}

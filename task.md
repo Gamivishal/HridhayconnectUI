@@ -24,6 +24,13 @@
   - [x] Modify `TeaMasalaCategoryPage.tsx` to render hover alternate image
   - [x] Modify `HridhaySpecialCategoryPage.tsx` to render hover alternate image
   - [x] Modify `ProductPage.tsx` to render hover alternate image in Related Products grid
+- [x] Price Range Filter in Category Page
+  - [x] Update `CategorySidebar.tsx` to support minPrice/maxPrice props and render Price Filter Section
+  - [x] Implement filter state and logic in `SoapCategoryPage.tsx`
+  - [x] Implement filter state and logic in `HairOilCategoryPage.tsx`
+  - [x] Implement filter state and logic in `MukhwasCategoryPage.tsx`
+  - [x] Implement filter state and logic in `TeaMasalaCategoryPage.tsx`
+  - [x] Implement filter state and logic in `HridhaySpecialCategoryPage.tsx`
 - [x] Verification
   - [x] Run typescript checks/compilations
   - [x] Verify functionality on UI

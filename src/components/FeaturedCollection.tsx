@@ -55,7 +55,7 @@ function CollectionProductCard({ p, i }: CollectionProductCardProps) {
 
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-700 ease-out z-20">
           <button className="bg-[var(--color-primary)]/90 backdrop-blur-md text-white px-8 py-3 rounded-full text-xs font-medium uppercase tracking-[0.1em] hover:bg-white hover:text-[var(--color-primary)] transition-colors">
-            Add to Ritual
+            Add to Cart
           </button>
         </div>
       </motion.div>
