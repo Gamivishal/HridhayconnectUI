@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { post } from "../api/BaseService";
 import {
   ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ShieldCheck,
   Truck, HelpCircle, Tag, Check, CreditCard, Sparkles
@@ -24,42 +25,117 @@ export function CartPage() {
   }, []);
 
   const [promoCode, setPromoCode] = useState("");
-  const [discountPercent, setDiscountPercent] = useState(0);
   const [promoError, setPromoError] = useState("");
   const [promoSuccess, setPromoSuccess] = useState("");
   const [isOrdering, setIsOrdering] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [generatedOrderId, setGeneratedOrderId] = useState("");
+  const [availableOffers, setAvailableOffers] = useState<any[]>([]);
+  const [appliedOffers, setAppliedOffers] = useState<any[]>([]);
+  const [isOffersLoading, setIsOffersLoading] = useState(false);
+  const [offerMessage, setOfferMessage] = useState({ text: "", type: "" });
 
   // Free shipping threshold
   const shippingThreshold = 500;
   const shippingCost = cartSubtotal >= shippingThreshold || cartSubtotal === 0 ? 0 : 60;
   const progressToFreeShipping = Math.min((cartSubtotal / shippingThreshold) * 100, 100);
 
-  // Apply Coupon Code
-  const handleApplyPromo = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPromoError("");
-    setPromoSuccess("");
+  const fetchOffers = async (code = "", selectedId = 0, removeId = 0) => {
+    try {
+      setIsOffersLoading(true);
+      setOfferMessage({ text: "", type: "" });
+      const customerId = localStorage.getItem("customerId") || "0";
+      const body: any = {
+        customerId: Number(customerId)
+      };
+      if (code) body.couponCode = code;
+      if (selectedId) body.selectedOfferId = selectedId;
+      if (removeId) body.removeOfferId = removeId;
+      
+      const response: any = await post("/Cart/ApplyOffersToCart", body);
+      if (response && response.data) {
+        const t2 = response.data.table2 || [];
+        const t3 = response.data.table3 || [];
+        
+        // table3 represents explicitly Applied Offers from the backend. 
+        // We force IsAlreadyApplied to 1 so the merge logic correctly identifies them.
+        t3.forEach((o: any) => {
+           o.IsAlreadyApplied = 1;
+        });
 
-    const code = promoCode.trim().toUpperCase();
-    if (code === "HRIDHAY10") {
-      setDiscountPercent(10);
-      setPromoSuccess("Coupon 'HRIDHAY10' applied successfully! 10% discount added.");
-    } else if (code === "WELCOME15") {
-      setDiscountPercent(15);
-      setPromoSuccess("Coupon 'WELCOME15' applied successfully! 15% discount added.");
-    } else {
-      setPromoError("Invalid coupon code. Try 'HRIDHAY10' or 'WELCOME15'.");
+        const checkIsApplied = (o: any) => Number(o.IsAlreadyApplied) === 1 || String(o.IsAlreadyApplied).toLowerCase() === 'true';
+
+        const uniqueOffersMap = new Map();
+        [...t2, ...t3].forEach((offer: any) => {
+          if (!uniqueOffersMap.has(offer.Id)) {
+            uniqueOffersMap.set(offer.Id, offer);
+          } else {
+            const existing = uniqueOffersMap.get(offer.Id);
+            // Always prefer the version that says it is applied
+            if (checkIsApplied(offer)) {
+              uniqueOffersMap.set(offer.Id, offer);
+            } else if (!checkIsApplied(existing) && offer.FinalDiscount !== undefined && offer.FinalDiscount > (existing.FinalDiscount || 0)) {
+              uniqueOffersMap.set(offer.Id, offer);
+            }
+          }
+        });
+        const uniqueOffers = Array.from(uniqueOffersMap.values());
+
+        setAppliedOffers(uniqueOffers.filter((o: any) => checkIsApplied(o)));
+        
+        const available = uniqueOffers.filter((o: any) => !checkIsApplied(o));
+        available.sort((a: any, b: any) => {
+          if (b.FinalDiscount !== a.FinalDiscount) return b.FinalDiscount - a.FinalDiscount; // Highest FinalDiscount
+          if (a.Priority !== b.Priority) return a.Priority - b.Priority; // Lowest Priority
+          return b.DiscountValue - a.DiscountValue; // Highest DiscountValue
+        });
+        setAvailableOffers(available);
+
+        if (code) {
+           const applied = uniqueOffers.find((o: any) => checkIsApplied(o) && (o.CouponCode === code || o.DiscountType));
+           if (applied) {
+             setOfferMessage({ text: "Coupon applied successfully!", type: "success" });
+           } else {
+             setOfferMessage({ text: "Invalid or inapplicable coupon code.", type: "error" });
+           }
+        } else if (selectedId) {
+           setOfferMessage({ text: "Offer applied successfully!", type: "success" });
+        } else if (removeId) {
+           setOfferMessage({ text: "Offer removed.", type: "success" });
+        }
+      }
+    } catch (err) {
+      console.error("[fetchOffers] Error fetching offers:", err);
+      setOfferMessage({ text: "Failed to process offer.", type: "error" });
+    } finally {
+      setIsOffersLoading(false);
     }
   };
 
-  const discountAmount = Math.round((cartSubtotal * discountPercent) / 100);
+  useEffect(() => {
+    if (cartSubtotal > 0) {
+      fetchOffers();
+    } else {
+      setAppliedOffers([]);
+      setAvailableOffers([]);
+    }
+  }, [cartItems, cartSubtotal]);
+
+  // Apply Coupon Code
+  const handleApplyPromo = (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = promoCode.trim();
+    if (code && !isOffersLoading) {
+      fetchOffers(code, 0, 0);
+    }
+  };
+
+  const discountAmount = appliedOffers.reduce((sum, offer) => sum + (offer.FinalDiscount || 0), 0);
   const orderTotal = cartSubtotal - discountAmount + shippingCost;
 
   // Prepare checkout items and redirect
   const handlePlaceOrder = () => {
-    prepareCheckout(cartItems);
+    prepareCheckout(cartItems, appliedOffers);
     window.location.hash = "#checkout";
   };
 
@@ -192,7 +268,7 @@ export function CartPage() {
                   >
                     {/* Product Image */}
                     <div className="w-24 sm:w-28 aspect-square rounded-[1.8rem] overflow-hidden bg-[var(--color-beige)]/20 flex-shrink-0 relative">
-                      <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" />
+                      <img src={item.product.images[0]} alt={item.product.name} loading="lazy" decoding="async" className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" />
                     </div>
 
                     {/* Product Details & Meta */}
@@ -293,12 +369,20 @@ export function CartPage() {
                     <span className="font-serif font-medium text-black">₹{cartSubtotal}</span>
                   </div>
 
-                  {discountAmount > 0 && (
-                    <div className="flex justify-between items-center text-emerald-600">
-                      <span>Discount ({discountPercent}%)</span>
-                      <span className="font-serif font-semibold">- ₹{discountAmount}</span>
+                  {appliedOffers.length > 0 && appliedOffers.map((offer, idx) => (
+                    <div key={idx} className="flex justify-between items-center text-emerald-600">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-xs">{offer.OfferName || "Discount"}</span>
+                        <button
+                          onClick={() => fetchOffers("", 0, offer.Id)}
+                          className="text-red-400 hover:text-red-600 text-[9px] uppercase font-bold text-left tracking-wider w-fit cursor-pointer mt-0.5"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <span className="font-serif font-semibold">- ₹{offer.FinalDiscount}</span>
                     </div>
-                  )}
+                  ))}
 
                   <div className="flex justify-between items-center">
                     <span className="flex items-center gap-1">
@@ -318,42 +402,153 @@ export function CartPage() {
                   </div>
                 </div>
 
+                {/* Merged Offers Section (Applied Offers removed from here) */}
+
+                {/* Offer Status Message */}
+                {offerMessage.text && (
+                  <div className={`p-3 rounded-xl border flex items-center justify-center text-xs font-semibold shadow-sm transition-all animate-in fade-in zoom-in-95 ${
+                    offerMessage.type === 'success' 
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                      : 'bg-red-50 border-red-200 text-red-600'
+                  }`}>
+                    {offerMessage.text}
+                  </div>
+                )}
+
                 {/* Promo Code Input Form */}
-                {/* <form onSubmit={handleApplyPromo} className="border-t border-black/5 pt-6 mt-2 space-y-3">
-                  <span className="text-[10px] uppercase tracking-wider text-[var(--color-dark-text)]/40 font-semibold block">
+                <form onSubmit={handleApplyPromo} className="border-t border-black/5 pt-6 mt-4 space-y-3">
+                  <span className="text-[11px] uppercase tracking-widest text-[var(--color-dark-text)]/60 font-bold block">
                     Promo Code
                   </span>
-                  
+
                   <div className="flex gap-2">
                     <div className="relative flex-1">
-                      <Tag className="w-3.5 h-3.5 text-[var(--color-dark-text)]/30 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                      <input 
-                        type="text" 
+                      <Tag className="w-4 h-4 text-[var(--color-dark-text)]/30 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
                         value={promoCode}
                         onChange={(e) => setPromoCode(e.target.value)}
-                        placeholder="HRIDHAY10" 
-                        className="w-full bg-black/5 border border-transparent focus:border-[var(--color-primary)]/20 rounded-full pl-9 pr-4 py-2.5 text-xs font-semibold focus:outline-none uppercase"
+                        placeholder="ENTER COUPON"
+                        disabled={isOffersLoading}
+                        className={`w-full bg-black/5 border border-transparent focus:border-[var(--color-primary)]/20 rounded-xl pl-10 pr-4 py-3 text-xs font-semibold focus:outline-none uppercase shadow-inner transition-colors ${isOffersLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       />
                     </div>
-                    <button 
+                    <button
                       type="submit"
-                      className="bg-black/5 hover:bg-black/10 border border-black/5 text-[var(--color-dark-text)] text-xs font-semibold px-5 rounded-full transition-colors cursor-pointer"
+                      disabled={isOffersLoading}
+                      className={`bg-black/5 hover:bg-black/10 border border-black/5 text-[var(--color-dark-text)] text-xs font-bold uppercase tracking-wider px-6 rounded-xl transition-colors cursor-pointer ${isOffersLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                      Apply
+                      {isOffersLoading ? 'Applying...' : 'Apply'}
                     </button>
                   </div>
+                </form>
 
-                  {promoError && (
-                    <span className="text-[10px] text-red-500 font-medium block pl-1">
-                      {promoError}
-                    </span>
+                {/* All Offers Section */}
+                <div className="border-t border-black/5 pt-5 mt-4 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-[11px] font-bold uppercase tracking-widest text-[var(--color-dark-text)]/60">
+                      Offers
+                    </h4>
+                  </div>
+                  {([...appliedOffers, ...availableOffers].length === 0) ? (
+                    <p className="text-xs text-[var(--color-dark-text)]/50 italic font-light">
+                      No offers available for this cart.
+                    </p>
+                  ) : (
+                    <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1 pb-1">
+                      {[...appliedOffers, ...availableOffers].map((offer, index) => {
+                        const isApplied = Number(offer.IsAlreadyApplied) === 1 || String(offer.IsAlreadyApplied).toLowerCase() === 'true';
+
+                        if (isApplied) {
+                          return (
+                            <div key={index} className="group bg-emerald-50/50 hover:bg-emerald-50 transition-all duration-300 border border-emerald-200/60 hover:border-emerald-300/80 rounded-2xl p-4.5 flex flex-col gap-3 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_-6px_rgba(16,185,129,0.15)] relative overflow-hidden">
+                              <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-400"></div>
+                              <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-br from-emerald-100/50 to-transparent rounded-full blur-2xl -mr-8 -mt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                              
+                              <div className="flex justify-between items-start relative z-10 pl-1">
+                                <div className="flex flex-col gap-1.5 pr-3">
+                                  <div className="flex items-center gap-2">
+                                    <div className="bg-emerald-100 rounded-full p-0.5 text-emerald-600 shadow-[0_0_10px_rgba(16,185,129,0.3)]">
+                                      <Check className="w-3.5 h-3.5" />
+                                    </div>
+                                    <span className="text-sm font-bold text-emerald-900 group-hover:text-emerald-950 transition-colors">{offer.OfferName}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-0.5 ml-6">
+                                    <span className="bg-emerald-100/50 border border-emerald-200 text-emerald-700/80 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md">
+                                      {offer.OfferType}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-emerald-600/90 tracking-wide">
+                                      {offer.DiscountType === "FLAT" ? `Flat ₹${offer.DiscountValue} OFF` : `${offer.DiscountValue}% OFF`}
+                                    </span>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex flex-col items-end gap-2">
+                                  <span className="bg-emerald-100 border border-emerald-200 text-emerald-700 text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm whitespace-nowrap">
+                                    Applied
+                                  </span>
+                                  <button
+                                    disabled={isOffersLoading}
+                                    onClick={() => fetchOffers("", 0, offer.Id)}
+                                    className={`text-[10px] text-emerald-700/60 hover:text-red-500 font-bold transition-colors underline decoration-transparent hover:decoration-red-300 underline-offset-2 cursor-pointer ${isOffersLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                  >
+                                    {isOffersLoading ? 'Removing...' : 'Remove'}
+                                  </button>
+                                </div>
+                              </div>
+                              
+                              <div className="bg-emerald-100/50 border border-emerald-200/60 rounded-xl p-3 flex items-center justify-between mt-1.5 relative z-10 group-hover:bg-emerald-100/80 transition-colors ml-1">
+                                 <span className="text-[10px] uppercase tracking-widest text-emerald-800/70 font-bold">You Saved</span>
+                                 <span className="text-sm font-bold text-emerald-600">₹{offer.FinalDiscount}</span>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div key={index} className="group bg-white hover:bg-orange-50/40 transition-all duration-300 border border-black/[0.08] hover:border-orange-200/60 rounded-2xl p-4.5 flex flex-col gap-3 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_-6px_rgba(234,88,12,0.12)] relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-br from-orange-100/50 to-transparent rounded-full blur-2xl -mr-8 -mt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                            
+                            <div className="flex justify-between items-start relative z-10">
+                              <div className="flex flex-col gap-1.5 pr-3">
+                                <span className="text-sm font-bold text-black group-hover:text-orange-900 transition-colors">{offer.OfferName}</span>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="bg-black/5 text-[var(--color-dark-text)]/70 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md">
+                                    {offer.OfferType}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-orange-600/90 tracking-wide">
+                                    {offer.DiscountType === "FLAT" ? `Flat ₹${offer.DiscountValue} OFF` : `${offer.DiscountValue}% OFF`}
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              {offer.IsCouponRequired ? (
+                                <div className="flex flex-col items-end">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-dark-text)]/40 bg-black/5 px-3 py-2 rounded-xl whitespace-nowrap">
+                                    Coupon Required
+                                  </span>
+                                </div>
+                              ) : (
+                                <button
+                                  disabled={isOffersLoading}
+                                  onClick={() => fetchOffers("", offer.Id, 0)}
+                                  className={`bg-orange-50 hover:bg-orange-500 text-orange-600 hover:text-white text-[10px] font-bold uppercase tracking-widest px-4.5 py-2.5 rounded-xl transition-all duration-300 shadow-sm hover:shadow-orange-500/30 whitespace-nowrap cursor-pointer border border-orange-100 hover:border-orange-500 ${isOffersLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                  {isOffersLoading ? 'Applying...' : 'Apply'}
+                                </button>
+                              )}
+                            </div>
+                            
+                            <div className="bg-orange-50/60 border border-orange-100/60 rounded-xl p-3 flex items-center justify-between mt-1.5 relative z-10 group-hover:bg-orange-100/40 transition-colors">
+                               <span className="text-[10px] uppercase tracking-widest text-orange-800/60 font-bold">Expected Saving</span>
+                               <span className="text-sm font-bold text-orange-600">Save ₹{offer.FinalDiscount}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
-                  {promoSuccess && (
-                    <span className="text-[10px] text-emerald-600 font-semibold block pl-1">
-                      {promoSuccess}
-                    </span>
-                  )}
-                </form> */}
+                </div>
 
                 {/* Checkout CTA */}
                 <div className="pt-2">

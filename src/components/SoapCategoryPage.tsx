@@ -3,16 +3,16 @@ import { useRef, useEffect, useState } from "react";
 import { Sparkle, Plus, Check, Heart } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
-import { products } from "../data/products";
+import { products, syncProducts } from "../data/products";
 import { InnerPageBanner } from "./InnerPageBanner";
 import { CategorySidebar } from "./CategorySidebar";
-import { getCaseInsensitiveProperty, getApiProducts, resolveImageUrl } from "../api/productService";
-import { post } from "../api/BaseService";
+import { resolveImageUrl, fetchProductsFromApi } from "../api/productService";
 
 interface SoapCardProps {
   key?: any;
   soap: {
     id: string;
+    productId?: number;
     name: string;
     price: number;
     originalPrice: number;
@@ -25,6 +25,7 @@ interface SoapCardProps {
     tag: string;
     ingredient: string;
     discount: string;
+    totalAvailableStock?: number;
     variants?: any[];
   };
   index: number;
@@ -199,51 +200,35 @@ export function SoapCategoryPage() {
     async function loadProducts() {
       try {
         setIsLoading(true);
-        const body = { id: -2, categoryId: 15, search: "" };
-        const result: any = await post("/Product/GetAll", body);
-        const apiProducts = getApiProducts(result);
-        if (apiProducts.length > 0 && isMounted) {
-          const apiCatName = getCaseInsensitiveProperty<string>(apiProducts[0], "CategoryName");
-          if (apiCatName) setCategoryName(apiCatName);
-        }
-        const updatedSoaps = apiProducts.map((apiProd: any) => {
-          let resolvedImg = "/Image/Noimage.jpg";
-          let images: string[] = [];
-          const imagesArray = getCaseInsensitiveProperty<any[]>(apiProd, "Images");
-          if (Array.isArray(imagesArray) && imagesArray.length > 0) {
-            const sortedImages = [...imagesArray].sort((a, b) => {
-              const aPrimary = a.isPrimary || a.IsPrimary || false;
-              const bPrimary = b.isPrimary || b.IsPrimary || false;
-              return aPrimary === bPrimary ? 0 : aPrimary ? -1 : 1;
-            });
-            images = sortedImages.map(img => resolveImageUrl(img.imagePath || img.ImagePath || ""));
-            resolvedImg = images[0] || "/Image/Noimage.jpg";
-          } else {
-            resolvedImg = resolveImageUrl(getCaseInsensitiveProperty<string>(apiProd, "ImagePath"));
-            images = [resolvedImg];
-          }
-          const matchProductId = getCaseInsensitiveProperty<number>(apiProd, "ProductId");
-          return {
-            id: matchProductId ? String(matchProductId) : String(Math.random()),
-            name: getCaseInsensitiveProperty<string>(apiProd, "ProductName"),
-            price: getCaseInsensitiveProperty<number>(apiProd, "Price") || 0,
-            sellPrice: getCaseInsensitiveProperty<number>(apiProd, "SellPrice"),
-            discountPercent: getCaseInsensitiveProperty<number>(apiProd, "DiscountPercent") || 0,
-            originalPrice: getCaseInsensitiveProperty<number>(apiProd, "Price") || 0,
-            desc: getCaseInsensitiveProperty<string>(apiProd, "ProductDescription") || "",
-            img: resolvedImg,
-            images: images,
-            benefits: ["Deeply nourishes & brightens skin", "Keeps skin soft, plump & hydrated"],
-            tag: "",
-            ingredient: ""
-          };
-        });
+        const fetched = await fetchProductsFromApi(15);
         if (isMounted) {
+          if (fetched.length > 0 && fetched[0].categoryName) {
+            setCategoryName(fetched[0].categoryName);
+          }
+          const updatedSoaps = fetched.map(p => ({
+            id: p.id,
+            productId: p.productId,
+            name: p.name,
+            price: p.originalPrice ?? p.price,
+            sellPrice: p.sellPrice ?? p.price,
+            discountPercent: p.discountPercent ?? 0,
+            originalPrice: p.originalPrice ?? p.price,
+            img: p.images?.[0] || "/Image/Noimage.jpg",
+            images: p.images,
+            desc: p.desc,
+            benefits: p.benefits || ["Deeply nourishes & brightens skin", "Keeps skin soft, plump & hydrated"],
+            tag: p.tag || "",
+            ingredient: "",
+            discount: p.discount || "",
+            totalAvailableStock: p.totalAvailableStock,
+            variants: p.variants
+          }));
           setSoaps(updatedSoaps);
           if (updatedSoaps.length > 0) {
             const maxVal = Math.max(100, Math.ceil(Math.max(...updatedSoaps.map(s => Number(s.sellPrice ?? s.price) || 0))));
             setMaxPrice(maxVal);
           }
+          syncProducts(fetched);
         }
       } catch (error) {
         console.error(error);

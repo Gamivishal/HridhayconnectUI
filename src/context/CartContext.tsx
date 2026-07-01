@@ -21,7 +21,8 @@ interface CartContextType {
   cartSubtotal: number;
   // Checkout fields
   checkoutItems: CartItem[];
-  prepareCheckout: (items: CartItem[]) => void;
+  checkoutOffers: any[];
+  prepareCheckout: (items: CartItem[], offers?: any[]) => void;
   clearCheckout: () => void;
   syncCartWithApi: () => Promise<void>;
   mergeGuestCartToApi: () => Promise<void>;
@@ -192,6 +193,7 @@ function getCustomerIdFromToken(token: string): string | null {
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [checkoutItems, setCheckoutItems] = useState<CartItem[]>([]);
+  const [checkoutOffers, setCheckoutOffers] = useState<any[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCartLoading, setIsCartLoading] = useState(false);
   const isSyncingRef = React.useRef(false);
@@ -403,6 +405,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       console.error("Failed to load checkout from localStorage", e);
     }
 
+    try {
+      const storedOffers = localStorage.getItem("hridhay_checkout_offers");
+      if (storedOffers) {
+        setCheckoutOffers(JSON.parse(storedOffers));
+      }
+    } catch (e) {
+      console.error("Failed to load checkout offers from localStorage", e);
+    }
+
     // Trigger initial API cart sync if logged in
     syncCartWithApi();
 
@@ -427,10 +438,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const prepareCheckout = (items: CartItem[]) => {
+  const prepareCheckout = (items: CartItem[], offers: any[] = []) => {
     setCheckoutItems(items);
+    setCheckoutOffers(offers);
     try {
       localStorage.setItem("hridhay_checkout", JSON.stringify(items));
+      localStorage.setItem("hridhay_checkout_offers", JSON.stringify(offers));
     } catch (e) {
       console.error("Failed to save checkout to localStorage", e);
     }
@@ -438,8 +451,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCheckout = () => {
     setCheckoutItems([]);
+    setCheckoutOffers([]);
     try {
       localStorage.removeItem("hridhay_checkout");
+      localStorage.removeItem("hridhay_checkout_offers");
     } catch (e) {
       console.error("Failed to clear checkout from localStorage", e);
     }
@@ -676,6 +691,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         cartCount,
         cartSubtotal,
         checkoutItems,
+        checkoutOffers,
         prepareCheckout,
         clearCheckout,
         syncCartWithApi,

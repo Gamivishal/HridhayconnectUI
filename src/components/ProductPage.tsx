@@ -42,9 +42,9 @@ export function ProductPage({ productId, onBack }: ProductPageProps) {
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({});
 
   // Helper to parse "Weight : 200, Packaging : Pouch" into { Weight: "200", Packaging: "Pouch" }
-  const parseAttributes = (attrStr: string): Record<string, string> => {
+  const parseAttributes = (attrStr: any): Record<string, string> => {
     const result: Record<string, string> = {};
-    if (!attrStr) return result;
+    if (!attrStr || typeof attrStr !== "string") return result;
     attrStr.split(",").forEach(part => {
       const colonIdx = part.indexOf(":");
       if (colonIdx !== -1) {

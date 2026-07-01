@@ -24,7 +24,7 @@ interface AddressInfo {
 }
 
 export function CheckoutPage() {
-  const { checkoutItems, clearCheckout, clearCart } = useCart();
+  const { checkoutItems, checkoutOffers, clearCheckout, clearCart } = useCart();
 
   // Local states
   const [addresses, setAddresses] = useState<AddressInfo[]>([]);
@@ -217,7 +217,8 @@ export function CheckoutPage() {
 
   // Calculate pricing
   const subtotal = checkoutItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
-  const discountAmount = Math.round((subtotal * discountPercent) / 100);
+  const passedDiscountAmount = checkoutOffers?.reduce((sum, offer) => sum + (offer.FinalDiscount || offer.DiscountValue || 0), 0) || 0;
+  const discountAmount = passedDiscountAmount > 0 ? passedDiscountAmount : Math.round((subtotal * discountPercent) / 100);
 
   // --- REWARD COIN CALCULATION ---
   let possibleMaxCoinsAllowed = 0;
@@ -833,15 +834,25 @@ export function CheckoutPage() {
                   <span className="font-semibold text-[var(--color-dark-text)]">₹{subtotal}</span>
                 </div>
 
-                {discountPercent > 0 && (
+                {checkoutOffers && checkoutOffers.length > 0 ? (
+                  checkoutOffers.map((offer, idx) => (
+                    <div key={idx} className="flex justify-between text-emerald-700 font-medium bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100/50">
+                      <span className="flex items-center gap-1">
+                        <Gift className="w-3.5 h-3.5" />
+                        🏷️ {offer.OfferName || "Applied Offer"}
+                      </span>
+                      <span className="font-semibold">-₹{offer.FinalDiscount || offer.DiscountValue || 0}</span>
+                    </div>
+                  ))
+                ) : discountPercent > 0 ? (
                   <div className="flex justify-between text-emerald-700 font-medium bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100/50">
                     <span className="flex items-center gap-1">
                       <Gift className="w-3.5 h-3.5" />
-                      Promo Discount ({discountPercent}%)
+                      🏷️ {couponCode.toUpperCase()} Offer ({discountPercent}% Off)
                     </span>
-                    <span>-₹{discountAmount}</span>
+                    <span className="font-semibold">-₹{discountAmount}</span>
                   </div>
-                )}
+                ) : null}
 
                 {useCoins && finalCoinDiscount > 0 && (
                   <div className="flex justify-between text-emerald-700 font-medium bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100/50">

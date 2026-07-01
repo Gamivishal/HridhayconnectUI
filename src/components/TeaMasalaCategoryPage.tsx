@@ -3,15 +3,16 @@ import { useRef, useEffect, useState } from "react";
 import { Sparkle, Check, Heart, Plus } from "lucide-react";
 import { InnerPageBanner } from "./InnerPageBanner";
 import { useCart } from "../context/CartContext";
-import { products, Product } from "../data/products";
+import { products, Product, syncProducts } from "../data/products";
 import { CategorySidebar } from "./CategorySidebar";
 import { useWishlist } from "../context/WishlistContext";
-import { getCaseInsensitiveProperty, getApiProducts, resolveImageUrl } from "../api/productService";
+import { resolveImageUrl, fetchProductsFromApi } from "../api/productService";
 
 interface TeaMasalaCardProps {
   key?: any;
   item: {
     id: string;
+    productId?: number;
     name: string;
     price: number;
     originalPrice: number;
@@ -202,15 +203,16 @@ export function TeaMasalaCategoryPage() {
     async function loadProducts() {
       try {
         setIsLoading(true);
-        const fetched = await getApiProducts(18);
+        const fetched = await fetchProductsFromApi(18);
         const processed = fetched.map(p => ({
           id: p.id,
+          productId: p.productId,
           name: p.name,
-          price: getCaseInsensitiveProperty(p, 'originalPrice') ?? p.price,
-          sellPrice: getCaseInsensitiveProperty(p, 'sellPrice') ?? p.price,
-          discountPercent: getCaseInsensitiveProperty(p, 'discountPercent') ?? 0,
-          originalPrice: getCaseInsensitiveProperty(p, 'originalPrice') ?? p.price,
-          images: p.images.map(resolveImageUrl),
+          price: p.originalPrice ?? p.price,
+          sellPrice: p.sellPrice ?? p.price,
+          discountPercent: p.discountPercent ?? 0,
+          originalPrice: p.originalPrice ?? p.price,
+          images: p.images,
           desc: p.desc,
           benefits: p.benefits || [],
           tag: p.tag || "",
@@ -223,6 +225,7 @@ export function TeaMasalaCategoryPage() {
           const maxVal = Math.max(100, Math.ceil(Math.max(...processed.map(t => Number(t.sellPrice ?? t.price) || 0))));
           setMaxPrice(maxVal);
         }
+        syncProducts(fetched);
       } catch (error) {
         console.error("Failed to load products:", error);
       } finally {
