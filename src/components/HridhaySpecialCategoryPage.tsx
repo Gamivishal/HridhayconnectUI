@@ -283,7 +283,7 @@ export function HridhaySpecialCategoryPage() {
         titleAccent=""
         subtitle="Premium micro-batch botanical skincare — crystal-charged, slow-stirred actives."
         breadcrumbs={[{ label: "Home", href: "#" }, { label: categoryName }]}
-        bgImage="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=1920&auto=format&fit=crop"
+        bgImage="/Image/Bannerimg/HridhaySpecial.webp"
         decorativeEmoji="✨"
       />
 

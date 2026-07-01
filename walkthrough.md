@@ -1,19 +1,33 @@
-# Walkthrough - Clear Banner Images, Mobile "My Account" Redesign, Paragraph Justification, Hover Alternate Image, Button Renaming & Price Filter
+# Walkthrough - Razorpay Payment Integration, Clear Banner Images, Mobile "My Account" Redesign, Paragraph Justification, Hover Alternate Image, Button Renaming & Price Filter
 
-Successfully removed the blur/haze effect and upgraded resolutions for all background banner images, completed the mobile view redesign of the "My Account" page, applied text justification to key editorial paragraphs, implemented alternate product image cross-fade hover animations, renamed the purchase buttons from "Add to Ritual" to "Add to Cart" globally, and added a price range filter widget to all category product lists.
+Successfully integrated Razorpay payment gateway (handling Cards, UPI, Netbanking, Wallets) with backend HMAC-SHA256 signature verification, removed the blur/haze effect and upgraded resolutions for all background banner images, completed the mobile view redesign of the "My Account" page, applied text justification to key editorial paragraphs, implemented alternate product image cross-fade hover animations, renamed the purchase buttons from "Add to Ritual" to "Add to Cart" globally, and added a price range filter widget to all category product lists.
 
 ## Changes Made
+
+### Razorpay Payment Integration
+- **Backend Setup (Verified & Active)**:
+  - App settings credentials configured in `appsettings.json`.
+  - Implemented `PaymentController.cs` exposing `POST /api/Payment/create-order` (to initialize Razorpay order ID) and `POST /api/Payment/verify` (to verify payment signature using HMAC-SHA256 and invoke the repository Checkout flow).
+  - Defined request and verification models in `CreateOrderRequest.cs`.
+- **Frontend Integration ([CheckoutPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/CheckoutPage.tsx))**:
+  - Dynamically injects the official Razorpay checkout script `https://checkout.razorpay.com/v1/checkout.js` into the DOM when an online payment is triggered.
+  - Intercepts order placement: routes Cash on Delivery (`cod`) transactions through the original direct checkout endpoint while routing online payments through Razorpay.
+  - Launches Razorpay modal with custom themes and prefilled customer details loaded from active local storage user profiles.
+  - **Payment Options and UPI Configuration**: Configured the Razorpay options object to not force card prefill (leaving `prefill.method` as `undefined` for default selections) so the modal opens directly onto the main checkout selection screen. Explicitly defined `config.display.sequence` to list Cards, Netbanking, Wallets, and UPI (`block.upi`) in the popup sequence so that customers can pay using UPI apps like Google Pay (GPay), PhonePe, Paytm, etc.
+  - **Dynamic Payment Mode Identification & Transmission**: Integrated a listener for the Razorpay `payment.submit` event to dynamically capture what payment method (card, netbanking, wallet, upi) the customer actually selects inside the popup. Maps this dynamically to the requested numeric identifiers (`3` for card, `4` for netbanking, `1` for wallet, and `2` for UPI) and transmits it as both `PaymentMode` and `paymentMode` fields in the `/api/Payment/verify` payload.
+  - Verifies payment on success via the secure backend API before final checkout execution and clears cart cache upon receipt of order confirmations containing the verified Order Numbers.
+  - Incorporates error handling, cancellation tracking, loading status updates, and retry support on failure.
 
 ### Clear Banner Images
 - Modified [InnerPageBanner.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/InnerPageBanner.tsx) to increase the background image opacity from `0.42` to `0.90` and removed the `saturate-[0.8]` class to allow natural, vibrant colors.
 - Softened the heavy gradient text readability overlay from `from-[var(--color-cream)] via-[var(--color-cream)]/88 to-transparent` to `from-[var(--color-cream)]/90 via-[var(--color-cream)]/35 to-transparent` to ensure the banner images are crisp and visible while maintaining text readability.
-- Upgraded the Unsplash background image URLs from low-resolution `w=600` or `w=800` to high-resolution `w=1920` to prevent pixelation on larger displays in:
-  - [SoapCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/SoapCategoryPage.tsx)
-  - [HairOilCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/HairOilCategoryPage.tsx)
-  - [MukhwasCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/MukhwasCategoryPage.tsx)
-  - [TeaMasalaCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/TeaMasalaCategoryPage.tsx)
-  - [HridhaySpecialCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/HridhaySpecialCategoryPage.tsx)
-  - [ContactPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ContactPage.tsx)
+- Replaced external Unsplash background images with local, high-quality WebP banner assets:
+  - [SoapCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/SoapCategoryPage.tsx): `/Image/Bannerimg/HomeMadeSoap.webp`
+  - [HairOilCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/HairOilCategoryPage.tsx): `/Image/Bannerimg/HairOil.webp`
+  - [MukhwasCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/MukhwasCategoryPage.tsx): `/Image/Bannerimg/Mukhwas.webp`
+  - [TeaMasalaCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/TeaMasalaCategoryPage.tsx): `/Image/Bannerimg/TeaMasala.webp`
+  - [HridhaySpecialCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/HridhaySpecialCategoryPage.tsx): `/Image/Bannerimg/HridhaySpecial.webp`
+  - [ContactPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ContactPage.tsx) (remains unchanged)
 
 
 ### Mobile "My Account" Redesign

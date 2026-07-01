@@ -263,7 +263,7 @@ export function TeaMasalaCategoryPage() {
           { label: "Home", href: "#" },
           { label: categoryName },
         ]}
-        bgImage="https://images.unsplash.com/photo-1532336414038-cf1905047b2b?q=80&w=1920&auto=format&fit=crop"
+        bgImage="/Image/Bannerimg/TeaMasala.webp"
         decorativeEmoji="☕"
       />
 

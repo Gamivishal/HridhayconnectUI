@@ -8,6 +8,20 @@ import { useCart, CartItem } from "../context/CartContext";
 import { StarButton } from "./ui/StarButton";
 import { get, post } from "../api/BaseService";
 
+const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if ((window as any).Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 interface AddressInfo {
   id: number;
   customerId: number;
@@ -65,12 +79,12 @@ export function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [generatedOrderId, setGeneratedOrderId] = useState("");
-  
+
   // Reward Coins usage
   const [rewardSettings, setRewardSettings] = useState<any>(null);
   const [availableCoins, setAvailableCoins] = useState(0);
   const [useCoins, setUseCoins] = useState(false);
-  
+
   useEffect(() => {
     const fetchRewardData = async () => {
       const customerId = localStorage.getItem("customerId");
@@ -80,12 +94,12 @@ export function CheckoutPage() {
           post("/Customer/GetAll", { Id: Number(customerId), Search: "" }),
           get("/Reward/GetAll")
         ]);
-        
+
         let dataObj = profileRes;
         if (profileRes && profileRes.data) {
           dataObj = profileRes.data;
         }
-        
+
         if (dataObj) {
           let table1 = dataObj.table1 || [];
           if (!Array.isArray(table1) || table1.length === 0) {
@@ -100,7 +114,7 @@ export function CheckoutPage() {
             setAvailableCoins(table1[0].RewardCoins || 0);
           }
         }
-        
+
         if (settingsRes && settingsRes.data && settingsRes.data.length > 0) {
           setRewardSettings(settingsRes.data[0]);
         }
@@ -110,7 +124,7 @@ export function CheckoutPage() {
     };
     fetchRewardData();
   }, []);
-  
+
   // Fetch Addresses
   useEffect(() => {
     const fetchAddresses = async () => {
@@ -223,7 +237,7 @@ export function CheckoutPage() {
   // --- REWARD COIN CALCULATION ---
   let possibleMaxCoinsAllowed = 0;
   let possibleMaxDiscountRs = 0;
-  
+
   // Final usage variables
   let finalUsedCoins = 0;
   let finalCoinDiscount = 0;
@@ -233,14 +247,14 @@ export function CheckoutPage() {
     const baseAmountForCoins = subtotal - discountAmount;
     const maxCoinUsagePercent = rewardSettings.MaxCoinUsagePercent || 0;
     const coinToRupeeRate = rewardSettings.CoinToRupeeRate || 1;
-    
+
     // Max usage rule based on cart value
     const maxDiscountAllowedRs = (baseAmountForCoins * maxCoinUsagePercent) / 100;
     const maxCoinsAllowed = maxDiscountAllowedRs * coinToRupeeRate;
-    
+
     // Final limit (minimum of available or maximum allowed)
     const rawCoinsLimit = Math.min(availableCoins, maxCoinsAllowed);
-    
+
     // Rounding rule: Allow only full rupee redemption
     possibleMaxCoinsAllowed = Math.floor(rawCoinsLimit / coinToRupeeRate) * coinToRupeeRate;
     possibleMaxDiscountRs = possibleMaxCoinsAllowed / coinToRupeeRate;
@@ -251,7 +265,7 @@ export function CheckoutPage() {
     finalUsedCoins = possibleMaxCoinsAllowed;
     finalCoinDiscount = possibleMaxDiscountRs;
   }
-  
+
   remainingCoins = availableCoins - finalUsedCoins;
 
   const shippingThreshold = 500;
@@ -299,42 +313,209 @@ export function CheckoutPage() {
     e.preventDefault();
     if (!validateForm()) {
       setAddressError("Please select a delivery address to place your order.");
-      // Scroll to top or show toast
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
     setIsProcessing(true);
+    setAddressError(""); // Reset any errors
 
-    try {
-      const customerId = localStorage.getItem("customerId");
+    const customerId = localStorage.getItem("customerId");
+    const createdBy = customerId ? Number(customerId) : 0;
 
-      const json: any = await post(`/Cart/CheckOut?customerId=${customerId}&CustomerAddressId=${selectedAddress?.id}&deliveryFee=${shippingCost || 0}&usedCoins=${finalUsedCoins}&coinDiscountAmount=${finalCoinDiscount}`, {});
+    // For Cash on Delivery (COD) - bypass Razorpay online flow and complete immediately
+    if (paymentMethod === "cod") {
+      try {
+        const json: any = await post(
+          `/Cart/CheckOut?customerId=${customerId}&CustomerAddressId=${selectedAddress?.id}&deliveryFee=${shippingCost || 0}&usedCoins=${finalUsedCoins}&coinDiscountAmount=${finalCoinDiscount}`,
+          {}
+        );
 
-      // Checking common success indicators from the .NET backend API format
-      if (json.isSuccess || json.statusCode === 1 || json.statusCode === 200) {
-        const orderId = "HC-" + Math.floor(100000 + Math.random() * 900000);
-        setGeneratedOrderId(orderId);
-        setIsProcessing(false);
-        setOrderCompleted(true);
-
-        // Clear cart items if they checked out their shopping cart
-        clearCart();
-        // Clear checkout data
-        clearCheckout();
-
-        // Scroll to top for success experience
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      } else {
-        setAddressError(json.message || "Failed to place order.");
+        if (json.isSuccess || json.statusCode === 1 || json.statusCode === 200) {
+          const orderNum = json.data?.items?.[0]?.OrderNumber || json.data?.Items?.[0]?.OrderNumber || "HC-" + Math.floor(100000 + Math.random() * 900000);
+          setGeneratedOrderId(orderNum);
+          setIsProcessing(false);
+          setOrderCompleted(true);
+          clearCart();
+          clearCheckout();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          setAddressError(json.message || "Failed to place order.");
+          setIsProcessing(false);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      } catch (err) {
+        console.error("COD Checkout error:", err);
+        setAddressError("A network error occurred. Please try again.");
         setIsProcessing(false);
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
-    } catch (err) {
-      console.error("Checkout error:", err);
-      setAddressError("A network error occurred. Please try again.");
+      return;
+    }
+
+    // For Online Payments (Card, UPI, PayPal) - use Razorpay Integration
+    try {
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        setAddressError("Failed to load payment gateway script. Please check your internet connection.");
+        setIsProcessing(false);
+        return;
+      }
+
+      const orderRes: any = await post("/Payment/create-order", {
+        Amount: finalTotal
+      });
+
+      if (!orderRes || (!orderRes.razorpayOrderId && !orderRes.RazorpayOrderId)) {
+        setAddressError(orderRes?.message || "Failed to create payment order. Please try again.");
+        setIsProcessing(false);
+        return;
+      }
+
+      const razorpayOrderId = orderRes.razorpayOrderId || orderRes.RazorpayOrderId;
+      const orderAmount = orderRes.amount || orderRes.Amount;
+      const orderCurrency = orderRes.currency || orderRes.Currency || "INR";
+
+      // Extract customer details for prefill
+      let customerEmail = "";
+      let customerName = selectedAddress?.customerName || "";
+      let customerMobile = selectedAddress?.mobileNo || "";
+      try {
+        const profileStr = localStorage.getItem("customerProfile");
+        if (profileStr) {
+          const profile = JSON.parse(profileStr);
+          customerEmail = profile.Email || profile.email || "";
+          if (!customerName) {
+            customerName = profile.Name || profile.name || profile.CustomerName || "";
+          }
+          if (!customerMobile) {
+            customerMobile = profile.MobileNo || profile.mobileNo || profile.Mobile || "";
+          }
+        }
+      } catch (err) {
+        console.error("Error parsing customer profile", err);
+      }
+
+      // Determine prefill method based on selected paymentMethod
+      let prefillMethod = "";
+      if (paymentMethod === "card") {
+        prefillMethod = ""; // Do not prefill card so that the modal shows the main options screen including UPI
+      } else if (paymentMethod === "upi") {
+        prefillMethod = "upi";
+      } else if (paymentMethod === "paypal") {
+        prefillMethod = "wallet";
+      }
+
+      let selectedMethod = "";
+
+      const options = {
+        key: "rzp_live_SNR6THeI8rRQIr",
+        amount: orderAmount,
+        currency: orderCurrency,
+        name: "Hridhay Connect",
+        description: "Artisanal Wellness Purchase",
+        order_id: razorpayOrderId,
+        image: "/logo.webp",
+        handler: async (response: any) => {
+          setIsProcessing(true);
+          try {
+            let paymentModeVal = "3"; // Default fallback (Card)
+            const finalMethod = (selectedMethod || paymentMethod || "").toLowerCase();
+            if (finalMethod === "card") {
+              paymentModeVal = "3";
+            } else if (finalMethod === "netbanking") {
+              paymentModeVal = "4";
+            } else if (finalMethod === "wallet" || finalMethod === "paypal") {
+              paymentModeVal = "1";
+            } else if (finalMethod === "upi") {
+              paymentModeVal = "2";
+            }
+
+            const verifyPayload = {
+              RazorpayOrderId: response.razorpay_order_id,
+              RazorpayPaymentId: response.razorpay_payment_id,
+              RazorpaySignature: response.razorpay_signature,
+              CustomerId: Number(customerId),
+              CustomerAddressId: selectedAddress?.id,
+              CreatedBy: createdBy,
+              UsedCoins: finalUsedCoins,
+              CoinDiscountAmount: finalCoinDiscount,
+              DeliveryFee: shippingCost || 0,
+              PaymentMode: paymentModeVal,
+              paymentMode: paymentModeVal
+            };
+
+            const verifyRes: any = await post("/Payment/verify", verifyPayload);
+
+            const isSuccessVal = verifyRes.isSuccess || verifyRes.IsSuccess || verifyRes.statusCode === 1 || verifyRes.statusCode === 200;
+            if (isSuccessVal) {
+              const orderNum = verifyRes.data?.items?.[0]?.OrderNumber || verifyRes.data?.Items?.[0]?.OrderNumber || "HC-" + Math.floor(100000 + Math.random() * 900000);
+              setGeneratedOrderId(orderNum);
+              setIsProcessing(false);
+              setOrderCompleted(true);
+              clearCart();
+              clearCheckout();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            } else {
+              setAddressError(verifyRes.message || "Payment verification failed. Please contact support.");
+              setIsProcessing(false);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          } catch (err: any) {
+            console.error("Payment verification network error:", err);
+            setAddressError("A network error occurred while verifying payment. Please do not close this window and contact support.");
+            setIsProcessing(false);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        },
+        prefill: {
+          name: customerName,
+          email: customerEmail,
+          contact: customerMobile,
+          method: prefillMethod || undefined,
+          vpa: paymentMethod === "upi" && upiId ? upiId : undefined
+        },
+        config: {
+          display: {
+            sequence: ["block.cards", "block.netbanking", "block.wallet", "block.upi"],
+            preferences: {
+              show_default_blocks: true
+            },
+            hide: [
+              {
+                method: "paylater"
+              }
+            ]
+          }
+        },
+        theme: {
+          color: "#5B2A86"
+        },
+        modal: {
+          ondismiss: () => {
+            setIsProcessing(false);
+            setAddressError("Payment window was closed by the user. You can try placing the order again.");
+          }
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.submit", (response: any) => {
+        if (response && response.method) {
+          selectedMethod = response.method;
+        }
+      });
+      rzp.on("payment.failed", (response: any) => {
+        console.error("Razorpay Payment failed:", response.error);
+        setIsProcessing(false);
+        setAddressError(`Payment failed: ${response.error.description || "Unknown error"}. Please try again.`);
+      });
+
+      rzp.open();
+    } catch (err: any) {
+      console.error("Razorpay creation error:", err);
+      setAddressError("An unexpected error occurred while initiating the payment. Please try again.");
       setIsProcessing(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -542,8 +723,8 @@ export function CheckoutPage() {
                   type="button"
                   onClick={() => setShippingOption('standard')}
                   className={`w-full flex items-center justify-between p-4 sm:p-5 rounded-3xl border transition-all duration-300 text-left ${shippingOption === 'standard'
-                      ? 'bg-[var(--color-primary)]/5 border-[var(--color-primary)] shadow-sm'
-                      : 'bg-white/40 border-black/5 hover:border-black/25'
+                    ? 'bg-[var(--color-primary)]/5 border-[var(--color-primary)] shadow-sm'
+                    : 'bg-white/40 border-black/5 hover:border-black/25'
                     }`}
                 >
                   <div className="flex items-center gap-4">
@@ -592,7 +773,7 @@ export function CheckoutPage() {
             </motion.div>
 
             {/* Payment Portal */}
-            <motion.div
+            {/* <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.25 }}
@@ -676,7 +857,7 @@ export function CheckoutPage() {
                   >
                     <input
                       type="text"
-                      placeholder="Enter UPI ID (e.g. username@okhdfcbank)"
+                      placeholder="Enter UPI ID (Optional - or leave blank to choose inside popup)"
                       value={upiId}
                       onChange={(e) => setUpiId(e.target.value)}
                       className="w-full bg-white/40 border border-black/10 rounded-2xl py-4.5 px-4 text-base text-[var(--color-dark-text)] focus:border-[var(--color-primary)] focus:outline-none transition-all duration-300"
@@ -709,7 +890,7 @@ export function CheckoutPage() {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </motion.div> */}
           </div>
 
           {/* RIGHT SIDE: Summary Card */}
@@ -963,8 +1144,8 @@ export function CheckoutPage() {
                     <label
                       key={addr.id}
                       className={`flex gap-4 p-5 rounded-3xl border cursor-pointer transition-all duration-300 ${selectedAddress?.id === addr.id
-                          ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5 shadow-sm"
-                          : "border-black/10 bg-white/50 hover:border-black/20"
+                        ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5 shadow-sm"
+                        : "border-black/10 bg-white/50 hover:border-black/20"
                         }`}
                     >
                       <div className="flex-shrink-0 mt-1">

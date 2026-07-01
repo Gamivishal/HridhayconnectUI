@@ -35,6 +35,31 @@ export function CartPage() {
   const [isOffersLoading, setIsOffersLoading] = useState(false);
   const [offerMessage, setOfferMessage] = useState({ text: "", type: "" });
 
+  const safeText = (value: unknown, fallback = "") => {
+    if (typeof value === "string") return value;
+    if (typeof value === "number" || typeof value === "boolean") return String(value);
+    return fallback;
+  };
+
+  const safeNumber = (value: unknown, fallback = 0) => {
+    const parsed = typeof value === "number" ? value : Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+
+  const normalizeOffer = (offer: any) => ({
+    ...offer,
+    Id: safeNumber(offer?.Id, 0),
+    OfferName: safeText(offer?.OfferName, ""),
+    OfferType: safeText(offer?.OfferType, ""),
+    DiscountType: safeText(offer?.DiscountType, ""),
+    DiscountValue: safeNumber(offer?.DiscountValue, 0),
+    FinalDiscount: safeNumber(offer?.FinalDiscount, 0),
+    IsAlreadyApplied: safeNumber(offer?.IsAlreadyApplied, 0),
+    IsCouponRequired: Boolean(offer?.IsCouponRequired),
+    CouponCode: safeText(offer?.CouponCode, ""),
+    Priority: safeNumber(offer?.Priority, 0)
+  });
+
   // Free shipping threshold
   const shippingThreshold = 500;
   const shippingCost = cartSubtotal >= shippingThreshold || cartSubtotal === 0 ? 0 : 60;
@@ -67,15 +92,16 @@ export function CartPage() {
 
         const uniqueOffersMap = new Map();
         [...t2, ...t3].forEach((offer: any) => {
-          if (!uniqueOffersMap.has(offer.Id)) {
-            uniqueOffersMap.set(offer.Id, offer);
+          const normalizedOffer = normalizeOffer(offer);
+          if (!uniqueOffersMap.has(normalizedOffer.Id)) {
+            uniqueOffersMap.set(normalizedOffer.Id, normalizedOffer);
           } else {
-            const existing = uniqueOffersMap.get(offer.Id);
+            const existing = uniqueOffersMap.get(normalizedOffer.Id);
             // Always prefer the version that says it is applied
-            if (checkIsApplied(offer)) {
-              uniqueOffersMap.set(offer.Id, offer);
-            } else if (!checkIsApplied(existing) && offer.FinalDiscount !== undefined && offer.FinalDiscount > (existing.FinalDiscount || 0)) {
-              uniqueOffersMap.set(offer.Id, offer);
+            if (checkIsApplied(normalizedOffer)) {
+              uniqueOffersMap.set(normalizedOffer.Id, normalizedOffer);
+            } else if (!checkIsApplied(existing) && normalizedOffer.FinalDiscount !== undefined && normalizedOffer.FinalDiscount > (existing.FinalDiscount || 0)) {
+              uniqueOffersMap.set(normalizedOffer.Id, normalizedOffer);
             }
           }
         });
@@ -130,7 +156,7 @@ export function CartPage() {
     }
   };
 
-  const discountAmount = appliedOffers.reduce((sum, offer) => sum + (offer.FinalDiscount || 0), 0);
+  const discountAmount = appliedOffers.reduce((sum, offer) => sum + safeNumber(offer.FinalDiscount, 0), 0);
   const orderTotal = cartSubtotal - discountAmount + shippingCost;
 
   // Prepare checkout items and redirect
@@ -372,15 +398,9 @@ export function CartPage() {
                   {appliedOffers.length > 0 && appliedOffers.map((offer, idx) => (
                     <div key={idx} className="flex justify-between items-center text-emerald-600">
                       <div className="flex flex-col">
-                        <span className="font-semibold text-xs">{offer.OfferName || "Discount"}</span>
-                        <button
-                          onClick={() => fetchOffers("", 0, offer.Id)}
-                          className="text-red-400 hover:text-red-600 text-[9px] uppercase font-bold text-left tracking-wider w-fit cursor-pointer mt-0.5"
-                        >
-                          Remove
-                        </button>
+                        <span className="font-semibold text-xs">{safeText(offer.OfferName, "Discount")}</span>
                       </div>
-                      <span className="font-serif font-semibold">- ₹{offer.FinalDiscount}</span>
+                      <span className="font-serif font-semibold">- ₹{safeNumber(offer.FinalDiscount, 0)}</span>
                     </div>
                   ))}
 
@@ -471,26 +491,23 @@ export function CartPage() {
                                     <div className="bg-emerald-100 rounded-full p-0.5 text-emerald-600 shadow-[0_0_10px_rgba(16,185,129,0.3)]">
                                       <Check className="w-3.5 h-3.5" />
                                     </div>
-                                    <span className="text-sm font-bold text-emerald-900 group-hover:text-emerald-950 transition-colors">{offer.OfferName}</span>
+                                    <span className="text-sm font-bold text-emerald-900 group-hover:text-emerald-950 transition-colors">{safeText(offer.OfferName, "")}</span>
                                   </div>
                                   <div className="flex items-center gap-2 mt-0.5 ml-6">
                                     <span className="bg-emerald-100/50 border border-emerald-200 text-emerald-700/80 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md">
-                                      {offer.OfferType}
+                                      {safeText(offer.OfferType, "")}
                                     </span>
                                     <span className="text-[10px] font-bold text-emerald-600/90 tracking-wide">
-                                      {offer.DiscountType === "FLAT" ? `Flat ₹${offer.DiscountValue} OFF` : `${offer.DiscountValue}% OFF`}
+                                      {safeText(offer.DiscountType, "") === "FLAT" ? `Flat ₹${safeNumber(offer.DiscountValue, 0)} OFF` : `${safeNumber(offer.DiscountValue, 0)}% OFF`}
                                     </span>
                                   </div>
                                 </div>
                                 
-                                <div className="flex flex-col items-end gap-2">
-                                  <span className="bg-emerald-100 border border-emerald-200 text-emerald-700 text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm whitespace-nowrap">
-                                    Applied
-                                  </span>
+                                <div className="flex flex-col items-end">
                                   <button
                                     disabled={isOffersLoading}
                                     onClick={() => fetchOffers("", 0, offer.Id)}
-                                    className={`text-[10px] text-emerald-700/60 hover:text-red-500 font-bold transition-colors underline decoration-transparent hover:decoration-red-300 underline-offset-2 cursor-pointer ${isOffersLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    className={`bg-red-50 hover:bg-red-500 text-red-600 hover:text-white text-[10px] font-bold uppercase tracking-widest px-4.5 py-2.5 rounded-xl transition-all duration-300 shadow-sm hover:shadow-red-500/30 whitespace-nowrap cursor-pointer border border-red-100 hover:border-red-500 ${isOffersLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                                   >
                                     {isOffersLoading ? 'Removing...' : 'Remove'}
                                   </button>
@@ -499,7 +516,7 @@ export function CartPage() {
                               
                               <div className="bg-emerald-100/50 border border-emerald-200/60 rounded-xl p-3 flex items-center justify-between mt-1.5 relative z-10 group-hover:bg-emerald-100/80 transition-colors ml-1">
                                  <span className="text-[10px] uppercase tracking-widest text-emerald-800/70 font-bold">You Saved</span>
-                                 <span className="text-sm font-bold text-emerald-600">₹{offer.FinalDiscount}</span>
+                                 <span className="text-sm font-bold text-emerald-600">₹{safeNumber(offer.FinalDiscount, 0)}</span>
                               </div>
                             </div>
                           );
@@ -511,13 +528,13 @@ export function CartPage() {
                             
                             <div className="flex justify-between items-start relative z-10">
                               <div className="flex flex-col gap-1.5 pr-3">
-                                <span className="text-sm font-bold text-black group-hover:text-orange-900 transition-colors">{offer.OfferName}</span>
+                                <span className="text-sm font-bold text-black group-hover:text-orange-900 transition-colors">{safeText(offer.OfferName, "")}</span>
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <span className="bg-black/5 text-[var(--color-dark-text)]/70 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md">
-                                    {offer.OfferType}
+                                    {safeText(offer.OfferType, "")}
                                   </span>
                                   <span className="text-[10px] font-bold text-orange-600/90 tracking-wide">
-                                    {offer.DiscountType === "FLAT" ? `Flat ₹${offer.DiscountValue} OFF` : `${offer.DiscountValue}% OFF`}
+                                    {safeText(offer.DiscountType, "") === "FLAT" ? `Flat ₹${safeNumber(offer.DiscountValue, 0)} OFF` : `${safeNumber(offer.DiscountValue, 0)}% OFF`}
                                   </span>
                                 </div>
                               </div>
@@ -541,7 +558,7 @@ export function CartPage() {
                             
                             <div className="bg-orange-50/60 border border-orange-100/60 rounded-xl p-3 flex items-center justify-between mt-1.5 relative z-10 group-hover:bg-orange-100/40 transition-colors">
                                <span className="text-[10px] uppercase tracking-widest text-orange-800/60 font-bold">Expected Saving</span>
-                               <span className="text-sm font-bold text-orange-600">Save ₹{offer.FinalDiscount}</span>
+                               <span className="text-sm font-bold text-orange-600">Save ₹{safeNumber(offer.FinalDiscount, 0)}</span>
                             </div>
                           </div>
                         );

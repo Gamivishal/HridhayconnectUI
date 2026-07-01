@@ -31,6 +31,43 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+function safeText(value: unknown, fallback = "") {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return fallback;
+}
+
+function safeNumber(value: unknown, fallback = 0) {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function sanitizeProductForCart(product: any): Product {
+  return {
+    ...product,
+    id: safeText(product?.id, ""),
+    name: safeText(product?.name, ""),
+    category: safeText(product?.category, ""),
+    tagline: safeText(product?.tagline, ""),
+    desc: safeText(product?.desc, ""),
+    longDesc: safeText(product?.longDesc, ""),
+    price: safeNumber(product?.price, 0),
+    originalPrice: safeNumber(product?.originalPrice, 0),
+    images: Array.isArray(product?.images) ? product.images.filter((image: unknown) => typeof image === "string") : [],
+    totalAvailableStock: product?.totalAvailableStock === undefined ? undefined : safeNumber(product?.totalAvailableStock, 0)
+  };
+}
+
+function sanitizeCartItem(item: any): CartItem | null {
+  if (!item || typeof item !== "object" || !item.product) return null;
+
+  return {
+    product: sanitizeProductForCart(item.product),
+    quantity: Math.max(1, safeNumber(item.quantity, 1)),
+    packingType: safeText(item.packingType, "") || undefined
+  };
+}
+
 // Helper to resolve API cart item to local CartItem structure
 export function resolveCartItem(apiCartItem: any): CartItem | null {
   console.log("[resolveCartItem] Raw API Cart Item:", apiCartItem);
@@ -390,7 +427,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const storedCart = localStorage.getItem("hridhay_cart");
       if (storedCart) {
-        setCartItems(JSON.parse(storedCart));
+        const parsedCart = JSON.parse(storedCart);
+        if (Array.isArray(parsedCart)) {
+          setCartItems(parsedCart.map(sanitizeCartItem).filter(Boolean) as CartItem[]);
+        }
       }
     } catch (e) {
       console.error("Failed to load cart from localStorage", e);
@@ -399,7 +439,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const storedCheckout = localStorage.getItem("hridhay_checkout");
       if (storedCheckout) {
-        setCheckoutItems(JSON.parse(storedCheckout));
+        const parsedCheckout = JSON.parse(storedCheckout);
+        if (Array.isArray(parsedCheckout)) {
+          setCheckoutItems(parsedCheckout.map(sanitizeCartItem).filter(Boolean) as CartItem[]);
+        }
       }
     } catch (e) {
       console.error("Failed to load checkout from localStorage", e);
@@ -430,19 +473,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Save to localStorage on any cartItems changes
   const saveCart = (items: CartItem[]) => {
-    setCartItems(items);
+    const sanitizedItems = items.map(sanitizeCartItem).filter(Boolean) as CartItem[];
+    setCartItems(sanitizedItems);
     try {
-      localStorage.setItem("hridhay_cart", JSON.stringify(items));
+      localStorage.setItem("hridhay_cart", JSON.stringify(sanitizedItems));
     } catch (e) {
       console.error("Failed to save cart to localStorage", e);
     }
   };
 
   const prepareCheckout = (items: CartItem[], offers: any[] = []) => {
-    setCheckoutItems(items);
+    const sanitizedItems = items.map(sanitizeCartItem).filter(Boolean) as CartItem[];
+    setCheckoutItems(sanitizedItems);
     setCheckoutOffers(offers);
     try {
-      localStorage.setItem("hridhay_checkout", JSON.stringify(items));
+      localStorage.setItem("hridhay_checkout", JSON.stringify(sanitizedItems));
       localStorage.setItem("hridhay_checkout_offers", JSON.stringify(offers));
     } catch (e) {
       console.error("Failed to save checkout to localStorage", e);
