@@ -38,7 +38,7 @@ export function ContactPage() {
           { label: "Home", href: "#" },
           { label: "Contact" },
         ]}
-        bgImage="https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=800&auto=format&fit=crop"
+        bgImage="https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=1920&auto=format&fit=crop"
         decorativeEmoji="💌"
       />
 

@@ -58,7 +58,7 @@ export function InnerPageBanner({
         {bgImage && (
           <>
             <div
-              className="absolute inset-0 opacity-[0.42] saturate-[0.8]"
+              className="absolute inset-0 opacity-[0.90]"
               style={{
                 backgroundImage: `url(${bgImage})`,
                 backgroundSize: "cover",
@@ -66,7 +66,7 @@ export function InnerPageBanner({
               }}
             />
             {/* Responsive gradient overlay for text readability */}
-            <div className="absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-[var(--color-cream)] via-[var(--color-cream)]/88 to-transparent z-[1] pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-[var(--color-cream)]/90 via-[var(--color-cream)]/35 to-transparent z-[1] pointer-events-none" />
           </>
         )}
 

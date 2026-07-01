@@ -239,7 +239,7 @@ export function MukhwasCategoryPage() {
         titleAccent=""
         subtitle="Indian heritage mouth fresheners hand-roasted in artisanal batches."
         breadcrumbs={[{ label: "Home", href: "#" }, { label: categoryName }]}
-        bgImage="https://images.unsplash.com/photo-1599940824399-b87987ceb72a?q=80&w=600&auto=format&fit=crop"
+        bgImage="https://images.unsplash.com/photo-1599940824399-b87987ceb72a?q=80&w=1920&auto=format&fit=crop"
         decorativeEmoji="🌿"
       />
 

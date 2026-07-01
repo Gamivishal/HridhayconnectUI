@@ -275,7 +275,7 @@ export function HairOilCategoryPage() {
         titleAccent=""
         subtitle="Traditional copper-cured Ayurvedic hair oils, slow-infused with Bhringraj, Amla, and Hibiscus."
         breadcrumbs={[{ label: "Home", href: "#" }, { label: categoryName }]}
-        bgImage="https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=600&auto=format&fit=crop"
+        bgImage="https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=1920&auto=format&fit=crop"
         decorativeEmoji="🌺"
       />
 

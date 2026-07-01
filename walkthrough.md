@@ -1,8 +1,20 @@
-# Walkthrough - Mobile "My Account" Redesign, Paragraph Justification, Hover Alternate Image, Button Renaming & Price Filter
+# Walkthrough - Clear Banner Images, Mobile "My Account" Redesign, Paragraph Justification, Hover Alternate Image, Button Renaming & Price Filter
 
-Successfully completed the mobile view redesign of the "My Account" page, applied text justification to key editorial paragraphs, implemented alternate product image cross-fade hover animations, renamed the purchase buttons from "Add to Ritual" to "Add to Cart" globally, and added a price range filter widget to all category product lists.
+Successfully removed the blur/haze effect and upgraded resolutions for all background banner images, completed the mobile view redesign of the "My Account" page, applied text justification to key editorial paragraphs, implemented alternate product image cross-fade hover animations, renamed the purchase buttons from "Add to Ritual" to "Add to Cart" globally, and added a price range filter widget to all category product lists.
 
 ## Changes Made
+
+### Clear Banner Images
+- Modified [InnerPageBanner.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/InnerPageBanner.tsx) to increase the background image opacity from `0.42` to `0.90` and removed the `saturate-[0.8]` class to allow natural, vibrant colors.
+- Softened the heavy gradient text readability overlay from `from-[var(--color-cream)] via-[var(--color-cream)]/88 to-transparent` to `from-[var(--color-cream)]/90 via-[var(--color-cream)]/35 to-transparent` to ensure the banner images are crisp and visible while maintaining text readability.
+- Upgraded the Unsplash background image URLs from low-resolution `w=600` or `w=800` to high-resolution `w=1920` to prevent pixelation on larger displays in:
+  - [SoapCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/SoapCategoryPage.tsx)
+  - [HairOilCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/HairOilCategoryPage.tsx)
+  - [MukhwasCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/MukhwasCategoryPage.tsx)
+  - [TeaMasalaCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/TeaMasalaCategoryPage.tsx)
+  - [HridhaySpecialCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/HridhaySpecialCategoryPage.tsx)
+  - [ContactPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ContactPage.tsx)
+
 
 ### Mobile "My Account" Redesign
 - Redesigned [ProfilePage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ProfilePage.tsx) to hide the sidebar menu on mobile layouts (`hidden lg:block`).

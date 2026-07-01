@@ -266,7 +266,7 @@ export function SoapCategoryPage() {
         titleAccent=""
         subtitle="Cold-pressed, handcrafted botanical soaps."
         breadcrumbs={[{ label: "Home", href: "#" }, { label: categoryName }]}
-        bgImage="https://images.unsplash.com/photo-1607006342456-ba275cd34226?q=80&w=600&auto=format&fit=crop"
+        bgImage="https://images.unsplash.com/photo-1607006342456-ba275cd34226?q=80&w=1920&auto=format&fit=crop"
         decorativeEmoji="🌸"
       />
 
