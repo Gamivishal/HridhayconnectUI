@@ -36,10 +36,10 @@ export function AboutPage() {
         title="About Hridhay"
         titleAccent="Connect"
         subtitle="Crafting premium wellness experiences through organic, handcrafted products that honor the ancient rhythms of nature."
-        breadcrumbs={[
-          { label: "Home", href: "#" },
-          { label: "About Us" },
-        ]}
+        // breadcrumbs={[
+        //   { label: "Home", href: "#" },
+        //   { label: "About Us" },
+        // ]}
         bgImage="/Image/AboutPageImage/BannerImage.webp"
         decorativeEmoji="🌿"
       />

@@ -14,6 +14,13 @@ export function CategorySidebar({ minPrice = 0, maxPrice = 1000, maxLimit = 1000
   const [featuredSection, setFeaturedSection] = useState<HomeSection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const currentHash = typeof window !== 'undefined' ? window.location.hash : '';
+  const [categories, setCategories] = useState([
+    { name: "Home Made Soap", hash: "#soap", categoryId: 15 },
+    { name: "Home Made Hair Oil", hash: "#hair-oil", categoryId: 16 },
+    { name: "Home Made Mukhwas", hash: "#mukhwas", categoryId: 17 },
+    { name: "Home Made Tea Masala", hash: "#tea-masala", categoryId: 18 },
+    { name: "Hridhay Special", hash: "#hridhay-special", categoryId: 19 },
+  ]);
 
   useEffect(() => {
     let isMounted = true;
@@ -23,6 +30,14 @@ export function CategorySidebar({ minPrice = 0, maxPrice = 1000, maxLimit = 1000
         if (isMounted) {
           const found = sections.find(s => s.componentId === 5); // Featured Products
           if (found) setFeaturedSection(found);
+
+          const catSection = sections.find(s => s.refType.toLowerCase() === "category");
+          if (catSection && catSection.items) {
+            setCategories(prev => prev.map(c => {
+              const matched = catSection.items.find((item: any) => item.categoryId === c.categoryId);
+              return matched && matched.name ? { ...c, name: matched.name } : c;
+            }));
+          }
           setIsLoading(false);
         }
       } catch (e) {
@@ -32,14 +47,6 @@ export function CategorySidebar({ minPrice = 0, maxPrice = 1000, maxLimit = 1000
     load();
     return () => { isMounted = false; };
   }, []);
-
-  const categories = [
-    { name: "Home Made Soap", hash: "#soap" },
-    { name: "Home Made Hair Oil", hash: "#hair-oil" },
-    { name: "Home Made Mukhwas", hash: "#mukhwas" },
-    { name: "Home Made Tea Masala", hash: "#tea-masala" },
-    { name: "Hridhay Special", hash: "#hridhay-special" },
-  ];
 
   return (
     <aside className="w-full flex flex-col gap-8 md:gap-12">
@@ -66,82 +73,6 @@ export function CategorySidebar({ minPrice = 0, maxPrice = 1000, maxLimit = 1000
         </ul>
       </div>
 
-      {/* Price Filter */}
-      {onPriceChange && (
-        <div className="bg-white/60 p-6 md:p-8 rounded-[2rem] border border-white/80 shadow-[0_4px_24px_rgb(0,0,0,0.02)] backdrop-blur-md">
-          <h3 className="text-xl font-serif mb-6 text-black tracking-wide border-b border-black/5 pb-4">Filter by Price</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between text-xs font-medium text-[var(--color-dark-text)]/60 font-general">
-              <span>Min: ₹{minPrice}</span>
-              <span>Max: ₹{maxPrice}</span>
-            </div>
-            <div className="relative w-full h-6 flex items-center">
-              {/* Track background */}
-              <div className="absolute left-0 right-0 h-1 bg-black/5 rounded-lg pointer-events-none" />
-              
-              {/* Selected range highlight */}
-              <div 
-                className="absolute h-1 bg-[var(--color-primary)] rounded-lg pointer-events-none"
-                style={{
-                  left: `${maxLimit > 0 ? (minPrice / maxLimit) * 100 : 0}%`,
-                  right: `${maxLimit > 0 ? 100 - (maxPrice / maxLimit) * 100 : 0}%`
-                }}
-              />
-
-              {/* Min range input */}
-              <input
-                type="range"
-                min="0"
-                max={maxLimit}
-                step="10"
-                value={minPrice}
-                onChange={(e) => {
-                  const val = Math.min(Number(e.target.value), maxPrice);
-                  onPriceChange(val, maxPrice);
-                }}
-                className="absolute w-full appearance-none h-1 bg-transparent pointer-events-none focus:outline-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--color-primary)] [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[var(--color-primary)] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer z-10"
-              />
-
-              {/* Max range input */}
-              <input
-                type="range"
-                min="0"
-                max={maxLimit}
-                step="10"
-                value={maxPrice}
-                onChange={(e) => {
-                  const val = Math.max(Number(e.target.value), minPrice);
-                  onPriceChange(minPrice, val);
-                }}
-                className="absolute w-full appearance-none h-1 bg-transparent pointer-events-none focus:outline-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--color-primary)] [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[var(--color-primary)] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer z-20"
-              />
-            </div>
-            <div className="flex gap-2 items-center">
-              <input
-                type="number"
-                placeholder="Min"
-                value={minPrice || ""}
-                onChange={(e) => {
-                  const val = Number(e.target.value) || 0;
-                  onPriceChange(val, Math.max(val, maxPrice));
-                }}
-                className="w-full bg-white border border-black/10 rounded-xl px-3 py-1.5 text-xs text-center focus:border-[var(--color-primary)] focus:outline-none"
-              />
-              <span className="text-[var(--color-dark-text)]/40">-</span>
-              <input
-                type="number"
-                placeholder="Max"
-                value={maxPrice === maxLimit ? "" : maxPrice}
-                onChange={(e) => {
-                  const val = Number(e.target.value) || maxLimit;
-                  onPriceChange(Math.min(minPrice, val), val);
-                }}
-                className="w-full bg-white border border-black/10 rounded-xl px-3 py-1.5 text-xs text-center focus:border-[var(--color-primary)] focus:outline-none"
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Featured Products */}
       <div className="hidden lg:block bg-white/60 p-6 md:p-8 rounded-[2rem] border border-white/80 shadow-[0_4px_24px_rgb(0,0,0,0.02)] backdrop-blur-md">

@@ -24,8 +24,7 @@ export function SectionCarousel({ section }: { section: HomeSection }) {
       if (window.innerWidth >= 1280) setItemsPerView(4);
       else if (window.innerWidth >= 1024) setItemsPerView(4);
       else if (window.innerWidth >= 768) setItemsPerView(3);
-      else if (window.innerWidth >= 640) setItemsPerView(2);
-      else setItemsPerView(1.5);
+      else setItemsPerView(2);
     };
     handleResize();
     window.addEventListener('resize', handleResize);

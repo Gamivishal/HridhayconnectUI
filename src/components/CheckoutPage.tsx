@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { useCart, CartItem } from "../context/CartContext";
 import { StarButton } from "./ui/StarButton";
-import { get, post } from "../api/BaseService";
+import { get, post, RAZORPAY_KEY_ID } from "../api/BaseService";
 
 const loadRazorpayScript = (): Promise<boolean> => {
   return new Promise((resolve) => {
@@ -409,7 +409,7 @@ export function CheckoutPage() {
       let selectedMethod = "";
 
       const options = {
-        key: "rzp_live_SNR6THeI8rRQIr",
+        key: RAZORPAY_KEY_ID,
         amount: orderAmount,
         currency: orderCurrency,
         name: "Hridhay Connect",

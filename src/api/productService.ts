@@ -291,6 +291,8 @@ export function parseApiProductGroup(group: any[]): Product {
 
   // Also collect any unique variant-specific images as fallback
   const variantOnlyImages = variants.map(v => v.imagePath).filter(Boolean);
+
+  // Only use dynamic database/API images (productImages and variantOnlyImages) to avoid showing placeholder images
   const allImages = Array.from(new Set([...productImages, ...variantOnlyImages]))
     .filter(url => url !== "/Image/Noimage.jpg");
 
@@ -317,7 +319,6 @@ export function parseApiProductGroup(group: any[]): Product {
 
   return {
     id: localProduct?.id || apiSlug || apiSkuSlug || String(prodId),
-    productId: prodId,
     name: prodName || (localProduct?.name ?? ""),
     price: resolvedSellPrice,
     originalPrice: computedOriginalPrice,

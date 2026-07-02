@@ -23,7 +23,7 @@ export function HomePage() {
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 640) {
-        setMaxRadius(100)
+        setMaxRadius(120)
       } else if (window.innerWidth < 1024) {
         setMaxRadius(180)
       } else {
@@ -190,8 +190,8 @@ export function HomePage() {
                     className="flex flex-col items-center justify-center relative z-20 transition-opacity duration-300 px-4"
                     style={{ opacity: textOpacity }}
                   >
-                    <h1 className="text-lg sm:text-2xl md:text-4xl font-bold text-[var(--color-dark-text)] text-center mb-0.5 sm:mb-2">Empowering</h1>
-                    <h1 className="text-lg sm:text-2xl md:text-4xl font-bold text-[var(--color-dark-text)] text-center mb-1 sm:mb-4">Every User</h1>
+                    <h1 className="text-base sm:text-2xl md:text-4xl font-bold text-[var(--color-dark-text)] text-center mb-0.5 sm:mb-2">Empowering</h1>
+                    <h1 className="text-base sm:text-2xl md:text-4xl font-bold text-[var(--color-dark-text)] text-center mb-1 sm:mb-4">Every User</h1>
 
                     <p className="text-[var(--color-dark-text)]/70 text-center text-[10px] sm:text-xs md:text-sm max-w-[110px] sm:max-w-xs leading-relaxed">
                       From entrepreneurs to educators, Gen AI provides tools to simplify work.

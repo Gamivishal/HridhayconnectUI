@@ -210,7 +210,7 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
               onMouseLeave={() => setIsOpen(false)}
             >
               <button
-                className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${isOpen || ['soap', 'hair-oil', 'mukhwas', 'tea-masala', 'hridhay-special'].includes(currentPage)
+                className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${isOpen || ['soap', 'hair-oil', 'mukhwas', 'tea-masala'].includes(currentPage)
                   ? 'text-[#5B2A86] font-bold'
                   : 'text-[#1B1720] hover:text-[#7A49A5]'
                   }`}
@@ -516,6 +516,10 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                           <Gift className="w-3.5 h-3.5" />
                           <span>Rewards</span>
                         </button>
+                        <button onClick={() => { setIsProfileOpen(false); window.location.hash = 'password'; window.dispatchEvent(new HashChangeEvent('hashchange')); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-[#1B1720]/80 hover:bg-[#5B2A86]/5 hover:text-[#5B2A86] transition-colors font-medium">
+                          <Shield className="w-3.5 h-3.5" />
+                          <span>Change Password</span>
+                        </button>
 
                         <div className="h-[1px] w-full bg-[#5B2A86]/10 my-2"></div>
 
@@ -524,7 +528,7 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                           className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 transition-colors text-left font-medium"
                         >
                           <LogOut className="w-3.5 h-3.5" />
-                          <span>Sign Out</span>
+                          <span>Logout</span>
                         </button>
                       </motion.div>
                     )}
@@ -653,10 +657,10 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
               <div className="relative flex-1 overflow-y-auto px-6 py-6 space-y-1">
 
                 {/* Nav Links */}
+                {/* Nav Links Part 1: Home & About */}
                 {[
                   { label: "Home", href: "#", page: "home" },
                   { label: "About", href: "#about", page: "about" },
-                  { label: "Hridhay Special", href: "#hridhay-special", page: "hridhay-special" },
                 ].map((link, i) => (
                   <motion.a
                     key={link.page}
@@ -687,7 +691,7 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.18, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  transition={{ delay: 0.14, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                   className="border-b border-[#5B2A86]/6"
                 >
                   <button
@@ -742,46 +746,35 @@ export function Navigation({ currentPage = 'home' }: NavigationProps) {
                   </AnimatePresence>
                 </motion.div>
 
-                {/* Cart Link */}
-                <motion.button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setIsCartOpen(true);
-                  }}
-                  className="flex items-center justify-between w-full py-3.5 px-1 border-b border-[#5B2A86]/6 cursor-pointer"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.22, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  whileTap={{ x: 4 }}
-                >
-                  <span className="font-serif text-base tracking-wide text-[#1B1720] font-medium">
-                    Shopping Cart
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {cartCount > 0 && (
-                      <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-[#5B2A86] text-white text-[9px] font-bold px-1.5 shadow-[0_2px_8px_rgba(91,42,134,0.35)]">
-                        {cartCount > 9 ? '9+' : cartCount}
-                      </span>
+                {/* Nav Links Part 2: Hridhay Special & Contact */}
+                {[
+                  { label: "Hridhay Special", href: "#hridhay-special", page: "hridhay-special" },
+                  { label: "Contact", href: "#contact", page: "contact" },
+                ].map((link, i) => (
+                  <motion.a
+                    key={link.page}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between w-full py-3.5 px-1 border-b border-[#5B2A86]/6"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.18 + i * 0.04, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    style={{ textDecoration: "none" }}
+                    whileTap={{ x: 4 }}
+                  >
+                    <span
+                      className={`font-serif text-base tracking-wide ${currentPage === link.page
+                        ? "text-[#5B2A86] font-semibold"
+                        : "text-[#1B1720] font-medium"
+                        }`}
+                    >
+                      {link.label}
+                    </span>
+                    {currentPage === link.page && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#5B2A86] flex-shrink-0" />
                     )}
-                    <ShoppingBag className="w-4 h-4 text-[#5B2A86]/60" />
-                  </div>
-                </motion.button>
-
-                {/* Contact Link */}
-                <motion.a
-                  href="#contact"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between w-full py-3.5 px-1 border-b border-[#5B2A86]/6"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.26, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  style={{ textDecoration: "none" }}
-                  whileTap={{ x: 4 }}
-                >
-                  <span className="font-serif text-base tracking-wide text-[#1B1720] font-medium">
-                    Contact
-                  </span>
-                </motion.a>
+                  </motion.a>
+                ))}
 
                 {/* My Profile Accordion (Mobile) */}
                 {isLoggedIn && (

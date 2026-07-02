@@ -76,7 +76,7 @@ function MukhwasCard({
             className="absolute inset-0 w-full h-full object-cover object-center opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out"
           />
         )}
-        
+
         <div className="absolute top-5 left-5 flex flex-col gap-2 items-start">
           {(() => {
             const sp = item.sellPrice ?? item.price;
@@ -146,7 +146,7 @@ function MukhwasCard({
           {item.desc}
         </p>
 
-        <div 
+        <div
           className="flex items-center justify-between gap-4 mt-1 mb-3 text-xs"
           onClick={(e) => {
             e.preventDefault();
@@ -181,35 +181,42 @@ export function MukhwasCategoryPage() {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
     async function loadProducts() {
       try {
         setIsLoading(true);
         const fetched = await fetchProductsFromApi(17);
-        const cardMukhwas = fetched.map(p => ({
-          id: p.id,
-          name: p.name,
-          price: p.originalPrice ?? p.price,
-          sellPrice: p.sellPrice ?? p.price,
-          discountPercent: p.discountPercent ?? 0,
-          originalPrice: p.originalPrice ?? p.price,
-          img: p.images[0] || "/Image/Noimage.jpg",
-          images: p.images,
-          desc: p.desc,
-          variants: p.variants
-        }));
-        setMukhwasList(cardMukhwas);
-        if (cardMukhwas.length > 0) {
-          const maxVal = Math.max(100, Math.ceil(Math.max(...cardMukhwas.map(m => Number(m.sellPrice ?? m.price) || 0))));
-          setMaxPrice(maxVal);
+        if (isMounted) {
+          if (fetched.length > 0 && fetched[0].categoryName) {
+            setCategoryName(fetched[0].categoryName);
+          }
+          const cardMukhwas = fetched.map(p => ({
+            id: p.id,
+            name: p.name,
+            price: p.originalPrice ?? p.price,
+            sellPrice: p.sellPrice ?? p.price,
+            discountPercent: p.discountPercent ?? 0,
+            originalPrice: p.originalPrice ?? p.price,
+            img: p.images[0] || "/Image/Noimage.jpg",
+            images: p.images,
+            desc: p.desc,
+            variants: p.variants
+          }));
+          setMukhwasList(cardMukhwas);
+          if (cardMukhwas.length > 0) {
+            const maxVal = Math.max(100, Math.ceil(Math.max(...cardMukhwas.map(m => Number(m.sellPrice ?? m.price) || 0))));
+            setMaxPrice(maxVal);
+          }
+          syncProducts(fetched);
         }
-        syncProducts(fetched);
       } catch (error) {
         console.error(error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     }
     loadProducts();
+    return () => { isMounted = false; };
   }, []);
 
   const [minPrice, setMinPrice] = useState(0);
@@ -238,7 +245,7 @@ export function MukhwasCategoryPage() {
         title={categoryName}
         titleAccent=""
         subtitle="Indian heritage mouth fresheners hand-roasted in artisanal batches."
-        breadcrumbs={[{ label: "Home", href: "#" }, { label: categoryName }]}
+        //  breadcrumbs={[{ label: "Home", href: "#" }, { label: categoryName }]}
         bgImage="/Image/Bannerimg/Mukhwas.webp"
         decorativeEmoji="🌿"
       />
@@ -246,9 +253,9 @@ export function MukhwasCategoryPage() {
       <section id="products-grid" className="py-16 md:py-24 px-2 sm:px-4 md:px-12 max-w-[1600px] mx-auto z-20 relative">
         <div className="flex flex-col lg:flex-row gap-12">
           <div className="w-full lg:w-1/4 xl:w-1/5">
-            <CategorySidebar 
-              minPrice={minPrice} 
-              maxPrice={maxPrice} 
+            <CategorySidebar
+              minPrice={minPrice}
+              maxPrice={maxPrice}
               maxLimit={maxLimit}
               onPriceChange={(min, max) => {
                 setMinPrice(min);
@@ -280,9 +287,9 @@ export function MukhwasCategoryPage() {
                   <div className="relative w-full h-4 flex items-center">
                     {/* Track background */}
                     <div className="absolute left-0 right-0 h-1 bg-black/5 rounded-lg pointer-events-none" />
-                    
+
                     {/* Selected range highlight */}
-                    <div 
+                    <div
                       className="absolute h-1 bg-[var(--color-primary)] rounded-lg pointer-events-none"
                       style={{
                         left: `${maxLimit > 0 ? (minPrice / maxLimit) * 100 : 0}%`,
@@ -316,31 +323,6 @@ export function MukhwasCategoryPage() {
                         setMaxPrice(val);
                       }}
                       className="absolute w-full appearance-none h-1 bg-transparent pointer-events-none focus:outline-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--color-primary)] [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[var(--color-primary)] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer z-20"
-                    />
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="number"
-                      placeholder="Min"
-                      value={minPrice || ""}
-                      onChange={(e) => {
-                        const val = Number(e.target.value) || 0;
-                        setMinPrice(val);
-                        if (val > maxPrice) setMaxPrice(val);
-                      }}
-                      className="w-full bg-white border border-black/10 rounded-xl px-2.5 py-1.5 text-[11px] text-center focus:border-[var(--color-primary)] focus:outline-none font-medium"
-                    />
-                    <span className="text-[var(--color-dark-text)]/30 text-xs">-</span>
-                    <input
-                      type="number"
-                      placeholder="Max"
-                      value={maxPrice === maxLimit ? "" : maxPrice}
-                      onChange={(e) => {
-                        const val = Number(e.target.value) || maxLimit;
-                        setMaxPrice(val);
-                        if (val < minPrice) setMinPrice(val);
-                      }}
-                      className="w-full bg-white border border-black/10 rounded-xl px-2.5 py-1.5 text-[11px] text-center focus:border-[var(--color-primary)] focus:outline-none font-medium"
                     />
                   </div>
                 </div>

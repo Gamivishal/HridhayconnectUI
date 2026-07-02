@@ -200,6 +200,9 @@ export function HridhaySpecialCategoryPage() {
         setIsLoading(true);
         const fetched = await fetchProductsFromApi(0);
         if (isMounted) {
+          if (fetched.length > 0 && fetched[0].categoryName) {
+            setCategoryName(fetched[0].categoryName);
+          }
           const targetCombos = [
             { productId: 54, variantId: 187 },
             { productId: 59, variantId: 194 },
@@ -282,7 +285,7 @@ export function HridhaySpecialCategoryPage() {
         title={categoryName}
         titleAccent=""
         subtitle="Premium micro-batch botanical skincare — crystal-charged, slow-stirred actives."
-        breadcrumbs={[{ label: "Home", href: "#" }, { label: categoryName }]}
+        //  breadcrumbs={[{ label: "Home", href: "#" }, { label: categoryName }]}
         bgImage="/Image/Bannerimg/HridhaySpecial.webp"
         decorativeEmoji="✨"
       />
@@ -290,9 +293,9 @@ export function HridhaySpecialCategoryPage() {
       <section id="products-grid" className="py-16 md:py-24 px-2 sm:px-4 md:px-12 max-w-[1600px] mx-auto z-20 relative border-t border-[var(--color-primary)]/5">
         <div className="flex flex-col lg:flex-row gap-12">
           <div className="w-full lg:w-1/4 xl:w-1/5">
-            <CategorySidebar 
-              minPrice={minPrice} 
-              maxPrice={maxPrice} 
+            <CategorySidebar
+              minPrice={minPrice}
+              maxPrice={maxPrice}
               maxLimit={maxLimit}
               onPriceChange={(min, max) => {
                 setMinPrice(min);
@@ -324,9 +327,9 @@ export function HridhaySpecialCategoryPage() {
                   <div className="relative w-full h-4 flex items-center">
                     {/* Track background */}
                     <div className="absolute left-0 right-0 h-1 bg-black/5 rounded-lg pointer-events-none" />
-                    
+
                     {/* Selected range highlight */}
-                    <div 
+                    <div
                       className="absolute h-1 bg-[var(--color-primary)] rounded-lg pointer-events-none"
                       style={{
                         left: `${maxLimit > 0 ? (minPrice / maxLimit) * 100 : 0}%`,
@@ -360,31 +363,6 @@ export function HridhaySpecialCategoryPage() {
                         setMaxPrice(val);
                       }}
                       className="absolute w-full appearance-none h-1 bg-transparent pointer-events-none focus:outline-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--color-primary)] [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[var(--color-primary)] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer z-20"
-                    />
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="number"
-                      placeholder="Min"
-                      value={minPrice || ""}
-                      onChange={(e) => {
-                        const val = Number(e.target.value) || 0;
-                        setMinPrice(val);
-                        if (val > maxPrice) setMaxPrice(val);
-                      }}
-                      className="w-full bg-white border border-black/10 rounded-xl px-2.5 py-1.5 text-[11px] text-center focus:border-[var(--color-primary)] focus:outline-none font-medium"
-                    />
-                    <span className="text-[var(--color-dark-text)]/30 text-xs">-</span>
-                    <input
-                      type="number"
-                      placeholder="Max"
-                      value={maxPrice === maxLimit ? "" : maxPrice}
-                      onChange={(e) => {
-                        const val = Number(e.target.value) || maxLimit;
-                        setMaxPrice(val);
-                        if (val < minPrice) setMinPrice(val);
-                      }}
-                      className="w-full bg-white border border-black/10 rounded-xl px-2.5 py-1.5 text-[11px] text-center focus:border-[var(--color-primary)] focus:outline-none font-medium"
                     />
                   </div>
                 </div>

@@ -353,31 +353,6 @@ export function HairOilCategoryPage() {
                       className="absolute w-full appearance-none h-1 bg-transparent pointer-events-none focus:outline-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--color-primary)] [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[var(--color-primary)] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer z-20"
                     />
                   </div>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="number"
-                      placeholder="Min"
-                      value={minPrice || ""}
-                      onChange={(e) => {
-                        const val = Number(e.target.value) || 0;
-                        setMinPrice(val);
-                        if (val > maxPrice) setMaxPrice(val);
-                      }}
-                      className="w-full bg-white border border-black/10 rounded-xl px-2.5 py-1.5 text-[11px] text-center focus:border-[var(--color-primary)] focus:outline-none font-medium"
-                    />
-                    <span className="text-[var(--color-dark-text)]/30 text-xs">-</span>
-                    <input
-                      type="number"
-                      placeholder="Max"
-                      value={maxPrice === maxLimit ? "" : maxPrice}
-                      onChange={(e) => {
-                        const val = Number(e.target.value) || maxLimit;
-                        setMaxPrice(val);
-                        if (val < minPrice) setMinPrice(val);
-                      }}
-                      className="w-full bg-white border border-black/10 rounded-xl px-2.5 py-1.5 text-[11px] text-center focus:border-[var(--color-primary)] focus:outline-none font-medium"
-                    />
-                  </div>
                 </div>
               </div>
             </div>

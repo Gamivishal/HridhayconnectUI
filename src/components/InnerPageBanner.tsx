@@ -65,8 +65,8 @@ export function InnerPageBanner({
                 backgroundPosition: "center 35%",
               }}
             />
-            {/* Responsive gradient overlay for text readability */}
-            <div className="absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-[var(--color-cream)]/90 via-[var(--color-cream)]/35 to-transparent z-[1] pointer-events-none" />
+            {/* Responsive dark gradient overlay for white text readability */}
+            <div className="absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-black/60 via-black/20 to-transparent z-[1] pointer-events-none" />
           </>
         )}
 
@@ -136,17 +136,31 @@ export function InnerPageBanner({
               {breadcrumbs.map((crumb, i) => (
                 <span key={i} className="flex items-center gap-1.5">
                   {i > 0 && (
-                    <ArrowRight className="w-3 h-3 text-[#5B2A86]/30 flex-shrink-0" />
+                    <ArrowRight className={`w-3 h-3 flex-shrink-0 ${bgImage ? 'text-white/55' : 'text-[#5B2A86]/30'}`} />
                   )}
                   {crumb.href ? (
                     <a
                       href={crumb.href}
-                      className="text-[10px] uppercase tracking-[0.18em] text-[#1B1720]/40 hover:text-[#5B2A86] transition-colors font-medium font-general"
+                      className={`text-[10px] uppercase tracking-[0.18em] transition-colors font-medium font-general ${
+                        bgImage
+                          ? 'text-white/80 hover:text-white'
+                          : 'text-[#1B1720]/40 hover:text-[#5B2A86]'
+                      }`}
+                      style={{
+                        textShadow: bgImage ? "0 1px 4px rgba(0,0,0,0.4)" : "none"
+                      }}
                     >
                       {crumb.label}
                     </a>
                   ) : (
-                    <span className="text-[10px] uppercase tracking-[0.18em] text-[#5B2A86] font-semibold font-general">
+                    <span
+                      className={`text-[10px] uppercase tracking-[0.18em] font-semibold font-general ${
+                        bgImage ? 'text-white' : 'text-[#5B2A86]'
+                      }`}
+                      style={{
+                        textShadow: bgImage ? "0 1px 4px rgba(0,0,0,0.4)" : "none"
+                      }}
+                    >
                       {crumb.label}
                     </span>
                   )}
@@ -165,9 +179,20 @@ export function InnerPageBanner({
             >
               <span
                 className="h-[1px] w-8"
-                style={{ background: "linear-gradient(90deg, #5B2A86, #A678D6)" }}
+                style={{
+                  background: bgImage
+                    ? "linear-gradient(90deg, rgba(255,255,255,0.8), rgba(255,255,255,0.15))"
+                    : "linear-gradient(90deg, #5B2A86, #A678D6)",
+                }}
               />
-              <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#5B2A86] font-general">
+              <span
+                className={`text-[10px] font-semibold uppercase tracking-[0.22em] font-general ${
+                  bgImage ? 'text-white/95' : 'text-[#5B2A86]'
+                }`}
+                style={{
+                  textShadow: bgImage ? "0 1px 4px rgba(0,0,0,0.4)" : "none"
+                }}
+              >
                 {eyebrow}
               </span>
             </motion.div>
@@ -178,8 +203,13 @@ export function InnerPageBanner({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="font-serif font-light text-[#1B1720] leading-[1.06] tracking-tight"
-            style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}
+            className={`font-serif leading-[1.06] tracking-tight ${
+              bgImage ? 'text-white font-normal' : 'text-[#1B1720] font-light'
+            }`}
+            style={{
+              fontSize: "clamp(2rem, 5vw, 3.5rem)",
+              textShadow: bgImage ? "0 2px 14px rgba(0,0,0,0.6)" : "none",
+            }}
           >
             {title}
             {titleAccent && (
@@ -187,7 +217,10 @@ export function InnerPageBanner({
                 {" "}
                 <span
                   className="italic font-serif"
-                  style={{ color: "#7A49A5" }}
+                  style={{
+                    color: bgImage ? "#E9D5FF" : "#7A49A5",
+                    textShadow: bgImage ? "0 2px 14px rgba(0,0,0,0.6)" : "none"
+                  }}
                 >
                   {titleAccent}
                 </span>
@@ -202,7 +235,9 @@ export function InnerPageBanner({
             transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
             className="mt-3 mb-5 h-[1px] w-16 origin-left"
             style={{
-              background: "linear-gradient(90deg, rgba(91,42,134,0.4), rgba(166,120,214,0.15))",
+              background: bgImage
+                ? "linear-gradient(90deg, rgba(255,255,255,0.7), rgba(255,255,255,0.15))"
+                : "linear-gradient(90deg, rgba(91,42,134,0.4), rgba(166,120,214,0.15))",
             }}
           />
 
@@ -212,7 +247,12 @@ export function InnerPageBanner({
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="text-sm md:text-base text-[#1B1720]/65 font-light font-satoshi leading-relaxed max-w-lg"
+              className={`text-sm md:text-base leading-relaxed max-w-lg ${
+                bgImage ? 'text-white/95 font-medium' : 'text-[#1B1720]/65 font-light'
+              }`}
+              style={{
+                textShadow: bgImage ? "0 2px 10px rgba(0,0,0,0.5)" : "none",
+              }}
             >
               {subtitle}
             </motion.p>

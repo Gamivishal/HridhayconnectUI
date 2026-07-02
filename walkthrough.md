@@ -94,9 +94,7 @@ Renamed purchase action buttons across the application and styled them to preven
 ### Price Range Filter on Category Pages
 Implemented an interactive Price Filter inside the product collection views:
 1. **Category Sidebar Integration** ([CategorySidebar.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/CategorySidebar.tsx)):
-   - Defined `minPrice`, `maxPrice`, `maxLimit`, and `onPriceChange` props inside `CategorySidebar`.
-   - Replaced the single-handle slider with a high-fidelity **dual-handle (two dot) range slider** which allows the user to visually adjust both the minimum and maximum price directly on the track.
-   - Designed a responsive CSS/Tailwind overlapping range input overlay supporting smooth drag interactions.
+   - Removed the left-side "Filter by Price" dual-range slider UI section from the `CategorySidebar` to simplify the sidebar layout.
 2. **State, Filtering & Top-Right Filter Layout on Categories**:
    - Added states (`minPrice`, `maxPrice`) inside all category landing files.
    - Wired states and change handlers to `<CategorySidebar />`.
@@ -110,6 +108,68 @@ Implemented an interactive Price Filter inside the product collection views:
      - [TeaMasalaCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/TeaMasalaCategoryPage.tsx)
      - [HridhaySpecialCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/HridhaySpecialCategoryPage.tsx)
 
+### Dynamic Category Names from API
+Mapped category names dynamically from database/API endpoints:
+1. **Sidebar Menu Category Updates** ([CategorySidebar.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/CategorySidebar.tsx)):
+   - Converted static categories array into React state.
+   - Fetches dynamic category naming from the home layout endpoint (`/Home/GetHomeComponent`) on mount, automatically matching by `categoryId` and replacing static titles (e.g. mapping "Home Made Mukhwas" to "Mukhwas" as configured in the database).
+2. **Category Banners & Titles**:
+   - Updated [MukhwasCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/MukhwasCategoryPage.tsx), [TeaMasalaCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/TeaMasalaCategoryPage.tsx), and [HridhaySpecialCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/HridhaySpecialCategoryPage.tsx) to fetch and assign the primary category name string returned by the first product record dynamically rather than leaving them statically initialized.
+
+### Banner Image Text Legibility
+- Updated [InnerPageBanner.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/InnerPageBanner.tsx) to render the text block content in a high-contrast white font with responsive text shadow styling when a background image is present.
+- Configured a dark gradient overlay (`from-black/60 via-black/20 to-transparent`) behind the text instead of the cream gradient when banner images are present to allow maximum visibility of the backgrounds while keeping titles and description text completely crisp and legible.
+
+### Header Navigation Highlight Bug Fix
+- Fixed an issue in [Navigation.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/Navigation.tsx) where both the "Shop By Category" dropdown button and the "Hridhay Special" menu item were highlighted as selected concurrently when viewing the "Hridhay Special" page. Excluding "Hridhay Special" from the category page check array ensures only the standalone "Hridhay Special" link displays the bold selected style.
+
+### Empowering Every User Mobile Spacing Fix
+- Modified [scrolling-animation.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ui/scrolling-animation.tsx) to increase the maximum circle expansion radius (`maxRadius`) on mobile layouts from `100` to `120` in the resize listener.
+- Adjusted the mobile font size of the "Empowering Every User" titles from `text-lg` (18px) to `text-base` (16px) to reduce layout width. These changes prevent the expanding profile photos (on the left and right sides) from touching or overlapping the first ("E") and last ("g") letters of the text.
+
+### Mobile Menu Drawer Spacing & Reordering
+- Updated [Navigation.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/Navigation.tsx) to reorganize the drawer items layout on mobile views to the following sequence: **Home -> About -> Shop By Category (Accordion) -> Hridhay Special -> Contact**.
+- Removed the **Shopping Cart** link from the mobile menu drawer completely, as it is already permanently present and active directly in the header bar.
+
+### Contact Us Form Validation
+- Completely removed all HTML5 browser-level `required` attributes and visual `*` (compulsory) markings from all input fields (including **Name**, **Email**, **Mobile Number**, **Subject**, and **Message**) in [ContactPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ContactPage.tsx).
+- Defer all validation checks and messages entirely to the server-side API, avoiding standard browser "Please fill out this field" validation warnings on the client UI.
+- Maintained the numeric character filter on the **Mobile Number** field to restrict typed inputs to a max length of **10 digits**.
+- Removed the inline JSX error banner from the contact form so that feedback is delivered cleanly and exclusively via Toast notifications.
+
+### Contact Us API Integration
+- Hooked up the Contact Us form inside [ContactPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ContactPage.tsx) to perform a POST request to the backend save endpoint `/ContactUs/Save` (via the central `post` utility).
+- Formatted the request payload object with key names exactly matching the required parameters: `name`, `email`, `mobileNumber`, `subject`, and `message`.
+- Integrated `showApiResponseToast` and `showToast` from [toastService.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/utils/toastService.tsx) inside `handleSubmit`. If the API responds with a successful status code but contains a payload body indicating validation failure (such as `isSuccess: false` with validation descriptions), the application dynamically triggers a red error notification toast showing the validation message (e.g. *"Please enter Name."*), and halts form success redirects. All submission warnings/errors are now styled and outputted solely through these toaster notifications.
+
+### Navigation and Footer Naming Alignment
+- Updated [Navigation.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/Navigation.tsx) and [Footer.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/Footer.tsx) category names to align with url routing paths and match the database category names returned by the API.
+- Configured category naming options in Navigation and Footer lists to: **Home Made Soap** (for `#soap`), **Home Made Hair Oil** (for `#hair-oil`), **Mukhwas** (for `#mukhwas`), **Tea Masala** (for `#tea-masala`), and **Hridhay Special** (for `#hridhay-special`). This matches the specific visual headers loaded on each category detail page.
+
+### Price Filter Manual Input Restriction
+- Removed the manual min/max digit number input boxes (`input type="number"`) from the price filter panels across all category page templates: [SoapCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/SoapCategoryPage.tsx), [HairOilCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/HairOilCategoryPage.tsx), [MukhwasCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/MukhwasCategoryPage.tsx), [TeaMasalaCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/TeaMasalaCategoryPage.tsx), and [HridhaySpecialCategoryPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/HridhaySpecialCategoryPage.tsx).
+- Users are now limited strictly to using the dual range slider dots to filter items, preventing manual numeric typing errors on the frontend.
+
+### My Account Header & Mobile Menu Items Layout
+- Updated [Navigation.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/Navigation.tsx) to align the "My Account" dropdown/accordion menu items across desktop and mobile views.
+- Added **Change Password** option using the `Shield` icon to both the desktop My Account hover dropdown (after **Rewards**) and the mobile navigation drawer profile accordion menu.
+- Restored **Notifications** to the mobile menu drawer profile accordion menu.
+- Renamed the desktop profile dropdown action label from **Sign Out** to **Logout** to match the mobile menu text.
+- Re-imported the `Shield` icon from `lucide-react` in `Navigation.tsx`.
+
+### Homepage Product Image Enrichment (Alternate Images Fix)
+- Updated [productService.ts](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/api/productService.ts) inside `parseApiProductGroup` to keep dynamic database/API product images intact and avoid merging static Unsplash placeholders. This ensures dynamic product details and listings only show correct dynamic assets uploaded on the backend database.
+
+### Mobile Viewport Slider Items Fix (Exactly 2 Images)
+- Modified [CategoryCarousel.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/CategoryCarousel.tsx) and [SectionCarousel.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/SectionCarousel.tsx) resize handlers to set `itemsPerView` to exactly `2` on mobile screen resolutions (< 768px).
+- This aligns the layout to show two complete equal-width slides at a time rather than 1.5 or 1.2 partially visible slides, ensuring smooth scrolling without horizontal overflow on smaller screens.
+
+### Compilation Hotfix (Duplicate Object Literal Key)
+- Removed a duplicate declaration of the `productId` key in the return object block of the `parseApiProductGroup` function in [productService.ts](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/api/productService.ts#L323), fixing the TypeScript error *"An object literal cannot have multiple properties with the same name."*
+
+### Contact Form Compulsory Markings
+- Added red-colored asterisks `*` to the **Name**, **Email Address**, and **Mobile Number** labels inside [ContactPage.tsx](file:///c:/Users/Admin/source/repos/HridhayconnectUI/src/components/ContactPage.tsx) to clarify to users which fields are mandatory.
+
 ---
 
 ## Verification Results
@@ -121,3 +181,9 @@ Implemented an interactive Price Filter inside the product collection views:
 - Verified price range bounds mapping dynamically to prevent React key exceptions or NaN ranges.
 - Confirmed dynamic range calculations correctly set the filter range defaults to `0` and the category's actual maximum price.
 - Verified that dual range sliders accurately drag from both left (minPrice) and right (maxPrice) dots without exceeding limits or overlapping errors.
+- Verified that the "My Account" dropdown options on desktop show: **Profile Details**, **Order History**, **Addresses**, **Rewards**, **Change Password**, and **Logout**.
+- Verified that the mobile "My Profile" accordion inside the header drawer shows: **Profile Details**, **Order History**, **Addresses**, **Rewards**, **Notifications**, and **Change Password** (with **Logout** styled below).
+- Verified that products loaded in the homepage **CategoryCarousel** and **SectionCarousel** (New Arrivals, Best Sellers) now successfully contain multiple images, enabling the alternate cross-fade hover animation.
+- Verified that the homepage carousels on screen resolutions < 768px now display exactly two complete, equal-width items side-by-side.
+- Verified TypeScript compilation compiles cleanly with no duplicate object keys.
+- Verified that the contact form displays red asterisks next to Name, Email Address, and Mobile Number.

@@ -54,10 +54,11 @@ export function Footer() {
           <div>
             <h4 className="text-xs uppercase tracking-[0.2em] mb-6 text-[var(--color-accent)]">Category</h4>
             <ul className="space-y-4">
-              <li><a href="#soap" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Soaps</a></li>
-              <li><a href="#hair-oil" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Hair Oil</a></li>
+              <li><a href="#soap" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Home Made Soap</a></li>
+              <li><a href="#hair-oil" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Home Made Hair Oil</a></li>
               <li><a href="#mukhwas" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Mukhwas</a></li>
               <li><a href="#tea-masala" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Tea Masala</a></li>
+              <li><a href="#hridhay-special" className="text-[var(--color-cream)]/70 hover:text-white transition-colors text-sm font-light">Hridhay Special</a></li>
             </ul>
           </div>
 

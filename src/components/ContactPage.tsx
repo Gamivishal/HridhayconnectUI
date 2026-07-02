@@ -1,25 +1,62 @@
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Mail, MapPin, Phone, Send, ArrowRight } from "lucide-react";
 import { InnerPageBanner } from "./InnerPageBanner";
+import { post } from "../api/BaseService";
+import { showApiResponseToast, showToast } from "../utils/toastService";
 
 export function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
     document.title = "Contact Us | Hridhay Connect";
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const response: any = await post("/ContactUs/Save", {
+        name,
+        email,
+        mobileNumber: mobile,
+        subject,
+        message
+      });
+
+      if (response) {
+        showApiResponseToast(response);
+        if (response.isSuccess === false || response.statusCode !== 1) {
+          setError(response.message || "Failed to send message.");
+          return;
+        }
+      }
+
       setIsSubmitted(true);
-    }, 1500);
+      // Reset form
+      setName("");
+      setEmail("");
+      setMobile("");
+      setSubject("");
+      setMessage("");
+    } catch (err: any) {
+      console.error("Failed to save contact message", err);
+      const errMsg = err?.response?.data?.message || err?.message || "Failed to send message. Please try again.";
+      setError(errMsg);
+      showToast("error", errMsg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const fadeUpItem = {
@@ -34,32 +71,32 @@ export function ContactPage() {
         title="Contact"
         titleAccent="Us"
         subtitle="We'd love to hear from you. Reach out for any questions about our artisanal skincare, order inquiries, or just to say hello."
-        breadcrumbs={[
-          { label: "Home", href: "#" },
-          { label: "Contact" },
-        ]}
+        // breadcrumbs={[
+        //   { label: "Home", href: "#" },
+        //   { label: "Contact" },
+        // ]}
         bgImage="https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=1920&auto=format&fit=crop"
         decorativeEmoji="💌"
       />
 
       <section className="py-24 md:py-32 px-6 md:px-12 max-w-[1400px] mx-auto z-20 relative">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
-          
+
           {/* Left Column - Contact Info */}
-          <motion.div 
-            initial="hidden" 
-            whileInView="show" 
-            viewport={{ once: true, margin: "-100px" }} 
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-100px" }}
             className="lg:col-span-5 flex flex-col justify-center"
           >
             <motion.span variants={fadeUpItem} className="text-[var(--color-primary)] font-medium tracking-[0.2em] uppercase text-xs mb-6 flex items-center gap-4">
               <span className="w-12 h-[1px] bg-[var(--color-primary)]/60"></span> Let's Talk
             </motion.span>
-            
+
             <motion.h2 variants={fadeUpItem} className="text-4xl sm:text-5xl font-serif text-black leading-[1.1] mb-8 font-light tracking-tight">
               We are here to <span className="italic text-[var(--color-primary)]">assist you.</span>
             </motion.h2>
-            
+
             <motion.p variants={fadeUpItem} className="text-base text-[var(--color-dark-text)]/70 font-light font-satoshi mb-12 leading-relaxed text-justify">
               Whether you have a question about our botanical ingredients, need assistance with your order, or simply want skincare advice, our dedicated team is always ready to help.
             </motion.p>
@@ -107,10 +144,10 @@ export function ContactPage() {
           </motion.div>
 
           {/* Right Column - Contact Form */}
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }} 
-            whileInView={{ opacity: 1, y: 0 }} 
-            viewport={{ once: true }} 
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
             transition={{ duration: 1, delay: 0.2 }}
             className="lg:col-span-7"
           >
@@ -128,7 +165,7 @@ export function ContactPage() {
                   <p className="text-[var(--color-dark-text)]/70 font-light max-w-md mx-auto">
                     Thank you for reaching out. We have received your message and will get back to you as soon as possible.
                   </p>
-                  <button 
+                  <button
                     onClick={() => setIsSubmitted(false)}
                     className="mt-8 text-[var(--color-primary)] text-sm uppercase tracking-widest font-semibold hover:text-black transition-colors"
                   >
@@ -137,12 +174,14 @@ export function ContactPage() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+
                   <div className="space-y-2">
-                    <label htmlFor="name" className="text-xs uppercase tracking-wider text-[var(--color-dark-text)]/60 font-semibold pl-2">Name</label>
-                    <input 
-                      type="text" 
-                      id="name" 
-                      required
+                    <label htmlFor="name" className="text-xs uppercase tracking-wider text-[var(--color-dark-text)]/60 font-semibold pl-2">Name <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                       maxLength={150}
                       className="w-full bg-white/80 border border-black/5 rounded-2xl px-5 py-4 outline-none focus:border-[var(--color-primary)]/30 focus:ring-4 focus:ring-[var(--color-primary)]/5 transition-all text-sm font-light placeholder:text-black/30"
                       placeholder="John Doe"
@@ -151,24 +190,27 @@ export function ContactPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label htmlFor="email" className="text-xs uppercase tracking-wider text-[var(--color-dark-text)]/60 font-semibold pl-2">Email Address</label>
-                      <input 
-                        type="email" 
-                        id="email" 
-                        required
+                      <label htmlFor="email" className="text-xs uppercase tracking-wider text-[var(--color-dark-text)]/60 font-semibold pl-2">Email Address <span className="text-red-500">*</span></label>
+                      <input
+                        type="email"
+                        id="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         maxLength={100}
                         className="w-full bg-white/80 border border-black/5 rounded-2xl px-5 py-4 outline-none focus:border-[var(--color-primary)]/30 focus:ring-4 focus:ring-[var(--color-primary)]/5 transition-all text-sm font-light placeholder:text-black/30"
                         placeholder="john@example.com"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label htmlFor="mobile" className="text-xs uppercase tracking-wider text-[var(--color-dark-text)]/60 font-semibold pl-2">Mobile Number</label>
-                      <input 
-                        type="tel" 
-                        id="mobile" 
-                        required
-                        maxLength={10}
-                        onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, ''); }}
+                      <label htmlFor="mobile" className="text-xs uppercase tracking-wider text-[var(--color-dark-text)]/60 font-semibold pl-2">Mobile Number <span className="text-red-500">*</span></label>
+                      <input
+                        type="tel"
+                        id="mobile"
+                        value={mobile}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                          setMobile(val);
+                        }}
                         className="w-full bg-white/80 border border-black/5 rounded-2xl px-5 py-4 outline-none focus:border-[var(--color-primary)]/30 focus:ring-4 focus:ring-[var(--color-primary)]/5 transition-all text-sm font-light placeholder:text-black/30"
                         placeholder="9876543210"
                       />
@@ -177,10 +219,11 @@ export function ContactPage() {
 
                   <div className="space-y-2">
                     <label htmlFor="subject" className="text-xs uppercase tracking-wider text-[var(--color-dark-text)]/60 font-semibold pl-2">Subject</label>
-                    <input 
-                      type="text" 
-                      id="subject" 
-                      required
+                    <input
+                      type="text"
+                      id="subject"
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
                       maxLength={200}
                       className="w-full bg-white/80 border border-black/5 rounded-2xl px-5 py-4 outline-none focus:border-[var(--color-primary)]/30 focus:ring-4 focus:ring-[var(--color-primary)]/5 transition-all text-sm font-light placeholder:text-black/30"
                       placeholder="How can we help?"
@@ -189,9 +232,10 @@ export function ContactPage() {
 
                   <div className="space-y-2">
                     <label htmlFor="message" className="text-xs uppercase tracking-wider text-[var(--color-dark-text)]/60 font-semibold pl-2">Message</label>
-                    <textarea 
-                      id="message" 
-                      required
+                    <textarea
+                      id="message"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
                       maxLength={500}
                       rows={5}
                       className="w-full bg-white/80 border border-black/5 rounded-2xl px-5 py-4 outline-none focus:border-[var(--color-primary)]/30 focus:ring-4 focus:ring-[var(--color-primary)]/5 transition-all text-sm font-light placeholder:text-black/30 resize-none"
@@ -199,8 +243,8 @@ export function ContactPage() {
                     ></textarea>
                   </div>
 
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     disabled={isSubmitting}
                     className="w-full bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white rounded-2xl py-4 flex items-center justify-center gap-2 transition-colors disabled:opacity-70 disabled:cursor-not-allowed group shadow-lg shadow-[var(--color-primary)]/20"
                   >
