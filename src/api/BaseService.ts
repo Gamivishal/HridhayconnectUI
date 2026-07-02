@@ -1,5 +1,5 @@
 // Centralized API configuration for Hridhay Connect
-//export const API_BASE_URL = "https://localhost:7103/api";
+// export const API_BASE_URL = "https://localhost:7103/api";
 // export const RAZORPAY_KEY_ID = "rzp_test_T86G614Jko29cT";
 
 export const API_BASE_URL = "https://hridhayconnectreact.bsite.net/api";
